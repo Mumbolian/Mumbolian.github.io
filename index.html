@@ -890,6 +890,7 @@
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
     let isRecomputing = false; // Flag to prevent recursive recomputation
+    let actualNapCountInUse = null; // Track which mode (2 or 3 naps) the schedule is actually using
 
     const wakeInput = document.getElementById("wakeTime");
     const bedInput = document.getElementById("bedTime");
@@ -1105,6 +1106,10 @@
 
     function saveSettings() {
       const preferThree = !!useThreeNapsInput.checked;
+      // Use the actual nap count in use if available (e.g., after auto-upgrade/downgrade),
+      // otherwise use the user's preference
+      const saveAsThreeNap = actualNapCountInUse !== null ? (actualNapCountInUse === 3) : preferThree;
+
       const settings = {
         wakeTime: wakeInput.value || "",
         bedTime: bedInput.value || "",
@@ -1113,12 +1118,13 @@
         minWake: Number(minWakeInput.value) || 0,
         maxWake: Number(maxWakeInput.value) || 0,
         // Store separate nap lengths for 2-nap and 3-nap modes
-        twoNapLengths: preferThree ? null : {
+        // Save to the mode that's actually being displayed/used
+        twoNapLengths: saveAsThreeNap ? null : {
           nap1: Number(nap1Input.value) || 0,
           nap2: Number(nap2Input.value) || 0,
           nap3: Number(nap3Input.value) || 0
         },
-        threeNapLengths: preferThree ? {
+        threeNapLengths: saveAsThreeNap ? {
           nap1: Number(nap1Input.value) || 0,
           nap2: Number(nap2Input.value) || 0,
           nap3: Number(nap3Input.value) || 0
@@ -2158,16 +2164,24 @@
 
         const params = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths };
 
+        // Reset actualNapCountInUse at the start of each recalculation
+        actualNapCountInUse = null;
+
         // Try requested nap count, with auto-downgrade from 3 to 2 if needed
         if (requestedNapCount === 3) {
           scheduleResult = tryBuildSchedule(3, params);
-          if (!scheduleResult.ok) {
+          if (scheduleResult.ok) {
+            // Schedule succeeded with 3 naps as requested
+            actualNapCountInUse = 3;
+          } else {
             threeNapFailReason = scheduleResult.reason;
 
             // First, try to auto-adjust nap lengths to make it fit
             const autoAdjustment = tryAutoAdjustNapsToFit(3, params);
             if (autoAdjustment) {
               scheduleResult = autoAdjustment.schedule;
+              // Schedule succeeded with 3 naps (with adjustments)
+              actualNapCountInUse = 3;
               // DO NOT modify input values - user's preferences should remain unchanged
               // The adjustment only affects the displayed schedule, not their settings
               // Store the adjustment message to display later
@@ -2191,6 +2205,12 @@
               if (scheduleResult.ok) {
                 autoDowngraded = true;
                 requestedNapCount = 2;
+                // Update input fields to show the 2-nap settings being used
+                nap1Input.value = newNapLengths[0];
+                nap2Input.value = newNapLengths[1];
+                nap3Input.value = newNapLengths[2];
+                // Track that we're actually using 2 naps so saveSettings saves to the right mode
+                actualNapCountInUse = 2;
                 // Don't change checkbox - keep user's preference
                 napToggleSwitch.classList.add('preference-mismatch');
               }
@@ -2198,13 +2218,18 @@
           }
         } else {
           scheduleResult = tryBuildSchedule(2, params);
-          if (!scheduleResult.ok) {
+          if (scheduleResult.ok) {
+            // Schedule succeeded with 2 naps as requested
+            actualNapCountInUse = 2;
+          } else {
             twoNapFailReason = scheduleResult.reason;
 
             // First, try to auto-adjust nap lengths to make it fit
             const autoAdjustment = tryAutoAdjustNapsToFit(2, params);
             if (autoAdjustment) {
               scheduleResult = autoAdjustment.schedule;
+              // Schedule succeeded with 2 naps (with adjustments)
+              actualNapCountInUse = 2;
               // DO NOT modify input values - user's preferences should remain unchanged
               // The adjustment only affects the displayed schedule, not their settings
               // Store the adjustment message to display later
@@ -2228,6 +2253,12 @@
               if (scheduleResult.ok) {
                 autoUpgraded = true;
                 requestedNapCount = 3;
+                // Update input fields to show the 3-nap settings being used
+                nap1Input.value = newNapLengths[0];
+                nap2Input.value = newNapLengths[1];
+                nap3Input.value = newNapLengths[2];
+                // Track that we're actually using 3 naps so saveSettings saves to the right mode
+                actualNapCountInUse = 3;
                 // Don't change checkbox - keep user's preference
                 napToggleSwitch.classList.add('preference-mismatch');
               }
@@ -2514,6 +2545,9 @@
     useThreeNapsInput.addEventListener("change", () => {
       const preferThree = useThreeNapsInput.checked;
       const s = loadSettings();
+
+      // Reset actualNapCountInUse so saveSettings uses the user's new preference
+      actualNapCountInUse = null;
 
       if (preferThree) {
         // Switching to 3 naps - load saved 3-nap settings or use defaults
