@@ -497,9 +497,9 @@
         useThreeNapsInput.checked = forceThreeNaps;
       }
 
-      firstWakeInput.value = 150;          // 2h30
+      firstWakeInput.value = 135;          // 2h15
       lastWakeInput.value = 210;           // 3h30
-      minWakeInput.value = 150;            // 2h30 min
+      minWakeInput.value = 135;            // 2h15 min
       maxWakeInput.value = 210;            // 3h30 max
 
       // Set nap length defaults based on number of naps
@@ -526,9 +526,9 @@
         if (s.bedTime) bedInput.value = s.bedTime;
         useThreeNapsInput.checked = !!s.preferThree;
 
-        firstWakeInput.value = s.firstWake || 150;
+        firstWakeInput.value = s.firstWake || 135;
         lastWakeInput.value = s.lastWake || 210;
-        minWakeInput.value = s.minWake || 150;
+        minWakeInput.value = s.minWake || 135;
         maxWakeInput.value = s.maxWake || 210;
 
         // Use appropriate defaults based on saved preference
