@@ -342,6 +342,15 @@
       background: rgba(34, 197, 94, 0.16);
       color: #bbf7d0;
     }
+    .badge.actual {
+      background: rgba(34, 197, 94, 0.2);
+      color: #bbf7d0;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+    .badge.planned {
+      background: rgba(59, 130, 246, 0.15);
+      color: #bfdbfe;
+    }
     .subtext {
       font-size: 0.72rem;
       color: #9ca3af;
@@ -869,7 +878,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.4.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.5.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -1392,6 +1401,150 @@
       updateNap3Visibility();
     }
 
+    function getActualNapTimes() {
+      // Get actual nap times if they exist
+      const actuals = [];
+
+      if (actualNap1Start.value && actualNap1End.value) {
+        actuals.push({
+          napNum: 1,
+          start: toMinutes(actualNap1Start.value),
+          end: toMinutes(actualNap1End.value)
+        });
+      }
+
+      if (actualNap2Start.value && actualNap2End.value) {
+        actuals.push({
+          napNum: 2,
+          start: toMinutes(actualNap2Start.value),
+          end: toMinutes(actualNap2End.value)
+        });
+      }
+
+      if (actualNap3Start.value && actualNap3End.value) {
+        actuals.push({
+          napNum: 3,
+          start: toMinutes(actualNap3Start.value),
+          end: toMinutes(actualNap3End.value)
+        });
+      }
+
+      return actuals;
+    }
+
+    function tryBuildScheduleWithActuals(napCount, params, actualNaps) {
+      const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths } = params;
+
+      // Build schedule using actual nap times where available
+      const items = [];
+      const wakeWindowDurations = [];
+      let totalNapTime = 0;
+
+      items.push({
+        label: "Wake-up",
+        timeRange: fromMinutes(wakeMins),
+        badge: "Start of day",
+        badgeClass: "wake"
+      });
+
+      let cursor = wakeMins;
+
+      // Process each nap
+      for (let i = 0; i < napCount; i++) {
+        const napNum = i + 1;
+        const actualNap = actualNaps.find(a => a.napNum === napNum);
+
+        if (actualNap) {
+          // Use actual nap time
+          const napStart = actualNap.start;
+          const napEnd = actualNap.end;
+          const napDuration = napEnd - napStart;
+          const wakeWindow = napStart - cursor;
+
+          items.push({
+            label: `Nap ${napNum}`,
+            timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
+            extra: `${napDuration} min`,
+            badge: "Actual",
+            badgeClass: "actual",
+            wakeWindow: wakeWindow,
+            isActual: true
+          });
+
+          totalNapTime += napDuration;
+          wakeWindowDurations.push(wakeWindow);
+          cursor = napEnd;
+        } else {
+          // Calculate planned nap time for remaining naps
+          // This is a simplified approach - we'll fit it in the remaining time
+          const remainingNaps = napCount - i;
+          const remainingTime = bedMins - cursor;
+
+          // Calculate how much time we need for remaining naps and wake windows
+          let remainingNapTime = 0;
+          for (let j = i; j < napCount; j++) {
+            remainingNapTime += napLengths[j];
+          }
+
+          // Last wake window is fixed
+          const isLastNap = (i === napCount - 1);
+          const targetWakeAfter = isLastNap ? lastWake : minWake;
+
+          const availableForWakeWindows = remainingTime - remainingNapTime;
+          const wakeWindowsNeeded = remainingNaps; // one before each nap
+
+          // Distribute wake windows
+          let wakeWindow;
+          if (isLastNap) {
+            wakeWindow = lastWake;
+          } else {
+            wakeWindow = Math.max(minWake, Math.min(maxWake, availableForWakeWindows / wakeWindowsNeeded));
+          }
+
+          const napStart = cursor + wakeWindow;
+          const napLen = napLengths[i];
+          const napEnd = napStart + napLen;
+
+          items.push({
+            label: `Nap ${napNum}`,
+            timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
+            extra: `${napLen} min`,
+            badge: "Planned",
+            badgeClass: "planned",
+            wakeWindow: wakeWindow,
+            isActual: false
+          });
+
+          totalNapTime += napLen;
+          wakeWindowDurations.push(wakeWindow);
+          cursor = napEnd;
+        }
+      }
+
+      // Final wake window to bedtime
+      const finalWakeWindow = bedMins - cursor;
+      wakeWindowDurations.push(finalWakeWindow);
+
+      items.push({
+        label: "Bedtime",
+        timeRange: fromMinutes(bedMins),
+        badge: "End of day",
+        badgeClass: "bed",
+        wakeWindow: finalWakeWindow
+      });
+
+      return {
+        ok: true,
+        items,
+        wakeWindowsAll: wakeWindowDurations,
+        wakeWindowDurations,
+        totalNapTime,
+        bedtimeMins: bedMins,
+        napCountUsed: napCount,
+        hasActuals: true
+      };
+    }
+
     function tryBuildSchedule(napCount, params) {
       const {
         wakeMins,
@@ -1401,6 +1554,13 @@
         maxWake,
         napLengths
       } = params;
+
+      const actualNaps = getActualNapTimes();
+
+      // If we have actual nap times, use a different scheduling approach
+      if (actualNaps.length > 0) {
+        return tryBuildScheduleWithActuals(napCount, params, actualNaps);
+      }
 
       const totalNapTime = napLengths.slice(0, napCount).reduce((a, b) => a + b, 0);
       const totalDay = bedMins - wakeMins;
@@ -2042,13 +2202,21 @@
           bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(bedtimeMins)}`;
         }
 
-        if (autoDowngraded) {
-          modeNote.textContent = "⚠️ Automatically switched to 2 naps (3 naps couldn't fit: " + threeNapFailReason + ")";
-        } else if (autoUpgraded) {
-          modeNote.textContent = "✓ Automatically switched to 3 naps (2 naps couldn't fit: " + twoNapFailReason + ")";
-        } else {
-          modeNote.textContent = "";
+        // Check if we're using actual nap times
+        const actualNaps = getActualNapTimes();
+        let modeMessages = [];
+
+        if (actualNaps.length > 0) {
+          modeMessages.push(`📊 Using ${actualNaps.length} actual nap time${actualNaps.length > 1 ? 's' : ''}`);
         }
+
+        if (autoDowngraded) {
+          modeMessages.push("⚠️ Automatically switched to 2 naps (3 naps couldn't fit: " + threeNapFailReason + ")");
+        } else if (autoUpgraded) {
+          modeMessages.push("✓ Automatically switched to 3 naps (2 naps couldn't fit: " + twoNapFailReason + ")");
+        }
+
+        modeNote.textContent = modeMessages.join(" • ");
 
         // Display constraint violations if any, or success message if constraints are set and met
         const hasConstraints = !!(mustBeAwakeByInput.value || (sleepWindowStartInput.value && sleepWindowEndInput.value));
