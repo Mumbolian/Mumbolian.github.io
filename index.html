@@ -188,25 +188,25 @@
     button.primary:hover {
       filter: brightness(1.05);
     }
-
     .nap-rows {
       margin-top: 4px;
       display: flex;
       flex-direction: column;
-      gap: 5px;
+      gap: 8px; 
     }
+
     .nap-row {
       display: grid;
-      grid-template-columns: auto 1fr auto;
+      grid-template-columns: minmax(85px, 1fr) minmax(130px, 1fr) auto;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       font-size: 0.8rem;
     }
+
     .nap-row span.label {
       color: #d1d5db;
       min-width: 0;
-      max-width: 110px;   
-      word-wrap: break-word;
+      white-space: nowrap; 
     }
 
     .nap-row .unit {
