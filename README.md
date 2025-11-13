@@ -52,9 +52,9 @@ Set time-based requirements and let the app automatically adjust the schedule to
 
 The app uses a sophisticated multi-strategy approach to automatically satisfy constraints:
 
-1. **Adjust wake windows** - Compresses or expands wake windows by up to 60 minutes to shift naps earlier or later (least invasive, bidirectional)
-2. **Adjust bedtime** - Moves bedtime earlier (shortens day) or later (extends day) by 15-45 minutes (bidirectional)
-3. **Reduce conflicting nap** - Shortens the conflicting nap by up to 30 minutes, with optional redistribution to later naps only
+1. **Adjust wake windows** - Compresses or expands wake windows by up to 60 minutes to shift naps earlier or later (least invasive)
+2. **Adjust bedtime** - Moves bedtime earlier (shortens day) or later (extends day) by 15-45 minutes
+3. **Reallocate nap time** - Redistributes nap durations while keeping total sleep constant (max ±15 min per nap, minimum 30 min each)
 4. **Switch nap count** - Tries alternative 2-nap vs 3-nap schedule if needed
 
 Visual feedback shows which strategy was used and whether constraints are satisfied.
@@ -112,40 +112,33 @@ For a given nap count (2 or 3):
 
 When schedule constraints are set, the app automatically tries to adjust the schedule using these strategies in order:
 
-#### Strategy 1: Adjust Wake Windows (Bidirectional)
+#### Strategy 1: Adjust Wake Windows
 - **Compress**: Reduces `maxWake` by 5-60 minutes in 5-minute increments to shift naps earlier
-- **Expand**: Increases `maxWake` by 5-60 minutes (up to 5-hour maximum) to shift naps later
+- **Expand**: Increases `maxWake` by 5-60 minutes in 5-minute increments (up to 5 hour maximum) to shift naps later
 - Preserves nap lengths and bedtime
 - **Least invasive** - tries this first
-- Allows reverting previous adjustments when constraints change
 
-Example: `maxWake` 210 → 180 minutes shifts schedule earlier
-Example: `maxWake` 180 → 200 minutes shifts schedule later (constraint change)
+Example: `maxWake` 210 → 200 minutes shifts schedule ~10 minutes earlier
+Example: `maxWake` 210 → 220 minutes shifts schedule ~10 minutes later
 
-#### Strategy 2: Adjust Bedtime (Bidirectional)
-- **Earlier**: Moves bedtime 15-45 minutes earlier in 15-minute increments, shortening the day
-- **Later**: Moves bedtime 15-45 minutes later in 15-minute increments, extending the day
+#### Strategy 2: Adjust Bedtime
+- **Earlier**: Moves bedtime 15-45 minutes earlier in 15-minute increments, shortening the day and forcing schedule compression
+- **Later**: Moves bedtime 15-45 minutes later in 15-minute increments, extending the day and allowing more flexibility
 - All naps and wake windows adjust to fit the new day length
 - Can trigger 3→2 nap reduction (when compressing) or 2→3 nap addition (when extending)
-- Allows reverting previous adjustments when constraints change
 
-Example: Bedtime 20:30 → 20:15 compresses everything
-Example: Bedtime 20:15 → 20:30 extends everything back (constraint change)
+Example: Bedtime 20:30 → 20:15 compresses everything by 15 minutes
+Example: Bedtime 20:30 → 21:00 extends everything by 30 minutes
 
-#### Strategy 3: Reduce Conflicting Nap
-- **First attempt**: Reduces conflicting nap by 5-30 minutes WITHOUT redistribution
-  - Avoids pushing nap start time later
-  - Creates extra awake time distributed across wake windows
-- **Second attempt**: Reduces conflicting nap and redistributes time to naps AFTER it only
-  - Prevents pushing the conflicting nap's start time later
-  - Only redistributes to later naps in the schedule
-- Constraints:
-  - Minimum 30 minutes per nap
-  - Maximum 30 minutes reduction for conflicting nap
-  - Maximum 15 minutes addition for receiving naps
+#### Strategy 3: Reallocate Nap Time
+- Reduces conflicting nap and redistributes time to other naps
+- **Total sleep time stays constant**
+- Constraints per nap:
+  - Minimum 30 minutes
+  - Maximum ±15 minutes change from original
+- Reduction in 5-minute increments (5, 10, 15 min)
 
-Example: Nap 2 (12:00-13:00) conflicts with "awake by 12:48"
-→ Reduce Nap 2 to 48 minutes (12:00-12:48), no redistribution
+Example: Reduce Nap 2 by 10 min, add 5 min each to Nap 1 and Nap 3
 
 #### Strategy 4: Switch Nap Count
 - Tries alternative nap count (2 ↔ 3)
