@@ -2,86 +2,645 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bingpot Studio</title>
+  <title>Bingpot Studio – Nap Scheduler</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: #0f172a;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #020617 100%);
       color: #e5e7eb;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 100vh;
+      padding: 16px;
     }
-    .card {
-      background: #020617;
-      border-radius: 16px;
-      padding: 24px 28px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-      max-width: 420px;
+    main {
       width: 100%;
-      border: 1px solid #1f2937;
+      max-width: 720px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      padding: 20px 18px 18px;
     }
-    h1 {
-      margin-top: 0;
-      margin-bottom: 0.35rem;
-      font-size: 1.7rem;
+    @media (min-width: 640px) {
+      main {
+        padding: 24px 26px 22px;
+      }
     }
-    h2 {
-      margin: 0 0 1rem;
-      font-size: 1rem;
-      font-weight: 500;
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .title-block h1 {
+      margin: 0 0 4px;
+      font-size: 1.5rem;
+    }
+    .title-block p {
+      margin: 0;
+      font-size: 0.86rem;
       color: #9ca3af;
-    }
-    p {
-      margin: 0 0 0.75rem;
-      line-height: 1.5;
     }
     .pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.2rem 0.7rem;
+      gap: 0.35rem;
+      padding: 0.2rem 0.6rem;
       border-radius: 999px;
-      background: rgba(34,197,94,0.08);
+      background: rgba(34, 197, 94, 0.12);
       color: #bbf7d0;
-      font-size: 0.75rem;
-      margin-bottom: 0.75rem;
+      font-size: 0.7rem;
+      white-space: nowrap;
     }
     .dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 999px;
       background: #22c55e;
+      box-shadow: 0 0 8px #22c55e;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.05fr 1.1fr;
+      gap: 18px;
+    }
+    @media (max-width: 640px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), rgba(15, 23, 42, 0.96) 55%);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+    }
+    .card.secondary {
+      background: radial-gradient(circle at top right, rgba(22, 163, 74, 0.32), rgba(15, 23, 42, 0.96) 55%);
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .card h2 span {
+      font-weight: 500;
+      font-size: 0.8rem;
+      color: #9ca3af;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    label {
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    input[type="time"],
+    input[type="number"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 9px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    input[type="time"]:focus,
+    input[type="number"]:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.45);
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .inline {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.76rem;
+      color: #9ca3af;
+      margin-bottom: 4px;
+    }
+    .inline input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      accent-color: #22c55e;
+    }
+
+    .buttons-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    button {
+      border-radius: 999px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 0.75rem;
+      padding: 5px 9px;
+      cursor: pointer;
+    }
+    button:hover {
+      border-color: #60a5fa;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      color: #022c22;
+      border-color: transparent;
+      font-weight: 600;
+    }
+    button.primary:hover {
+      filter: brightness(1.05);
+    }
+
+    .nap-rows {
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .nap-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+    }
+    .nap-row span.label {
+      color: #d1d5db;
+      width: 58px;
+    }
+    .nap-row .unit {
+      font-size: 0.72rem;
+      color: #6b7280;
+      margin-left: 2px;
+    }
+
+    .schedule-list {
+      margin: 6px 0 4px;
+      padding: 0;
+      list-style: none;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .schedule-list li {
+      padding: 6px 8px;
+      border-radius: 9px;
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .time {
+      font-variant-numeric: tabular-nums;
+    }
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.15);
+      color: #bfdbfe;
+      white-space: nowrap;
+    }
+    .badge.wake {
+      background: rgba(234, 179, 8, 0.14);
+      color: #facc15;
+    }
+    .badge.bed {
+      background: rgba(34, 197, 94, 0.16);
+      color: #bbf7d0;
+    }
+    .subtext {
+      font-size: 0.72rem;
+      color: #9ca3af;
+      margin-top: 4px;
+    }
+    .warning {
+      margin-top: 4px;
+      font-size: 0.72rem;
+      color: #fecaca;
+      background: rgba(248, 113, 113, 0.12);
+      border-radius: 8px;
+      padding: 4px 6px;
+      border: 1px solid rgba(248, 113, 113, 0.35);
     }
     .footer {
-      margin-top: 1rem;
-      font-size: 0.75rem;
+      margin-top: 10px;
+      font-size: 0.7rem;
       color: #6b7280;
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.75rem;
+      background: rgba(15, 23, 42, 0.9);
+      padding: 2px 4px;
+      border-radius: 4px;
+      border: 1px solid rgba(55, 65, 81, 0.8);
     }
   </style>
 </head>
 <body>
-  <main class="card">
+<main>
+  <header>
+    <div class="title-block">
+      <h1>Bingpot Studio – Nap Planner</h1>
+      <p>Quickly build a 2–3 nap day from wake-up to bedtime. Everything runs in your browser only.</p>
+    </div>
     <div class="pill">
       <span class="dot"></span>
-      <span>Live dev sandbox</span>
+      <span>Local-only • No login</span>
     </div>
-    <h1>Bingpot Studio</h1>
-    <h2>Baby nap tools & experiments</h2>
-    <p>
-      If you can see this, everything is wired up correctly:
-      Squarespace → GitHub Pages → <code>www.bingpotstudio.com</code>.
-    </p>
-    <p>
-      Next step will be dropping in the actual nap scheduler so
-      you can enter a wake time and auto-generate nap times for the day.
-    </p>
-    <div class="footer">
-      v0.0.1 – placeholder page
-    </div>
-  </main>
+  </header>
+
+  <div class="layout">
+    <!-- Controls -->
+    <section class="card">
+      <h2>
+        Inputs
+        <span>Adjust these, schedule updates instantly</span>
+      </h2>
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="wakeTime">Wake-up time</label>
+          <input type="time" id="wakeTime" />
+        </div>
+        <div class="form-row">
+          <label for="bedTime">Target bedtime</label>
+          <input type="time" id="bedTime" />
+        </div>
+      </div>
+
+      <div class="inline">
+        <input type="checkbox" id="useThreeNaps" />
+        <label for="useThreeNaps">Use 3 naps (default is 2)</label>
+      </div>
+
+      <div class="nap-rows">
+        <div class="nap-row">
+          <span class="label">Nap 1</span>
+          <input type="number" id="nap1Length" min="10" max="240" step="5" />
+          <span class="unit">mins</span>
+        </div>
+        <div class="nap-row">
+          <span class="label">Nap 2</span>
+          <input type="number" id="nap2Length" min="10" max="240" step="5" />
+          <span class="unit">mins</span>
+        </div>
+        <div class="nap-row" id="nap3Row">
+          <span class="label">Nap 3</span>
+          <input type="number" id="nap3Length" min="10" max="240" step="5" />
+          <span class="unit">mins</span>
+        </div>
+      </div>
+
+      <div class="buttons-row">
+        <button type="button" id="resetDefaults">Reset to age-7m-ish defaults</button>
+        <button type="button" id="copySchedule">Copy schedule text</button>
+      </div>
+      <p class="subtext">
+        Tip: tweak nap lengths or bedtime until the wake windows look sensible for your baby.
+      </p>
+    </section>
+
+    <!-- Output -->
+    <section class="card secondary">
+      <h2>
+        Today’s schedule
+        <span id="summaryLabel"></span>
+      </h2>
+      <ul class="schedule-list" id="scheduleList"></ul>
+      <div id="wakeWindowsText" class="subtext"></div>
+      <div id="warningBox" class="warning" style="display:none;"></div>
+    </section>
+  </div>
+
+  <div class="footer">
+    <span>Settings are saved in this browser (localStorage).</span>
+    <span>Built for <code>bingpotstudio.com</code> – you can always tweak the logic later.</span>
+  </div>
+</main>
+
+<script>
+  (function () {
+    const STORAGE_KEY = "napPlannerSettings_v1";
+
+    const wakeInput = document.getElementById("wakeTime");
+    const bedInput = document.getElementById("bedTime");
+    const useThreeNapsInput = document.getElementById("useThreeNaps");
+    const nap1Input = document.getElementById("nap1Length");
+    const nap2Input = document.getElementById("nap2Length");
+    const nap3Input = document.getElementById("nap3Length");
+    const nap3Row = document.getElementById("nap3Row");
+
+    const scheduleList = document.getElementById("scheduleList");
+    const summaryLabel = document.getElementById("summaryLabel");
+    const wakeWindowsText = document.getElementById("wakeWindowsText");
+    const warningBox = document.getElementById("warningBox");
+    const resetBtn = document.getElementById("resetDefaults");
+    const copyBtn = document.getElementById("copySchedule");
+
+    function toMinutes(timeStr) {
+      if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return null;
+      const [h, m] = timeStr.split(":").map(Number);
+      if (isNaN(h) || isNaN(m)) return null;
+      return h * 60 + m;
+    }
+
+    function fromMinutes(totalMinutes) {
+      totalMinutes = ((totalMinutes % (24 * 60)) + (24 * 60)) % (24 * 60);
+      const h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+    }
+
+    function formatDuration(mins) {
+      if (mins <= 0) return "0 min";
+      const h = Math.floor(mins / 60);
+      const m = mins % 60;
+      if (h && m) return `${h}h ${m}m`;
+      if (h) return `${h}h`;
+      return `${m}m`;
+    }
+
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function saveSettings() {
+      const settings = {
+        wakeTime: wakeInput.value || "",
+        bedTime: bedInput.value || "",
+        useThreeNaps: !!useThreeNapsInput.checked,
+        nap1: Number(nap1Input.value) || 0,
+        nap2: Number(nap2Input.value) || 0,
+        nap3: Number(nap3Input.value) || 0
+      };
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+      } catch {
+        // ignore
+      }
+    }
+
+    function applyDefaults() {
+      wakeInput.value = "07:00";
+      bedInput.value = "19:00";
+      useThreeNapsInput.checked = false;
+      nap1Input.value = 60;  // 1h
+      nap2Input.value = 90;  // 1.5h
+      nap3Input.value = 30;  // cat nap if enabled
+      updateNap3Visibility();
+    }
+
+    function initFromStorageOrDefaults() {
+      const s = loadSettings();
+      if (s) {
+        if (s.wakeTime) wakeInput.value = s.wakeTime;
+        if (s.bedTime) bedInput.value = s.bedTime;
+        useThreeNapsInput.checked = !!s.useThreeNaps;
+        nap1Input.value = s.nap1 || 60;
+        nap2Input.value = s.nap2 || 90;
+        nap3Input.value = s.nap3 || 30;
+      } else {
+        applyDefaults();
+      }
+      updateNap3Visibility();
+    }
+
+    function updateNap3Visibility() {
+      nap3Row.style.display = useThreeNapsInput.checked ? "grid" : "none";
+    }
+
+    function recomputeSchedule() {
+      updateNap3Visibility();
+      saveSettings();
+
+      scheduleList.innerHTML = "";
+      wakeWindowsText.textContent = "";
+      summaryLabel.textContent = "";
+      warningBox.style.display = "none";
+
+      const wakeMins = toMinutes(wakeInput.value);
+      const bedMinsRaw = toMinutes(bedInput.value);
+      if (wakeMins == null || bedMinsRaw == null) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Please set both wake-up time and target bedtime.";
+        return;
+      }
+
+      let bedMins = bedMinsRaw;
+      if (bedMins <= wakeMins) {
+        bedMins += 24 * 60; // assume bedtime is the same 'sleep day', just later
+      }
+
+      const useThree = useThreeNapsInput.checked;
+      const napCount = useThree ? 3 : 2;
+
+      const nap1Len = Number(nap1Input.value) || 0;
+      const nap2Len = Number(nap2Input.value) || 0;
+      const nap3Len = useThree ? (Number(nap3Input.value) || 0) : 0;
+
+      const napLengths = [nap1Len, nap2Len];
+      if (useThree) napLengths.push(nap3Len);
+
+      const totalDay = bedMins - wakeMins;
+      const totalNapTime = napLengths.reduce((a, b) => a + b, 0);
+      const remainingAwake = totalDay - totalNapTime;
+
+      if (totalNapTime <= 0 || totalDay <= 0) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Check nap lengths and times – day length or nap duration is invalid.";
+        return;
+      }
+
+      if (remainingAwake < 60) {
+        warningBox.style.display = "block";
+        warningBox.textContent =
+                "Total nap time is very high for this wake–bed window. Try shortening naps or moving bedtime later.";
+      }
+
+      const wakeWindowsCount = napCount + 1;
+      const baseWakeWindow = Math.max(0, Math.floor(remainingAwake / wakeWindowsCount));
+      let remainder = Math.max(0, remainingAwake - baseWakeWindow * wakeWindowsCount);
+
+      const wakeWindows = [];
+      for (let i = 0; i < wakeWindowsCount; i++) {
+        let extra = 0;
+        if (remainder > 0) {
+          extra = 5;
+          remainder -= 5;
+        }
+        wakeWindows.push(baseWakeWindow + extra);
+      }
+
+      const items = [];
+
+      // Wake-up
+      items.push({
+        label: "Wake-up",
+        timeRange: fromMinutes(wakeMins),
+        badge: "Start of day",
+        badgeClass: "wake"
+      });
+
+      let cursor = wakeMins;
+      const wakeWindowDurations = [];
+
+      for (let i = 0; i < napCount; i++) {
+        const ww = wakeWindows[i];
+        const napLen = napLengths[i];
+
+        cursor += ww;
+        const napStart = cursor;
+        const napEnd = napStart + napLen;
+        wakeWindowDurations.push(ww);
+
+        items.push({
+          label: `Nap ${i + 1}`,
+          timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
+          extra: `${napLen} min`,
+          badge: "Nap",
+          badgeClass: ""
+        });
+
+        cursor = napEnd;
+      }
+
+      const finalWakeWindow = bedMins - cursor;
+      wakeWindowDurations.push(finalWakeWindow);
+
+      items.push({
+        label: "Bedtime",
+        timeRange: fromMinutes(bedMins),
+        badge: "End of day",
+        badgeClass: "bed"
+      });
+
+      const scheduleTextLines = [];
+
+      scheduleList.innerHTML = "";
+      items.forEach((item) => {
+        const li = document.createElement("li");
+        const left = document.createElement("div");
+        const right = document.createElement("div");
+
+        left.innerHTML = `<strong>${item.label}</strong><br/><span class="time">${item.timeRange}</span>`;
+        if (item.extra) {
+          left.innerHTML += `<br/><span class="subtext">${item.extra}</span>`;
+        }
+
+        if (item.badge) {
+          right.innerHTML = `<span class="badge ${item.badgeClass || ""}">${item.badge}</span>`;
+        }
+
+        li.appendChild(left);
+        li.appendChild(right);
+        scheduleList.appendChild(li);
+
+        if (item.label === "Wake-up" || item.label === "Bedtime") {
+          scheduleTextLines.push(`${item.label}: ${item.timeRange}`);
+        } else {
+          scheduleTextLines.push(
+                  `${item.label}: ${item.timeRange} (${item.extra || ""}`.replace(/\s+\(\)/, "")
+          );
+        }
+      });
+
+      const wwStrings = wakeWindowDurations.map((mins, idx) => {
+        const label =
+                idx === 0
+                        ? "Before nap 1"
+                        : idx === wakeWindowDurations.length - 1
+                                ? "Before bed"
+                                : `Between naps ${idx} & ${idx + 1}`;
+        return `${label}: ${formatDuration(mins)}`;
+      });
+      wakeWindowsText.textContent = wwStrings.join("  •  ");
+
+      const totalNapHours = (totalNapTime / 60).toFixed(2);
+      summaryLabel.textContent = `${napCount} naps • ${totalNapHours}h total daytime sleep`;
+
+      // Attach schedule text to copy button
+      copyBtn.dataset.scheduleText = scheduleTextLines.join("\n");
+    }
+
+    resetBtn.addEventListener("click", () => {
+      applyDefaults();
+      recomputeSchedule();
+    });
+
+    copyBtn.addEventListener("click", async () => {
+      const text = copyBtn.dataset.scheduleText || "";
+      if (!text) return;
+      try {
+        await navigator.clipboard.writeText(text);
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = "Copied!";
+        setTimeout(() => (copyBtn.textContent = prev), 900);
+      } catch {
+        const prev = copyBtn.textContent;
+        copyBtn.textContent = "Copy failed";
+        setTimeout(() => (copyBtn.textContent = prev), 900);
+      }
+    });
+
+    [wakeInput, bedInput, useThreeNapsInput, nap1Input, nap2Input, nap3Input].forEach((el) => {
+      el.addEventListener("input", recomputeSchedule);
+    });
+
+    initFromStorageOrDefaults();
+    recomputeSchedule();
+  })();
+</script>
 </body>
 </html>
