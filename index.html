@@ -146,6 +146,16 @@
     input[type="number"] {
       -moz-appearance: textfield;
     }
+    /* Subtle visual indicator when schedule used a different value than user's setting */
+    input[type="number"].setting-adjusted {
+      background: rgba(251, 191, 36, 0.08);
+      border-color: rgba(251, 191, 36, 0.4);
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.1), inset 0 0 12px rgba(251, 191, 36, 0.06);
+    }
+    input[type="number"].setting-adjusted:focus {
+      border-color: #fbbf24;
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.45), inset 0 0 12px rgba(251, 191, 36, 0.06);
+    }
 
     .inline {
       display: flex;
@@ -322,6 +332,12 @@
       justify-content: space-between;
       align-items: baseline;
       gap: 8px;
+    }
+    /* Subtle visual cue when schedule item uses adjusted value */
+    .schedule-list li.adjusted {
+      background: rgba(251, 191, 36, 0.06);
+      border-color: rgba(251, 191, 36, 0.35);
+      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.08);
     }
     .time {
       font-variant-numeric: tabular-nums;
@@ -1553,6 +1569,16 @@
         wakeWindow: finalWakeWindow
       });
 
+      // Extract the nap lengths that were actually used (from items)
+      const usedNapLengths = [];
+      for (let i = 0; i < napCount; i++) {
+        const napItem = items.find(item => item.label === `Nap ${i + 1}`);
+        if (napItem && napItem.extra) {
+          const napLen = parseInt(napItem.extra); // Extract from "X min" format
+          usedNapLengths.push(napLen);
+        }
+      }
+
       return {
         ok: true,
         items,
@@ -1561,7 +1587,8 @@
         totalNapTime,
         bedtimeMins: bedMins,
         napCountUsed: napCount,
-        hasActuals: true
+        hasActuals: true,
+        napLengthsUsed: usedNapLengths // Track which nap lengths were actually used
       };
     }
 
@@ -1680,7 +1707,8 @@
         wakeWindowDurations,
         totalNapTime,
         bedtimeMins: resultingBedtimeMins,
-        napCountUsed: napCount
+        napCountUsed: napCount,
+        napLengthsUsed: napLengths.slice(0, napCount) // Track which nap lengths were actually used
       };
     }
 
@@ -2206,10 +2234,42 @@
           wakeWindowDurations,
           totalNapTime,
           bedtimeMins,
-          napCountUsed
+          napCountUsed,
+          napLengthsUsed
         } = scheduleResult;
 
         updateNap3Visibility(napCountUsed);
+
+        // Apply visual indicators when schedule uses different nap lengths than user's settings
+        const userNapLengths = [
+          Number(nap1Input.value) || 0,
+          Number(nap2Input.value) || 0,
+          Number(nap3Input.value) || 0
+        ];
+
+        // Clear all adjustment indicators first
+        nap1Input.classList.remove('setting-adjusted');
+        nap2Input.classList.remove('setting-adjusted');
+        nap3Input.classList.remove('setting-adjusted');
+
+        // Apply indicators to inputs and mark schedule items as adjusted
+        if (napLengthsUsed && napLengthsUsed.length > 0) {
+          for (let i = 0; i < napCountUsed; i++) {
+            if (napLengthsUsed[i] !== userNapLengths[i]) {
+              // Mark the input as adjusted
+              const inputElement = [nap1Input, nap2Input, nap3Input][i];
+              if (inputElement) {
+                inputElement.classList.add('setting-adjusted');
+              }
+
+              // Mark the schedule item as adjusted for visual cue
+              const napItem = items.find(item => item.label === `Nap ${i + 1}`);
+              if (napItem) {
+                napItem.isAdjusted = true;
+              }
+            }
+          }
+        }
 
         // Validate constraints (use adjusted bedtime if it was changed)
         const constraintViolations = validateConstraints(scheduleResult, wakeMins, adjustedBedMins);
@@ -2221,6 +2281,11 @@
           const li = document.createElement("li");
           const left = document.createElement("div");
           const right = document.createElement("div");
+
+          // Apply visual cue if this nap was adjusted
+          if (item.isAdjusted) {
+            li.classList.add('adjusted');
+          }
 
           left.innerHTML = `<strong>${item.label}</strong><br/><span class="time">${item.timeRange}</span>`;
           if (item.extra) {
