@@ -985,51 +985,9 @@
         return null; // Already satisfied, no adjustment needed
       }
 
-      // Strategy 1: Adjust wake windows to shift naps
-      // First try reducing maxWake to shift naps earlier
-      for (let reduction = 5; reduction <= 60; reduction += 5) {
-        const adjustedMaxWake = Math.max(minWake, maxWake - reduction);
-        if (adjustedMaxWake === maxWake && reduction > 5) break; // Can't reduce further
-
-        const testParams = { ...params, maxWake: adjustedMaxWake };
-        const testSchedule = tryBuildSchedule(napCount, testParams);
-
-        if (testSchedule.ok) {
-          const testViolations = validateConstraints(testSchedule, wakeMins, bedMins);
-          if (testViolations.length === 0) {
-            return {
-              schedule: testSchedule,
-              strategy: 'wake-windows',
-              changes: { maxWake: adjustedMaxWake },
-              message: `Reduced max wake window by ${maxWake - adjustedMaxWake} min to shift naps earlier`
-            };
-          }
-        }
-      }
-
-      // Also try increasing maxWake to shift naps later (if there's room)
-      // Allow up to +60 min from user's maxWake, respecting their preferences
-      // No hard ceiling - let natural schedule constraints be the limit
-      for (let increase = 5; increase <= 60; increase += 5) {
-        const adjustedMaxWake = maxWake + increase;
-
-        const testParams = { ...params, maxWake: adjustedMaxWake };
-        const testSchedule = tryBuildSchedule(napCount, testParams);
-
-        if (testSchedule.ok) {
-          const testViolations = validateConstraints(testSchedule, wakeMins, bedMins);
-          if (testViolations.length === 0) {
-            return {
-              schedule: testSchedule,
-              strategy: 'wake-windows',
-              changes: { maxWake: adjustedMaxWake },
-              message: `Increased max wake window by ${adjustedMaxWake - maxWake} min to shift naps later`
-            };
-          }
-        }
-      }
-
-      // Strategy 2: Adjust bedtime
+      // Strategy 1: Adjust bedtime
+      // NOTE: We do NOT adjust wake window parameters (minWake, maxWake, lastWake) as these
+      // are biological constraints that must be respected as hard limits
       // Try moving bedtime earlier (shortens day, compresses schedule)
       for (let adjustment = 15; adjustment <= 45; adjustment += 15) {
         const earlierBedMins = bedMins - adjustment;
@@ -1069,10 +1027,10 @@
         }
       }
 
-      // Strategy 3: Adjust naps (reduce for awake-by, extend for sleep-window)
+      // Strategy 2: Adjust naps (reduce for awake-by, extend for sleep-window)
       const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
 
-      // Strategy 3a: Handle "must be awake by" - reduce conflicting nap
+      // Strategy 2a: Handle "must be awake by" - reduce conflicting nap
       let conflictingNapIndex = -1;
       if (mustBeAwakeBy !== null) {
         for (let i = 0; i < naps.length; i++) {
@@ -1176,7 +1134,7 @@
         }
       }
 
-      // Strategy 3b: Handle "must be asleep during" - extend/adjust target nap
+      // Strategy 2b: Handle "must be asleep during" - extend/adjust target nap
       if (sleepStart !== null && sleepEnd !== null) {
         const MIN_NAP = 30;
         const MAX_NAP_EXTENSION = 30; // Max extension per nap
@@ -1293,7 +1251,7 @@
         }
       }
 
-      // Strategy 4: Try alternative nap count (2 vs 3)
+      // Strategy 3: Try alternative nap count (2 vs 3)
       const alternateNapCount = napCount === 2 ? 3 : 2;
       const alternateNapLengths = alternateNapCount === 3 ? [30, 60, 30] : [90, 30, 30];
       const testParams4 = { ...params, napCount: alternateNapCount, napLengths: alternateNapLengths };
