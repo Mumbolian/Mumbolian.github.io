@@ -938,28 +938,48 @@
 
       // Get constraint values
       const mustBeAwakeByStr = mustBeAwakeByInput.value;
+      const sleepWindowStartStr = sleepWindowStartInput.value;
+      const sleepWindowEndStr = sleepWindowEndInput.value;
 
-      // If no "must be awake by" constraint, return null (no adjustment needed)
-      if (!mustBeAwakeByStr) {
+      // If no constraints at all, return null (no adjustment needed)
+      if (!mustBeAwakeByStr && !(sleepWindowStartStr && sleepWindowEndStr)) {
         return null;
       }
 
-      let mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
-      if (mustBeAwakeBy === null) {
-        return null;
+      // Parse and normalize "must be awake by" constraint if present
+      let mustBeAwakeBy = null;
+      if (mustBeAwakeByStr) {
+        mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
+        if (mustBeAwakeBy !== null) {
+          while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
+          while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+        }
       }
 
-      // Normalize constraint time
-      while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
-      while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+      // Parse and normalize "must be asleep during" constraint if present
+      let sleepStart = null;
+      let sleepEnd = null;
+      if (sleepWindowStartStr && sleepWindowEndStr) {
+        sleepStart = toMinutes(sleepWindowStartStr);
+        sleepEnd = toMinutes(sleepWindowEndStr);
+        if (sleepStart !== null && sleepEnd !== null) {
+          while (sleepStart < wakeMins - 12 * 60) sleepStart += 24 * 60;
+          while (sleepStart > wakeMins + 12 * 60) sleepStart -= 24 * 60;
+          while (sleepEnd < wakeMins - 12 * 60) sleepEnd += 24 * 60;
+          while (sleepEnd > wakeMins + 12 * 60) sleepEnd -= 24 * 60;
+          if (sleepEnd <= sleepStart) {
+            sleepEnd += 24 * 60;
+          }
+        }
+      }
 
-      // Build the schedule and check which nap conflicts
+      // Build the schedule and check constraints
       let scheduleResult = tryBuildSchedule(napCount, params);
       if (!scheduleResult.ok) {
         return null; // Can't even build basic schedule
       }
 
-      // Check if constraint is already satisfied
+      // Check if constraints are already satisfied
       const violations = validateConstraints(scheduleResult, wakeMins, bedMins);
       if (violations.length === 0) {
         return null; // Already satisfied, no adjustment needed
@@ -1049,26 +1069,28 @@
         }
       }
 
-      // Strategy 3: Reduce conflicting nap (without redistribution first)
-      // Find which nap conflicts
+      // Strategy 3: Adjust naps (reduce for awake-by, extend for sleep-window)
       const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
+
+      // Strategy 3a: Handle "must be awake by" - reduce conflicting nap
       let conflictingNapIndex = -1;
+      if (mustBeAwakeBy !== null) {
+        for (let i = 0; i < naps.length; i++) {
+          const nap = naps[i];
+          const [startStr, endStr] = nap.timeRange.split(" – ");
+          let napStart = toMinutes(startStr);
+          let napEnd = toMinutes(endStr);
 
-      for (let i = 0; i < naps.length; i++) {
-        const nap = naps[i];
-        const [startStr, endStr] = nap.timeRange.split(" – ");
-        let napStart = toMinutes(startStr);
-        let napEnd = toMinutes(endStr);
+          // Normalize
+          while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
+          while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
+          while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
+          while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
 
-        // Normalize
-        while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
-        while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
-        while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
-        while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
-
-        if (mustBeAwakeBy >= napStart && mustBeAwakeBy < napEnd) {
-          conflictingNapIndex = i;
-          break;
+          if (mustBeAwakeBy >= napStart && mustBeAwakeBy < napEnd) {
+            conflictingNapIndex = i;
+            break;
+          }
         }
       }
 
@@ -1148,6 +1170,123 @@
                   message: `Reduced Nap ${conflictingNapIndex + 1} by ${actualReduction} min and redistributed to later naps`,
                   napChanges: adjustedNapLengths
                 };
+              }
+            }
+          }
+        }
+      }
+
+      // Strategy 3b: Handle "must be asleep during" - extend/adjust target nap
+      if (sleepStart !== null && sleepEnd !== null) {
+        const MIN_NAP = 30;
+        const MAX_NAP_EXTENSION = 30; // Max extension per nap
+
+        // Find the nap closest to the sleep window
+        let closestNapIndex = -1;
+        let closestDistance = Infinity;
+
+        for (let i = 0; i < naps.length; i++) {
+          const nap = naps[i];
+          const [startStr, endStr] = nap.timeRange.split(" – ");
+          let napStart = toMinutes(startStr);
+          let napEnd = toMinutes(endStr);
+
+          // Normalize
+          while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
+          while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
+          while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
+          while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
+
+          // Calculate distance to sleep window (how much we'd need to adjust)
+          let distance = 0;
+          if (napEnd < sleepStart) {
+            // Nap ends before window starts
+            distance = sleepStart - napEnd;
+          } else if (napStart > sleepEnd) {
+            // Nap starts after window ends
+            distance = napStart - sleepEnd;
+          } else {
+            // Nap overlaps with window - check if it fully covers
+            if (napStart <= sleepStart && napEnd >= sleepEnd) {
+              distance = 0; // Already covers (shouldn't happen as we have violations)
+            } else {
+              // Partial overlap - calculate extension needed
+              const needStartEarlier = Math.max(0, sleepStart - napStart);
+              const needEndLater = Math.max(0, sleepEnd - napEnd);
+              distance = needStartEarlier + needEndLater;
+            }
+          }
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestNapIndex = i;
+          }
+        }
+
+        // Try to adjust the closest nap
+        if (closestNapIndex !== -1) {
+          const nap = naps[closestNapIndex];
+          const [startStr, endStr] = nap.timeRange.split(" – ");
+          let napStart = toMinutes(startStr);
+          let napEnd = toMinutes(endStr);
+
+          // Normalize
+          while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
+          while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
+          while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
+          while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
+
+          // Try extending the nap to cover the sleep window
+          const needStartEarlier = Math.max(0, sleepStart - napStart);
+          const needEndLater = Math.max(0, sleepEnd - napEnd);
+          const totalExtensionNeeded = needStartEarlier + needEndLater;
+
+          if (totalExtensionNeeded > 0 && totalExtensionNeeded <= MAX_NAP_EXTENSION) {
+            const newLength = napLengths[closestNapIndex] + totalExtensionNeeded;
+            const adjustedNapLengths = [...napLengths];
+            adjustedNapLengths[closestNapIndex] = newLength;
+
+            const testParams3b = { ...params, napLengths: adjustedNapLengths };
+            const testSchedule3b = tryBuildSchedule(napCount, testParams3b);
+
+            if (testSchedule3b.ok) {
+              const testViolations3b = validateConstraints(testSchedule3b, wakeMins, bedMins);
+              if (testViolations3b.length === 0) {
+                return {
+                  schedule: testSchedule3b,
+                  strategy: 'nap-extension',
+                  changes: { napLengths: adjustedNapLengths },
+                  message: `Extended Nap ${closestNapIndex + 1} by ${totalExtensionNeeded} min to cover required sleep window`,
+                  napChanges: adjustedNapLengths
+                };
+              }
+            }
+          }
+
+          // Try reducing naps BEFORE the target nap to shift it earlier
+          if (closestNapIndex > 0 && napStart > sleepStart) {
+            const shiftNeeded = napStart - sleepStart;
+
+            for (let i = 0; i < closestNapIndex; i++) {
+              for (let reduction = 5; reduction <= Math.min(30, napLengths[i] - MIN_NAP); reduction += 5) {
+                const adjustedNapLengths = [...napLengths];
+                adjustedNapLengths[i] = napLengths[i] - reduction;
+
+                const testParams3c = { ...params, napLengths: adjustedNapLengths };
+                const testSchedule3c = tryBuildSchedule(napCount, testParams3c);
+
+                if (testSchedule3c.ok) {
+                  const testViolations3c = validateConstraints(testSchedule3c, wakeMins, bedMins);
+                  if (testViolations3c.length === 0) {
+                    return {
+                      schedule: testSchedule3c,
+                      strategy: 'nap-reduction',
+                      changes: { napLengths: adjustedNapLengths },
+                      message: `Shortened Nap ${i + 1} by ${reduction} min to shift schedule earlier`,
+                      napChanges: adjustedNapLengths
+                    };
+                  }
+                }
               }
             }
           }
