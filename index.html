@@ -721,13 +721,13 @@
       <input type="hidden" id="nap3Length" />
 
       <div class="buttons-row">
-        <button type="button" id="openNapConfig">⚙️ Configure Nap Lengths</button>
-        <button type="button" id="resetDefaults">Reset to defaults</button>
+        <button type="button" id="openNapConfig" title="Configure nap lengths for 2-nap and 3-nap modes">⚙️ Naps</button>
+        <button type="button" id="resetDefaults" title="Reset all settings to defaults">↻ Reset</button>
+        <button type="button" id="copySchedule" title="Copy schedule to clipboard">📋 Copy</button>
       </div>
       <div class="buttons-row">
-        <button type="button" id="copySchedule">Copy schedule text</button>
-        <button type="button" id="openActualNaps">📊 Track Actual Naps</button>
-        <button type="button" id="openConstraints">🎯 Schedule Constraints</button>
+        <button type="button" id="openActualNaps" title="Track today's actual nap times">📊 Track</button>
+        <button type="button" id="openConstraints" title="Set schedule constraints">🎯 Constraints</button>
       </div>
     </section>
 
@@ -2540,7 +2540,7 @@
 
           left.innerHTML = `<strong>${item.label}</strong><br/><span class="time">${item.timeRange}</span>`;
           if (item.extra) {
-            left.innerHTML += `<br/><span class="subtext">${item.extra}</span>`;
+            left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${item.extra}</span>`;
           }
           // Add adjustment info if present
           if (item.adjustmentInfo) {
@@ -2548,7 +2548,7 @@
           }
           // Add wake window duration if present
           if (item.wakeWindow) {
-            left.innerHTML += `<br/><span class="subtext" style="color: #facc15;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
+            left.innerHTML += `<br/><span class="subtext" style="color: #9ca3af;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
           }
 
           if (item.badge) {
