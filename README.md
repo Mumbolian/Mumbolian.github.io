@@ -36,6 +36,7 @@ This tool formalises that mental model in a way that's simple enough to use on a
 ## Features
 
 ### Core Features
+- **Version tracking**: App version displayed in footer for debugging and testing purposes
 - **Local-only**: All settings are saved in your browser (localStorage). No server, no login, no tracking.
 - **Automatic downgrade**: If 3 naps won't fit your constraints, the app automatically switches to 2 naps with appropriate defaults (90 min, 30 min).
 - **Wake window display**: Each nap and bedtime shows the active wake window duration before it (e.g., "↑ 2h30 awake").
