@@ -188,11 +188,12 @@
     button.primary:hover {
       filter: brightness(1.05);
     }
+
     .nap-rows {
       margin-top: 4px;
       display: flex;
       flex-direction: column;
-      gap: 8px; 
+      gap: 8px;
     }
 
     .nap-row {
@@ -206,7 +207,7 @@
     .nap-row span.label {
       color: #d1d5db;
       min-width: 0;
-      white-space: nowrap; 
+      white-space: nowrap;
     }
 
     .nap-row .unit {
@@ -284,6 +285,12 @@
       border-radius: 4px;
       border: 1px solid rgba(55, 65, 81, 0.8);
     }
+
+    @media (max-width: 420px) {
+      .nap-row {
+        grid-template-columns: 1fr 1fr auto;
+      }
+    }
   </style>
 </head>
 <body>
@@ -316,7 +323,7 @@
           <input type="time" id="wakeTime" />
         </div>
         <div class="form-row">
-          <label for="bedTime">Bedtime (fixed, non-negotiable)</label>
+          <label for="bedTime">Bedtime</label>
           <input type="time" id="bedTime" />
         </div>
       </div>
@@ -330,22 +337,22 @@
         <div class="nap-row">
           <span class="label">First wake window</span>
           <input type="number" id="firstWake" min="30" max="360" step="5" />
-          <span class="unit">mins (before nap 1)</span>
+          <span class="unit">mins</span>
         </div>
         <div class="nap-row">
           <span class="label">Last wake window</span>
           <input type="number" id="lastWake" min="30" max="360" step="5" />
-          <span class="unit">mins (before bed, fixed)</span>
+          <span class="unit">mins</span>
         </div>
         <div class="nap-row">
           <span class="label">Min wake window</span>
           <input type="number" id="minWake" min="30" max="360" step="5" />
-          <span class="unit">mins (safety floor)</span>
+          <span class="unit">mins</span>
         </div>
         <div class="nap-row">
           <span class="label">Max wake window</span>
           <input type="number" id="maxWake" min="30" max="360" step="5" />
-          <span class="unit">mins (safety cap)</span>
+          <span class="unit">mins</span>
         </div>
       </div>
 
