@@ -161,6 +161,70 @@
       accent-color: #22c55e;
     }
 
+    /* Nap preference toggle switch */
+    .nap-toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .nap-toggle-label {
+      font-size: 0.76rem;
+      color: #9ca3af;
+    }
+    .nap-toggle-switch {
+      position: relative;
+      display: inline-flex;
+      background: rgba(30, 41, 59, 0.8);
+      border-radius: 999px;
+      border: 1px solid rgba(75, 85, 99, 0.9);
+      padding: 3px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .nap-toggle-option {
+      position: relative;
+      z-index: 2;
+      padding: 4px 16px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #9ca3af;
+      transition: color 0.2s ease;
+      text-align: center;
+      min-width: 65px;
+    }
+    .nap-toggle-option.active {
+      color: #e5e7eb;
+    }
+    .nap-toggle-slider {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      height: calc(100% - 6px);
+      width: calc(50% - 3px);
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(37, 99, 235, 0.8));
+      border-radius: 999px;
+      transition: transform 0.25s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .nap-toggle-switch.three-naps .nap-toggle-slider {
+      transform: translateX(100%);
+    }
+    /* Visual indicator when preference doesn't match actual schedule */
+    .nap-toggle-switch.preference-mismatch {
+      border-color: rgba(248, 113, 113, 0.7);
+      box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.15), 0 0 12px rgba(248, 113, 113, 0.3);
+      animation: pulse-warning 2s ease-in-out infinite;
+    }
+    @keyframes pulse-warning {
+      0%, 100% {
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.15), 0 0 12px rgba(248, 113, 113, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.25), 0 0 16px rgba(248, 113, 113, 0.4);
+      }
+    }
+
     .buttons-row {
       display: flex;
       flex-wrap: wrap;
@@ -465,9 +529,15 @@
         </div>
       </div>
 
-      <div class="inline">
-        <input type="checkbox" id="useThreeNaps" />
-        <label for="useThreeNaps">Prefer 3 naps (we'll drop to 2 if needed)</label>
+      <div class="nap-toggle-container">
+        <span class="nap-toggle-label">Nap preference:</span>
+        <div class="nap-toggle-switch" id="napToggleSwitch">
+          <div class="nap-toggle-slider"></div>
+          <div class="nap-toggle-option" data-value="2">2 naps</div>
+          <div class="nap-toggle-option active" data-value="3">3 naps</div>
+        </div>
+        <!-- Hidden checkbox to maintain compatibility with existing JS -->
+        <input type="checkbox" id="useThreeNaps" style="display: none;" />
       </div>
 
       <button type="button" id="toggleWakeWindows" class="collapse-toggle">
@@ -598,6 +668,7 @@
     const wakeInput = document.getElementById("wakeTime");
     const bedInput = document.getElementById("bedTime");
     const useThreeNapsInput = document.getElementById("useThreeNaps");
+    const napToggleSwitch = document.getElementById("napToggleSwitch");
 
     const lastWakeInput = document.getElementById("lastWake");
     const minWakeInput = document.getElementById("minWake");
@@ -769,6 +840,7 @@
       // If forceThreeNaps is specified, use that; otherwise keep current state
       if (forceThreeNaps !== null) {
         useThreeNapsInput.checked = forceThreeNaps;
+        updateToggleSwitch(forceThreeNaps);
       }
 
       lastWakeInput.value = 210;           // 3h30
@@ -798,6 +870,7 @@
         if (s.wakeTime) wakeInput.value = s.wakeTime;
         if (s.bedTime) bedInput.value = s.bedTime;
         useThreeNapsInput.checked = !!s.preferThree;
+        updateToggleSwitch(!!s.preferThree);
 
         lastWakeInput.value = s.lastWake || 210;
         minWakeInput.value = s.minWake || 135;
@@ -1229,6 +1302,8 @@
         warningBox.style.background = "";
         warningBox.style.borderColor = "";
         warningBox.style.color = "";
+        // Clear preference mismatch indicator
+        napToggleSwitch.classList.remove('preference-mismatch');
 
         const wakeMins = toMinutes(wakeInput.value);
         let bedMins = toMinutes(bedInput.value);
@@ -1295,7 +1370,9 @@
 
         let scheduleResult = null;
         let autoDowngraded = false;
+        let autoUpgraded = false;
         let threeNapFailReason = null;
+        let twoNapFailReason = null;
 
         const params = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths };
 
@@ -1313,11 +1390,28 @@
             if (scheduleResult.ok) {
               autoDowngraded = true;
               requestedNapCount = 2;
-              useThreeNapsInput.checked = false;
+              // Don't change checkbox - keep user's preference
+              napToggleSwitch.classList.add('preference-mismatch');
             }
           }
         } else {
           scheduleResult = tryBuildSchedule(2, params);
+          if (!scheduleResult.ok) {
+            twoNapFailReason = scheduleResult.reason;
+            // Auto-upgrade to 3 naps with appropriate defaults
+            nap1Input.value = 30;
+            nap2Input.value = 60;
+            nap3Input.value = 30;
+            const newNapLengths = [30, 60, 30];
+            const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+            scheduleResult = tryBuildSchedule(3, newParams);
+            if (scheduleResult.ok) {
+              autoUpgraded = true;
+              requestedNapCount = 3;
+              // Don't change checkbox - keep user's preference
+              napToggleSwitch.classList.add('preference-mismatch');
+            }
+          }
         }
 
         if (!scheduleResult || !scheduleResult.ok) {
@@ -1339,6 +1433,10 @@
 
           if (threeNapFailReason) {
             errorMsg += " (Note: 3 naps also failed - " + threeNapFailReason + ")";
+          }
+
+          if (twoNapFailReason) {
+            errorMsg += " (Note: 2 naps also failed - " + twoNapFailReason + ")";
           }
 
           warningBox.textContent = errorMsg;
@@ -1450,6 +1548,8 @@
 
         if (autoDowngraded) {
           modeNote.textContent = "⚠️ Automatically switched to 2 naps (3 naps couldn't fit: " + threeNapFailReason + ")";
+        } else if (autoUpgraded) {
+          modeNote.textContent = "✓ Automatically switched to 3 naps (2 naps couldn't fit: " + twoNapFailReason + ")";
         } else {
           modeNote.textContent = "";
         }
@@ -1510,6 +1610,33 @@
         copyBtn.textContent = "Copy failed";
         setTimeout(() => (copyBtn.textContent = prev), 900);
       }
+    });
+
+    // Helper function to update toggle switch visual state
+    function updateToggleSwitch(preferThree) {
+      const options = napToggleSwitch.querySelectorAll('.nap-toggle-option');
+      if (preferThree) {
+        napToggleSwitch.classList.add('three-naps');
+        options[0].classList.remove('active');
+        options[1].classList.add('active');
+      } else {
+        napToggleSwitch.classList.remove('three-naps');
+        options[0].classList.add('active');
+        options[1].classList.remove('active');
+      }
+    }
+
+    // Toggle switch click handler
+    napToggleSwitch.addEventListener("click", (e) => {
+      const option = e.target.closest('.nap-toggle-option');
+      if (!option) return;
+
+      const preferThree = option.dataset.value === "3";
+      useThreeNapsInput.checked = preferThree;
+      updateToggleSwitch(preferThree);
+
+      // Trigger the checkbox change event to handle nap defaults
+      useThreeNapsInput.dispatchEvent(new Event('change'));
     });
 
     // Special handler for prefer 3 naps checkbox - update defaults when toggled
