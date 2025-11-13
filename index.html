@@ -865,7 +865,7 @@
 
       <div class="modal-footer">
         <button type="button" id="clearAllActuals">Clear all</button>
-        <button type="button" id="useActualDurations" class="primary">Apply durations to plan</button>
+        <button type="button" id="closeActualNapsModalFooter" class="primary">Done</button>
       </div>
     </div>
   </div>
@@ -878,7 +878,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.5.2"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.6.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -904,7 +904,7 @@
     const nap3Insights = document.getElementById("nap3Insights");
     const overallInsights = document.getElementById("overallInsights");
     const clearAllActualsBtn = document.getElementById("clearAllActuals");
-    const useActualDurationsBtn = document.getElementById("useActualDurations");
+    const closeActualNapsModalFooterBtn = document.getElementById("closeActualNapsModalFooter");
 
     const lastWakeInput = document.getElementById("lastWake");
     const minWakeInput = document.getElementById("minWake");
@@ -2390,54 +2390,9 @@
       clearAllActualNaps();
     });
 
-    // Apply actual durations to planned schedule
-    useActualDurationsBtn.addEventListener('click', () => {
-      let updated = false;
-
-      // Nap 1
-      if (actualNap1Start.value && actualNap1End.value) {
-        const start = toMinutes(actualNap1Start.value);
-        const end = toMinutes(actualNap1End.value);
-        if (start !== null && end !== null) {
-          let duration = end - start;
-          if (duration < 0) duration += 24 * 60;
-          nap1Input.value = duration;
-          updated = true;
-        }
-      }
-
-      // Nap 2
-      if (actualNap2Start.value && actualNap2End.value) {
-        const start = toMinutes(actualNap2Start.value);
-        const end = toMinutes(actualNap2End.value);
-        if (start !== null && end !== null) {
-          let duration = end - start;
-          if (duration < 0) duration += 24 * 60;
-          nap2Input.value = duration;
-          updated = true;
-        }
-      }
-
-      // Nap 3
-      if (actualNap3Start.value && actualNap3End.value) {
-        const start = toMinutes(actualNap3Start.value);
-        const end = toMinutes(actualNap3End.value);
-        if (start !== null && end !== null) {
-          let duration = end - start;
-          if (duration < 0) duration += 24 * 60;
-          nap3Input.value = duration;
-          updated = true;
-        }
-      }
-
-      if (updated) {
-        recomputeSchedule();
-        // Close modal and visual feedback
-        closeActualNapsModal();
-        const prev = useActualDurationsBtn.textContent;
-        useActualDurationsBtn.textContent = "Applied!";
-        setTimeout(() => (useActualDurationsBtn.textContent = prev), 1500);
-      }
+    // Done button in modal footer - just closes the modal
+    closeActualNapsModalFooterBtn.addEventListener('click', () => {
+      closeActualNapsModal();
     });
 
     // Check for midnight reset on init
