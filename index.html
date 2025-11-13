@@ -886,7 +886,7 @@
 <script>
   (function () {
     const APP_VERSION = "1.7.0"; // Semantic versioning: MAJOR.MINOR.PATCH
-    const STORAGE_KEY = "napPlannerSettings_v5";
+    const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
     let isRecomputing = false; // Flag to prevent recursive recomputation
@@ -1104,16 +1104,25 @@
     }
 
     function saveSettings() {
+      const preferThree = !!useThreeNapsInput.checked;
       const settings = {
         wakeTime: wakeInput.value || "",
         bedTime: bedInput.value || "",
-        preferThree: !!useThreeNapsInput.checked,
+        preferThree: preferThree,
         lastWake: Number(lastWakeInput.value) || 0,
         minWake: Number(minWakeInput.value) || 0,
         maxWake: Number(maxWakeInput.value) || 0,
-        nap1: Number(nap1Input.value) || 0,
-        nap2: Number(nap2Input.value) || 0,
-        nap3: Number(nap3Input.value) || 0,
+        // Store separate nap lengths for 2-nap and 3-nap modes
+        twoNapLengths: preferThree ? null : {
+          nap1: Number(nap1Input.value) || 0,
+          nap2: Number(nap2Input.value) || 0,
+          nap3: Number(nap3Input.value) || 0
+        },
+        threeNapLengths: preferThree ? {
+          nap1: Number(nap1Input.value) || 0,
+          nap2: Number(nap2Input.value) || 0,
+          nap3: Number(nap3Input.value) || 0
+        } : null,
         constraints: {
           mustBeAwakeBy: mustBeAwakeByInput.value || null,
           sleepWindow: {
@@ -1122,6 +1131,22 @@
           }
         }
       };
+
+      // Merge with existing settings to preserve the other mode's values
+      try {
+        const existing = localStorage.getItem(STORAGE_KEY);
+        if (existing) {
+          const existingSettings = JSON.parse(existing);
+          if (preferThree && existingSettings.twoNapLengths) {
+            settings.twoNapLengths = existingSettings.twoNapLengths;
+          } else if (!preferThree && existingSettings.threeNapLengths) {
+            settings.threeNapLengths = existingSettings.threeNapLengths;
+          }
+        }
+      } catch {
+        // ignore
+      }
+
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
       } catch {
@@ -1394,11 +1419,24 @@
         minWakeInput.value = s.minWake || 135;
         maxWakeInput.value = s.maxWake || 210;
 
-        // Use appropriate defaults based on saved preference
+        // Load mode-specific nap lengths from new v6 format or fall back to old format
         const preferThree = !!s.preferThree;
-        nap1Input.value = s.nap1 || (preferThree ? 30 : 90);
-        nap2Input.value = s.nap2 || (preferThree ? 60 : 30);
-        nap3Input.value = s.nap3 || 30;
+        if (preferThree && s.threeNapLengths) {
+          // Load 3-nap mode settings
+          nap1Input.value = s.threeNapLengths.nap1 || 30;
+          nap2Input.value = s.threeNapLengths.nap2 || 60;
+          nap3Input.value = s.threeNapLengths.nap3 || 30;
+        } else if (!preferThree && s.twoNapLengths) {
+          // Load 2-nap mode settings
+          nap1Input.value = s.twoNapLengths.nap1 || 90;
+          nap2Input.value = s.twoNapLengths.nap2 || 30;
+          nap3Input.value = s.twoNapLengths.nap3 || 30;
+        } else {
+          // Fall back to old v5 format or defaults
+          nap1Input.value = s.nap1 || (preferThree ? 30 : 90);
+          nap2Input.value = s.nap2 || (preferThree ? 60 : 30);
+          nap3Input.value = s.nap3 || 30;
+        }
 
         // Load constraints if present
         if (s.constraints) {
@@ -2135,9 +2173,19 @@
               // Store the adjustment message to display later
               scheduleResult.autoAdjustMessage = autoAdjustment.message;
             } else {
-              // If auto-adjustment didn't work, try auto-downgrade to 2 naps with appropriate defaults
-              // Use default 2-nap lengths for schedule, but don't modify user's input values
-              const newNapLengths = [90, 30, Number(nap3Input.value) || 30];
+              // If auto-adjustment didn't work, try auto-downgrade to 2 naps
+              // Use stored 2-nap settings if available, otherwise use defaults
+              const s = loadSettings();
+              let newNapLengths;
+              if (s && s.twoNapLengths) {
+                newNapLengths = [
+                  s.twoNapLengths.nap1 || 90,
+                  s.twoNapLengths.nap2 || 30,
+                  s.twoNapLengths.nap3 || 30
+                ];
+              } else {
+                newNapLengths = [90, 30, 30];
+              }
               const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
               scheduleResult = tryBuildSchedule(2, newParams);
               if (scheduleResult.ok) {
@@ -2162,9 +2210,19 @@
               // Store the adjustment message to display later
               scheduleResult.autoAdjustMessage = autoAdjustment.message;
             } else {
-              // If auto-adjustment didn't work, try auto-upgrade to 3 naps with appropriate defaults
-              // Use default 3-nap lengths for schedule, but don't modify user's input values
-              const newNapLengths = [30, 60, 30];
+              // If auto-adjustment didn't work, try auto-upgrade to 3 naps
+              // Use stored 3-nap settings if available, otherwise use defaults
+              const s = loadSettings();
+              let newNapLengths;
+              if (s && s.threeNapLengths) {
+                newNapLengths = [
+                  s.threeNapLengths.nap1 || 30,
+                  s.threeNapLengths.nap2 || 60,
+                  s.threeNapLengths.nap3 || 30
+                ];
+              } else {
+                newNapLengths = [30, 60, 30];
+              }
               const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
               scheduleResult = tryBuildSchedule(3, newParams);
               if (scheduleResult.ok) {
@@ -2452,18 +2510,33 @@
       useThreeNapsInput.dispatchEvent(new Event('change'));
     });
 
-    // Special handler for prefer 3 naps checkbox - update defaults when toggled
+    // Special handler for prefer 3 naps checkbox - load saved settings for that mode
     useThreeNapsInput.addEventListener("change", () => {
       const preferThree = useThreeNapsInput.checked;
+      const s = loadSettings();
+
       if (preferThree) {
-        // Switching to 3 naps - apply 3-nap defaults
-        nap1Input.value = 30;
-        nap2Input.value = 60;
-        nap3Input.value = 30;
+        // Switching to 3 naps - load saved 3-nap settings or use defaults
+        if (s && s.threeNapLengths) {
+          nap1Input.value = s.threeNapLengths.nap1 || 30;
+          nap2Input.value = s.threeNapLengths.nap2 || 60;
+          nap3Input.value = s.threeNapLengths.nap3 || 30;
+        } else {
+          nap1Input.value = 30;
+          nap2Input.value = 60;
+          nap3Input.value = 30;
+        }
       } else {
-        // Switching to 2 naps - apply 2-nap defaults
-        nap1Input.value = 90;
-        nap2Input.value = 30;
+        // Switching to 2 naps - load saved 2-nap settings or use defaults
+        if (s && s.twoNapLengths) {
+          nap1Input.value = s.twoNapLengths.nap1 || 90;
+          nap2Input.value = s.twoNapLengths.nap2 || 30;
+          nap3Input.value = s.twoNapLengths.nap3 || 30;
+        } else {
+          nap1Input.value = 90;
+          nap2Input.value = 30;
+          nap3Input.value = 30;
+        }
       }
       updateActualNapsButton(); // Update button to reflect correct nap count
       recomputeSchedule();
