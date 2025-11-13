@@ -988,10 +988,10 @@
       }
 
       // Also try increasing maxWake to shift naps later (if there's room)
-      const MAX_WAKE_LIMIT = 300; // 5 hours absolute maximum
+      // Allow up to +60 min from user's maxWake, respecting their preferences
+      // No hard ceiling - let natural schedule constraints be the limit
       for (let increase = 5; increase <= 60; increase += 5) {
-        const adjustedMaxWake = Math.min(MAX_WAKE_LIMIT, maxWake + increase);
-        if (adjustedMaxWake === maxWake) break; // Can't increase further
+        const adjustedMaxWake = maxWake + increase;
 
         const testParams = { ...params, maxWake: adjustedMaxWake };
         const testSchedule = tryBuildSchedule(napCount, testParams);
@@ -1030,46 +1030,8 @@
       }
 
       // Also try moving bedtime later (extends day, allows more flexibility)
-      for (let adjustment = 15; adjustment <= 45; adjustment += 15) {
-        const laterBedMins = bedMins + adjustment;
-        const testParams2b = { ...params, bedMins: laterBedMins };
-        const testSchedule2b = tryBuildSchedule(napCount, testParams2b);
-
-        if (testSchedule2b.ok) {
-          const testViolations2b = validateConstraints(testSchedule2b, wakeMins, laterBedMins);
-          if (testViolations2b.length === 0) {
-            return {
-              schedule: testSchedule2b,
-              strategy: 'bedtime',
-              changes: { bedMins: laterBedMins },
-              message: `Extended schedule by moving bedtime later by ${adjustment} min to ${fromMinutes(laterBedMins)}`
-            };
-          }
-        }
-      }
-
-      // Strategy 2: Adjust bedtime (bidirectional - earlier OR later)
-      // Try moving bedtime earlier (shortens day, compresses schedule)
-      for (let adjustment = 15; adjustment <= 45; adjustment += 15) {
-        const earlierBedMins = bedMins - adjustment;
-        const testParams2 = { ...params, bedMins: earlierBedMins };
-        const testSchedule2 = tryBuildSchedule(napCount, testParams2);
-
-        if (testSchedule2.ok) {
-          const testViolations2 = validateConstraints(testSchedule2, wakeMins, earlierBedMins);
-          if (testViolations2.length === 0) {
-            return {
-              schedule: testSchedule2,
-              strategy: 'bedtime',
-              changes: { bedMins: earlierBedMins },
-              message: `Compressed schedule by moving bedtime earlier by ${adjustment} min to ${fromMinutes(earlierBedMins)}`
-            };
-          }
-        }
-      }
-
-      // Also try moving bedtime later (extends day, allows more flexibility)
-      for (let adjustment = 15; adjustment <= 45; adjustment += 15) {
+      // Limited to +30 minutes to respect user's bedtime preferences
+      for (let adjustment = 15; adjustment <= 30; adjustment += 15) {
         const laterBedMins = bedMins + adjustment;
         const testParams2b = { ...params, bedMins: laterBedMins };
         const testSchedule2b = tryBuildSchedule(napCount, testParams2b);
