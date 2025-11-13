@@ -869,7 +869,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.6.3"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.7.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -1729,6 +1729,46 @@
       return combinations;
     }
 
+    function tryAutoAdjustNapsToFit(napCount, params) {
+      // Try to automatically adjust nap lengths to make a schedule fit
+      // This runs when the base schedule fails, even without explicit constraints
+      const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths } = params;
+
+      const MIN_NAP = 30;
+      const MAX_NAP_ADJUST = 15; // Max adjustment per nap (matches user expectation)
+
+      // Generate nap length combinations to try (similar to constraint adjustment)
+      const napCombinations = generateNapCombinations(napLengths, napCount, MIN_NAP, MAX_NAP_ADJUST);
+
+      for (const testNapLengths of napCombinations) {
+        const testParams = {
+          ...params,
+          napLengths: testNapLengths
+        };
+
+        const testSchedule = tryBuildSchedule(napCount, testParams);
+
+        if (testSchedule.ok) {
+          // Found a solution!
+          const napChanges = [];
+          for (let i = 0; i < napCount; i++) {
+            const diff = testNapLengths[i] - napLengths[i];
+            if (diff !== 0) {
+              napChanges.push(`Nap ${i + 1} ${diff > 0 ? '+' : ''}${diff} min`);
+            }
+          }
+
+          return {
+            schedule: testSchedule,
+            napLengths: testNapLengths,
+            message: napChanges.length > 0 ? `Auto-adjusted naps to fit schedule: ${napChanges.join(', ')}` : null
+          };
+        }
+      }
+
+      return null; // Couldn't find a working combination
+    }
+
     function adjustScheduleForConstraints(params) {
       const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths, napCount } = params;
 
@@ -2055,35 +2095,64 @@
           scheduleResult = tryBuildSchedule(3, params);
           if (!scheduleResult.ok) {
             threeNapFailReason = scheduleResult.reason;
-            // Auto-downgrade to 2 naps with appropriate defaults
-            nap1Input.value = 90;
-            nap2Input.value = 30;
-            const newNapLengths = [90, 30, Number(nap3Input.value) || 30];
-            const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
-            scheduleResult = tryBuildSchedule(2, newParams);
-            if (scheduleResult.ok) {
-              autoDowngraded = true;
-              requestedNapCount = 2;
-              // Don't change checkbox - keep user's preference
-              napToggleSwitch.classList.add('preference-mismatch');
+
+            // First, try to auto-adjust nap lengths to make it fit
+            const autoAdjustment = tryAutoAdjustNapsToFit(3, params);
+            if (autoAdjustment) {
+              scheduleResult = autoAdjustment.schedule;
+              // Update nap input values to reflect the auto-adjustment
+              if (autoAdjustment.napLengths) {
+                nap1Input.value = autoAdjustment.napLengths[0];
+                nap2Input.value = autoAdjustment.napLengths[1];
+                nap3Input.value = autoAdjustment.napLengths[2];
+              }
+              // Store the adjustment message to display later
+              scheduleResult.autoAdjustMessage = autoAdjustment.message;
+            } else {
+              // If auto-adjustment didn't work, try auto-downgrade to 2 naps with appropriate defaults
+              nap1Input.value = 90;
+              nap2Input.value = 30;
+              const newNapLengths = [90, 30, Number(nap3Input.value) || 30];
+              const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+              scheduleResult = tryBuildSchedule(2, newParams);
+              if (scheduleResult.ok) {
+                autoDowngraded = true;
+                requestedNapCount = 2;
+                // Don't change checkbox - keep user's preference
+                napToggleSwitch.classList.add('preference-mismatch');
+              }
             }
           }
         } else {
           scheduleResult = tryBuildSchedule(2, params);
           if (!scheduleResult.ok) {
             twoNapFailReason = scheduleResult.reason;
-            // Auto-upgrade to 3 naps with appropriate defaults
-            nap1Input.value = 30;
-            nap2Input.value = 60;
-            nap3Input.value = 30;
-            const newNapLengths = [30, 60, 30];
-            const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
-            scheduleResult = tryBuildSchedule(3, newParams);
-            if (scheduleResult.ok) {
-              autoUpgraded = true;
-              requestedNapCount = 3;
-              // Don't change checkbox - keep user's preference
-              napToggleSwitch.classList.add('preference-mismatch');
+
+            // First, try to auto-adjust nap lengths to make it fit
+            const autoAdjustment = tryAutoAdjustNapsToFit(2, params);
+            if (autoAdjustment) {
+              scheduleResult = autoAdjustment.schedule;
+              // Update nap input values to reflect the auto-adjustment
+              if (autoAdjustment.napLengths) {
+                nap1Input.value = autoAdjustment.napLengths[0];
+                nap2Input.value = autoAdjustment.napLengths[1];
+              }
+              // Store the adjustment message to display later
+              scheduleResult.autoAdjustMessage = autoAdjustment.message;
+            } else {
+              // If auto-adjustment didn't work, try auto-upgrade to 3 naps with appropriate defaults
+              nap1Input.value = 30;
+              nap2Input.value = 60;
+              nap3Input.value = 30;
+              const newNapLengths = [30, 60, 30];
+              const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+              scheduleResult = tryBuildSchedule(3, newParams);
+              if (scheduleResult.ok) {
+                autoUpgraded = true;
+                requestedNapCount = 3;
+                // Don't change checkbox - keep user's preference
+                napToggleSwitch.classList.add('preference-mismatch');
+              }
             }
           }
         }
@@ -2224,6 +2293,11 @@
 
         if (actualNaps.length > 0) {
           modeMessages.push(`📊 Using ${actualNaps.length} actual nap time${actualNaps.length > 1 ? 's' : ''}`);
+        }
+
+        // Show auto-adjustment message if nap lengths were adjusted
+        if (scheduleResult.autoAdjustMessage) {
+          modeMessages.push("✓ " + scheduleResult.autoAdjustMessage);
         }
 
         if (autoDowngraded) {

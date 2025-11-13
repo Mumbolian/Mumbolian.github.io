@@ -106,17 +106,26 @@ For a given nap count (2 or 3):
 4. Distribute remaining time across wake windows before naps, starting at `minWake` and growing toward `maxWake`.
 5. Build schedule items with wake windows displayed before each nap and bedtime.
 
+**Auto-adjustment features:**
+- If the base schedule can't fit with exact nap lengths, the app automatically tries adjusting nap lengths by ±5-15 minutes
+- Naps are never reduced below 30 minutes minimum
+- Adjustments prefer minimal changes (±5 min first, then ±10 min, etc.)
+- Can also transfer time between naps (e.g., reduce one nap by 10 min, increase another by 10 min)
+- If auto-adjustment succeeds, displays message like "✓ Auto-adjusted naps to fit schedule: Nap 1 +5 min"
+
 **Constraints:**
 - Bedtime is **non-negotiable** - schedule must land exactly on target time
 - Last wake window is **fixed** and must be within `[minWake, maxWake]`
 - All earlier wake windows are dynamic, growing from `minWake` toward `maxWake`
-- If 3 naps can't fit, automatically switches to 2-nap schedule
+- If auto-adjustment fails for 3 naps, automatically switches to 2-nap schedule
 
 ### Constraint Satisfaction Algorithm (Linear Programming Approach)
 
-When schedule constraints are set, the app uses a unified approach to find a feasible solution:
+When schedule constraints are set (e.g., "must be awake by" or "must be asleep during"), the app uses a more aggressive adjustment approach to satisfy them:
 
 **Important:** Wake window parameters (minWake, maxWake, lastWake) are biological constraints and are never modified. All adjustments work within these hard limits.
+
+**Note:** This is separate from the base auto-adjustment (±15 min) that happens automatically even without constraints. Constraint satisfaction can adjust naps by up to ±30 minutes and also adjust bedtime.
 
 #### Strategy 1: Unified Linear Adjustment
 
@@ -124,7 +133,7 @@ Simultaneously adjusts multiple parameters to satisfy constraints:
 
 **Variables adjusted:**
 - Bedtime: ±15-45 minutes (tried in order: 0, -15, -30, -45, +15, +30)
-- Nap lengths: ±30 minutes per nap (tried intelligently)
+- Nap lengths: ±30 minutes per nap (more aggressive than base auto-adjustment)
   - Single nap adjustments: ±5, ±10, ±15, ±20, ±25, ±30 minutes
   - Pairwise transfers: Move time between two naps (e.g., reduce Nap 1 by 10, extend Nap 2 by 10)
 
