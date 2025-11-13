@@ -7,15 +7,15 @@ You enter:
 - Wake-up time
 - Fixed bedtime (non-negotiable)
 - Preferred number of naps (2 or 3)
-- Nap lengths
+- Nap lengths (configured via modal for both 2-nap and 3-nap modes)
 - Wake window settings (collapsible)
   - Last wake window
   - Min and max wake window limits
-- **NEW:** Schedule constraints (optional)
+- Schedule constraints (optional)
   - Must be awake by a certain time
   - Must be asleep during a time window
 
-The app then builds a full day schedule that **always lands on the chosen bedtime**, automatically drops from 3 to 2 naps if needed, and **automatically adjusts to satisfy your constraints**.
+The app then builds a full day schedule that **always lands on the chosen bedtime**, automatically switches between 2 and 3 naps as needed, and **automatically adjusts nap lengths to satisfy your constraints** while preserving your preferred settings.
 
 Live at: **https://bingpotstudio.com**
 
@@ -38,14 +38,20 @@ This tool formalises that mental model in a way that's simple enough to use on a
 ### Core Features
 - **Version tracking**: App version displayed in footer for debugging and testing purposes
 - **Local-only**: All settings are saved in your browser (localStorage). No server, no login, no tracking.
-- **Automatic downgrade**: If 3 naps won't fit your constraints, the app automatically switches to 2 naps with appropriate defaults (90 min, 30 min).
+- **Nap configuration modal**: Configure both 2-nap and 3-nap settings independently via a dedicated modal, allowing you to maintain separate preferences for each schedule type without losing your configurations when the app auto-switches modes.
+- **Mode-specific settings**: Separate storage for 2-nap and 3-nap configurations (v6 schema). When the app switches modes to fit constraints, it uses your saved settings for that mode.
+- **Settings preservation**: Your configured nap lengths are never modified—adjustments only affect the displayed schedule. Your preferences remain your desired targets.
+- **Automatic mode switching**: If your preferred mode won't fit constraints, the app automatically switches to the alternative (3↔2 naps) using your saved settings for that mode.
+- **Visual adjustment indicators**:
+  - Amber haze on nap schedule cards when adjusted
+  - "⚠️ Adjusted +10 min" shown on affected naps
+  - Amber highlight on Configure button when adjustments are active
 - **Wake window display**: Each nap and bedtime shows the active wake window duration before it (e.g., "↑ 2h30 awake").
-- **Smart defaults**: Different default nap lengths for 2-nap (90, 30) vs 3-nap (30, 60, 30) schedules.
 - **Copy to clipboard**: One-click copy of the full day schedule.
 - **Responsive design**: Works on mobile and desktop.
 - **Collapsible settings**: Wake window parameters collapse by default for a cleaner mobile interface.
 
-### Schedule Constraints (NEW)
+### Schedule Constraints
 Set time-based requirements and let the app automatically adjust the schedule to meet them:
 
 - **"Must be awake by"** constraint: Ensures baby is awake by a specific time (e.g., 12:30 PM for leaving the house)
@@ -88,7 +94,7 @@ Optional constraint inputs:
   - `start` – start of required sleep window
   - `end` – end of required sleep window
 
-All of these are configurable in the UI, and persisted in `localStorage` under `napPlannerSettings_v5`.
+All of these are configurable in the UI, and persisted in `localStorage` under `napPlannerSettings_v6`.
 
 ### Base Schedule Algorithm
 
@@ -158,11 +164,12 @@ Simultaneously adjusts multiple parameters to satisfy constraints:
 
 #### Strategy 2: Switch Nap Count
 - Tries alternative nap count (2 ↔ 3)
-- Uses default lengths for that schedule type
-  - 2-nap: 90, 30 minutes
-  - 3-nap: 30, 60, 30 minutes
+- Uses your saved settings for that schedule type (falls back to defaults if none configured)
+  - 2-nap defaults: 90, 30 minutes
+  - 3-nap defaults: 30, 60, 30 minutes
 - Only used if unified adjustment finds no solution
 - Can drastically change schedule layout
+- Your configured settings for the alternate mode are preserved and used
 
 ### Validation
 After adjustments, the app validates constraints:
@@ -180,18 +187,27 @@ Displays:
 
 - **Mobile-first design**: Works seamlessly on phones, the primary use case
 - **Collapsible sections**: Wake window settings hidden by default to reduce clutter
-- **Modal for constraints**: Clean overlay (full-screen on mobile) for setting constraints
+- **Modals for configuration**:
+  - **Nap Configuration Modal**: "⚙️ Configure Nap Lengths" - Edit both 2-nap and 3-nap settings side-by-side
+  - **Constraints Modal**: "🎯 Schedule Constraints" - Set time-based requirements
+  - **Track Naps Modal**: "📊 Track Actual Naps" - Record actual nap times for analysis
 - **Real-time updates**: Schedule recalculates instantly as you adjust parameters
 - **Visual indicators**:
   - Constraint button shows active count: "🎯 Constraints (2)"
+  - Configure button gets amber haze when naps are adjusted: "⚙️ Configure Nap Lengths"
+  - Adjusted naps show amber border and "⚠️ Adjusted +10 min" on schedule cards
   - Success/warning messages color-coded (green/red)
   - Wake window durations displayed: "↑ 2h30 awake"
+  - Preference mismatch indicator when actual mode differs from preference
 
 ---
 
 ## Technical Details
 
 - **No backend**: Pure client-side JavaScript, runs entirely in browser
-- **LocalStorage**: Settings persisted locally (v5 schema includes constraints)
+- **LocalStorage**: Settings persisted locally (v6 schema with mode-specific nap configurations)
+  - Stores separate `twoNapLengths` and `threeNapLengths` objects
+  - Preserves both configurations even when switching modes
+  - Backwards compatible with v5 settings
 - **No dependencies**: Vanilla HTML/CSS/JS, no frameworks
 - **Mobile optimized**: Responsive design, native time pickers, touch-friendly
