@@ -380,6 +380,130 @@
       }
     }
 
+    /* Actual Naps Tracking Styles */
+    .actual-naps-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 12px;
+    }
+    .actual-nap-row {
+      background: rgba(15, 23, 42, 0.96);
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      border-radius: 10px;
+      padding: 10px 12px;
+      transition: all 0.2s ease;
+    }
+    .actual-nap-row.has-data {
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.05);
+    }
+    .nap-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .nap-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #d1d5db;
+    }
+    .clear-nap-btn {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 0.9rem;
+      padding: 2px 6px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+      line-height: 1;
+    }
+    .clear-nap-btn:hover {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+    }
+    .time-inputs-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .time-input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .time-input-group label {
+      font-size: 0.72rem;
+      color: #9ca3af;
+    }
+    .actual-nap-input {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    .actual-nap-input:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.45);
+    }
+    .actual-nap-input.has-value {
+      border-color: rgba(34, 197, 94, 0.5);
+      background: rgba(34, 197, 94, 0.05);
+    }
+    .nap-insights {
+      font-size: 0.72rem;
+      color: #9ca3af;
+      padding: 6px 8px;
+      background: rgba(30, 41, 59, 0.5);
+      border-radius: 6px;
+      line-height: 1.4;
+      display: none;
+    }
+    .nap-insights.visible {
+      display: block;
+    }
+    .nap-insights .insight-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2px 0;
+    }
+    .nap-insights .insight-label {
+      color: #9ca3af;
+    }
+    .nap-insights .insight-value {
+      color: #e5e7eb;
+      font-weight: 500;
+    }
+    .nap-insights .insight-value.positive {
+      color: #bbf7d0;
+    }
+    .nap-insights .insight-value.negative {
+      color: #fca5a5;
+    }
+    .overall-insights {
+      background: rgba(30, 64, 175, 0.12);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 0.75rem;
+      color: #bfdbfe;
+      line-height: 1.5;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .overall-insights.visible {
+      display: block;
+    }
+
     /* Modal Styles */
     .modal {
       position: fixed;
@@ -514,7 +638,7 @@
     <!-- Controls -->
     <section class="card">
       <h2>
-        Inputs
+        Planned Schedule Inputs
         <span>Schedule updates instantly as you tweak</span>
       </h2>
 
@@ -586,6 +710,7 @@
       <div class="buttons-row">
         <button type="button" id="resetDefaults">Reset to defaults</button>
         <button type="button" id="copySchedule">Copy schedule text</button>
+        <button type="button" id="openActualNaps">📊 Track Actual Naps</button>
         <button type="button" id="openConstraints">🎯 Schedule Constraints</button>
       </div>
       <p class="subtext">
@@ -653,6 +778,89 @@
     </div>
   </div>
 
+  <!-- Actual Naps Tracking Modal -->
+  <div id="actualNapsModal" class="modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Track Today's Naps</h3>
+        <button type="button" id="closeActualNapsModal" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="constraint-description" style="margin-bottom: 14px;">
+          Enter actual nap times to analyze wake windows and compare to your plan. Data auto-resets at midnight UTC.
+        </p>
+
+        <div class="actual-naps-grid" id="actualNapsGrid">
+          <!-- Nap 1 -->
+          <div class="actual-nap-row" id="actualNap1Row">
+            <div class="nap-label-row">
+              <span class="nap-label">Nap 1</span>
+              <button type="button" class="clear-nap-btn" data-nap="1" title="Clear nap 1">✕</button>
+            </div>
+            <div class="time-inputs-row">
+              <div class="time-input-group">
+                <label for="actualNap1Start">Start</label>
+                <input type="time" id="actualNap1Start" class="actual-nap-input" />
+              </div>
+              <div class="time-input-group">
+                <label for="actualNap1End">End</label>
+                <input type="time" id="actualNap1End" class="actual-nap-input" />
+              </div>
+            </div>
+            <div class="nap-insights" id="nap1Insights"></div>
+          </div>
+
+          <!-- Nap 2 -->
+          <div class="actual-nap-row" id="actualNap2Row">
+            <div class="nap-label-row">
+              <span class="nap-label">Nap 2</span>
+              <button type="button" class="clear-nap-btn" data-nap="2" title="Clear nap 2">✕</button>
+            </div>
+            <div class="time-inputs-row">
+              <div class="time-input-group">
+                <label for="actualNap2Start">Start</label>
+                <input type="time" id="actualNap2Start" class="actual-nap-input" />
+              </div>
+              <div class="time-input-group">
+                <label for="actualNap2End">End</label>
+                <input type="time" id="actualNap2End" class="actual-nap-input" />
+              </div>
+            </div>
+            <div class="nap-insights" id="nap2Insights"></div>
+          </div>
+
+          <!-- Nap 3 -->
+          <div class="actual-nap-row" id="actualNap3Row">
+            <div class="nap-label-row">
+              <span class="nap-label">Nap 3</span>
+              <button type="button" class="clear-nap-btn" data-nap="3" title="Clear nap 3">✕</button>
+            </div>
+            <div class="time-inputs-row">
+              <div class="time-input-group">
+                <label for="actualNap3Start">Start</label>
+                <input type="time" id="actualNap3Start" class="actual-nap-input" />
+              </div>
+              <div class="time-input-group">
+                <label for="actualNap3End">End</label>
+                <input type="time" id="actualNap3End" class="actual-nap-input" />
+              </div>
+            </div>
+            <div class="nap-insights" id="nap3Insights"></div>
+          </div>
+        </div>
+
+        <div class="overall-insights" id="overallInsights"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="clearAllActuals">Clear all</button>
+        <button type="button" id="useActualDurations" class="primary">Apply durations to plan</button>
+      </div>
+    </div>
+  </div>
+
   <div class="footer">
     <span>Settings are saved in this browser (localStorage).</span>
     <span id="versionDisplay" style="margin-left: 10px; opacity: 0.7;"></span>
@@ -661,14 +869,33 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.1.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.4.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
+    const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
+    const LAST_RESET_KEY = "napPlannerLastReset";
     let isRecomputing = false; // Flag to prevent recursive recomputation
 
     const wakeInput = document.getElementById("wakeTime");
     const bedInput = document.getElementById("bedTime");
     const useThreeNapsInput = document.getElementById("useThreeNaps");
     const napToggleSwitch = document.getElementById("napToggleSwitch");
+
+    // Actual naps tracking elements
+    const actualNap1Start = document.getElementById("actualNap1Start");
+    const actualNap1End = document.getElementById("actualNap1End");
+    const actualNap2Start = document.getElementById("actualNap2Start");
+    const actualNap2End = document.getElementById("actualNap2End");
+    const actualNap3Start = document.getElementById("actualNap3Start");
+    const actualNap3End = document.getElementById("actualNap3End");
+    const actualNap1Row = document.getElementById("actualNap1Row");
+    const actualNap2Row = document.getElementById("actualNap2Row");
+    const actualNap3Row = document.getElementById("actualNap3Row");
+    const nap1Insights = document.getElementById("nap1Insights");
+    const nap2Insights = document.getElementById("nap2Insights");
+    const nap3Insights = document.getElementById("nap3Insights");
+    const overallInsights = document.getElementById("overallInsights");
+    const clearAllActualsBtn = document.getElementById("clearAllActuals");
+    const useActualDurationsBtn = document.getElementById("useActualDurations");
 
     const lastWakeInput = document.getElementById("lastWake");
     const minWakeInput = document.getElementById("minWake");
@@ -697,6 +924,12 @@
     const closeModalBtn = document.getElementById("closeModal");
     const applyConstraintsBtn = document.getElementById("applyConstraints");
     const modalBackdrop = constraintsModal.querySelector(".modal-backdrop");
+
+    // Actual naps modal elements
+    const openActualNapsBtn = document.getElementById("openActualNaps");
+    const actualNapsModal = document.getElementById("actualNapsModal");
+    const closeActualNapsModalBtn = document.getElementById("closeActualNapsModal");
+    const actualNapsModalBackdrop = actualNapsModal.querySelector(".modal-backdrop");
 
     const mustBeAwakeByInput = document.getElementById("mustBeAwakeBy");
     const sleepWindowStartInput = document.getElementById("sleepWindowStart");
@@ -736,6 +969,26 @@
       }
     }
 
+    // Update actual naps button to show active state
+    function updateActualNapsButton() {
+      let napCount = 0;
+      if (actualNap1Start.value && actualNap1End.value) napCount++;
+      if (actualNap2Start.value && actualNap2End.value) napCount++;
+      if (actualNap3Start.value && actualNap3End.value) napCount++;
+
+      if (napCount > 0) {
+        openActualNapsBtn.textContent = `📊 Tracked Naps (${napCount})`;
+        openActualNapsBtn.style.background = "rgba(34, 197, 94, 0.15)";
+        openActualNapsBtn.style.borderColor = "rgba(34, 197, 94, 0.5)";
+        openActualNapsBtn.style.color = "#bbf7d0";
+      } else {
+        openActualNapsBtn.textContent = "📊 Track Actual Naps";
+        openActualNapsBtn.style.background = "";
+        openActualNapsBtn.style.borderColor = "";
+        openActualNapsBtn.style.color = "";
+      }
+    }
+
     // Modal open/close handlers
     function openModal() {
       constraintsModal.style.display = "flex";
@@ -751,6 +1004,22 @@
     openConstraintsBtn.addEventListener("click", openModal);
     closeModalBtn.addEventListener("click", closeModal);
     modalBackdrop.addEventListener("click", closeModal);
+
+    // Actual naps modal open/close
+    function openActualNapsModal() {
+      actualNapsModal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeActualNapsModal() {
+      actualNapsModal.style.display = "none";
+      document.body.style.overflow = "";
+      updateActualNapsButton();
+    }
+
+    openActualNapsBtn.addEventListener("click", openActualNapsModal);
+    closeActualNapsModalBtn.addEventListener("click", closeActualNapsModal);
+    actualNapsModalBackdrop.addEventListener("click", closeActualNapsModal);
 
     // Clear constraint handlers
     clearAwakeByBtn.addEventListener("click", () => {
@@ -801,6 +1070,19 @@
       }
     }
 
+    // Check if we need to reset actual naps (new day in UTC)
+    function checkMidnightReset() {
+      const now = new Date();
+      const today = now.toISOString().split('T')[0]; // Get UTC date in YYYY-MM-DD format
+      const lastReset = localStorage.getItem(LAST_RESET_KEY);
+
+      if (lastReset !== today) {
+        // New day detected - clear actual naps
+        clearAllActualNaps();
+        localStorage.setItem(LAST_RESET_KEY, today);
+      }
+    }
+
     function saveSettings() {
       const settings = {
         wakeTime: wakeInput.value || "",
@@ -827,10 +1109,224 @@
       }
     }
 
+    function saveActualNaps() {
+      const actuals = {
+        nap1: {
+          start: actualNap1Start.value || null,
+          end: actualNap1End.value || null
+        },
+        nap2: {
+          start: actualNap2Start.value || null,
+          end: actualNap2End.value || null
+        },
+        nap3: {
+          start: actualNap3Start.value || null,
+          end: actualNap3End.value || null
+        }
+      };
+      try {
+        localStorage.setItem(ACTUAL_NAPS_KEY, JSON.stringify(actuals));
+      } catch {
+        // ignore
+      }
+    }
+
+    function loadActualNaps() {
+      try {
+        const raw = localStorage.getItem(ACTUAL_NAPS_KEY);
+        if (!raw) return;
+        const actuals = JSON.parse(raw);
+
+        if (actuals.nap1) {
+          actualNap1Start.value = actuals.nap1.start || "";
+          actualNap1End.value = actuals.nap1.end || "";
+        }
+        if (actuals.nap2) {
+          actualNap2Start.value = actuals.nap2.start || "";
+          actualNap2End.value = actuals.nap2.end || "";
+        }
+        if (actuals.nap3) {
+          actualNap3Start.value = actuals.nap3.start || "";
+          actualNap3End.value = actuals.nap3.end || "";
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    function clearAllActualNaps() {
+      actualNap1Start.value = "";
+      actualNap1End.value = "";
+      actualNap2Start.value = "";
+      actualNap2End.value = "";
+      actualNap3Start.value = "";
+      actualNap3End.value = "";
+      saveActualNaps();
+      updateActualNapsInsights();
+    }
+
+    function clearSingleNap(napNum) {
+      if (napNum === 1) {
+        actualNap1Start.value = "";
+        actualNap1End.value = "";
+      } else if (napNum === 2) {
+        actualNap2Start.value = "";
+        actualNap2End.value = "";
+      } else if (napNum === 3) {
+        actualNap3Start.value = "";
+        actualNap3End.value = "";
+      }
+      saveActualNaps();
+      updateActualNapsInsights();
+    }
+
+    function updateActualNapsInsights() {
+      const wakeMins = toMinutes(wakeInput.value);
+      const nap1PlannedLen = Number(nap1Input.value) || 0;
+      const nap2PlannedLen = Number(nap2Input.value) || 0;
+      const nap3PlannedLen = Number(nap3Input.value) || 0;
+
+      const naps = [
+        {
+          num: 1,
+          startEl: actualNap1Start,
+          endEl: actualNap1End,
+          rowEl: actualNap1Row,
+          insightsEl: nap1Insights,
+          plannedDuration: nap1PlannedLen
+        },
+        {
+          num: 2,
+          startEl: actualNap2Start,
+          endEl: actualNap2End,
+          rowEl: actualNap2Row,
+          insightsEl: nap2Insights,
+          plannedDuration: nap2PlannedLen
+        },
+        {
+          num: 3,
+          startEl: actualNap3Start,
+          endEl: actualNap3End,
+          rowEl: actualNap3Row,
+          insightsEl: nap3Insights,
+          plannedDuration: nap3PlannedLen
+        }
+      ];
+
+      let previousNapEnd = wakeMins;
+      let totalActualNapTime = 0;
+      let napCountWithData = 0;
+      let overallInsightsText = [];
+
+      naps.forEach((nap) => {
+        const startTime = nap.startEl.value;
+        const endTime = nap.endEl.value;
+
+        // Update input styling
+        if (startTime) {
+          nap.startEl.classList.add('has-value');
+        } else {
+          nap.startEl.classList.remove('has-value');
+        }
+        if (endTime) {
+          nap.endEl.classList.add('has-value');
+        } else {
+          nap.endEl.classList.remove('has-value');
+        }
+
+        // If both times are entered, calculate insights
+        if (startTime && endTime) {
+          const startMins = toMinutes(startTime);
+          const endMins = toMinutes(endTime);
+
+          if (startMins !== null && endMins !== null) {
+            napCountWithData++;
+
+            // Calculate nap duration
+            let duration = endMins - startMins;
+            if (duration < 0) duration += 24 * 60; // Handle next-day wrap
+
+            // Calculate wake window (time from previous event to this nap start)
+            let wakeWindow = startMins - previousNapEnd;
+            if (wakeWindow < 0) wakeWindow += 24 * 60;
+
+            // Compare to planned duration
+            const durationDiff = duration - nap.plannedDuration;
+            const durationDiffStr = durationDiff > 0 ? `+${durationDiff}` : `${durationDiff}`;
+
+            // Build insights HTML
+            let insightsHTML = `
+              <div class="insight-row">
+                <span class="insight-label">Duration:</span>
+                <span class="insight-value">${formatDuration(duration)}</span>
+              </div>
+              <div class="insight-row">
+                <span class="insight-label">Wake window before:</span>
+                <span class="insight-value">${formatDuration(wakeWindow)}</span>
+              </div>
+            `;
+
+            if (nap.plannedDuration > 0) {
+              const diffClass = durationDiff > 0 ? 'positive' : (durationDiff < 0 ? 'negative' : '');
+              insightsHTML += `
+                <div class="insight-row">
+                  <span class="insight-label">vs. Planned:</span>
+                  <span class="insight-value ${diffClass}">${durationDiffStr} min</span>
+                </div>
+              `;
+            }
+
+            nap.insightsEl.innerHTML = insightsHTML;
+            nap.insightsEl.classList.add('visible');
+            nap.rowEl.classList.add('has-data');
+
+            totalActualNapTime += duration;
+            previousNapEnd = endMins;
+          } else {
+            nap.insightsEl.classList.remove('visible');
+            nap.rowEl.classList.remove('has-data');
+          }
+        } else {
+          nap.insightsEl.classList.remove('visible');
+          nap.rowEl.classList.remove('has-data');
+        }
+      });
+
+      // Update overall insights
+      if (napCountWithData > 0) {
+        const totalPlanned = nap1PlannedLen + nap2PlannedLen + (napCountWithData >= 3 ? nap3PlannedLen : 0);
+        const totalDiff = totalActualNapTime - totalPlanned;
+        const totalDiffStr = totalDiff > 0 ? `+${totalDiff}` : `${totalDiff}`;
+
+        overallInsightsText.push(`<strong>Summary:</strong> ${napCountWithData} nap${napCountWithData > 1 ? 's' : ''} tracked`);
+        overallInsightsText.push(`Total daytime sleep: ${formatDuration(totalActualNapTime)}`);
+        if (totalPlanned > 0) {
+          overallInsightsText.push(`Difference from plan: ${totalDiffStr} min`);
+        }
+
+        overallInsights.innerHTML = overallInsightsText.join(' • ');
+        overallInsights.classList.add('visible');
+      } else {
+        overallInsights.classList.remove('visible');
+      }
+
+      // Update visibility of nap 3 row based on schedule
+      updateActualNap3Visibility();
+
+      // Update button state
+      updateActualNapsButton();
+    }
+
+    function updateActualNap3Visibility() {
+      const preferThree = useThreeNapsInput.checked;
+      actualNap3Row.style.display = preferThree ? "block" : "none";
+    }
+
     function updateNap3Visibility(actualNapCount) {
       const preferThree = useThreeNapsInput.checked;
       const showThree = (actualNapCount || (preferThree ? 3 : 2)) === 3;
       nap3Row.style.display = showThree ? "grid" : "none";
+      updateActualNap3Visibility();
     }
 
     function applyDefaults(forceThreeNaps = null) {
@@ -1593,6 +2089,8 @@
       mustBeAwakeByInput.value = "";
       sleepWindowStartInput.value = "";
       sleepWindowEndInput.value = "";
+      // Clear actual naps
+      clearAllActualNaps();
       updateConstraintsButton();
       recomputeSchedule();
     });
@@ -1668,8 +2166,92 @@
       el.addEventListener("input", recomputeSchedule);
     });
 
+    // Actual naps tracking event listeners
+    [
+      actualNap1Start,
+      actualNap1End,
+      actualNap2Start,
+      actualNap2End,
+      actualNap3Start,
+      actualNap3End
+    ].forEach((el) => {
+      el.addEventListener("input", () => {
+        saveActualNaps();
+        updateActualNapsInsights();
+      });
+    });
+
+    // Clear individual nap buttons
+    document.querySelectorAll('.clear-nap-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const napNum = parseInt(btn.dataset.nap);
+        clearSingleNap(napNum);
+      });
+    });
+
+    // Clear all actual naps button
+    clearAllActualsBtn.addEventListener('click', () => {
+      clearAllActualNaps();
+    });
+
+    // Apply actual durations to planned schedule
+    useActualDurationsBtn.addEventListener('click', () => {
+      let updated = false;
+
+      // Nap 1
+      if (actualNap1Start.value && actualNap1End.value) {
+        const start = toMinutes(actualNap1Start.value);
+        const end = toMinutes(actualNap1End.value);
+        if (start !== null && end !== null) {
+          let duration = end - start;
+          if (duration < 0) duration += 24 * 60;
+          nap1Input.value = duration;
+          updated = true;
+        }
+      }
+
+      // Nap 2
+      if (actualNap2Start.value && actualNap2End.value) {
+        const start = toMinutes(actualNap2Start.value);
+        const end = toMinutes(actualNap2End.value);
+        if (start !== null && end !== null) {
+          let duration = end - start;
+          if (duration < 0) duration += 24 * 60;
+          nap2Input.value = duration;
+          updated = true;
+        }
+      }
+
+      // Nap 3
+      if (actualNap3Start.value && actualNap3End.value) {
+        const start = toMinutes(actualNap3Start.value);
+        const end = toMinutes(actualNap3End.value);
+        if (start !== null && end !== null) {
+          let duration = end - start;
+          if (duration < 0) duration += 24 * 60;
+          nap3Input.value = duration;
+          updated = true;
+        }
+      }
+
+      if (updated) {
+        recomputeSchedule();
+        // Close modal and visual feedback
+        closeActualNapsModal();
+        const prev = useActualDurationsBtn.textContent;
+        useActualDurationsBtn.textContent = "Applied!";
+        setTimeout(() => (useActualDurationsBtn.textContent = prev), 1500);
+      }
+    });
+
+    // Check for midnight reset on init
+    checkMidnightReset();
+
     initFromStorageOrDefaults();
+    loadActualNaps();
     updateConstraintsButton();
+    updateActualNapsButton();
+    updateActualNapsInsights();
     recomputeSchedule();
 
     // Display app version
