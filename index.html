@@ -210,6 +210,20 @@
     .nap-toggle-switch.three-naps .nap-toggle-slider {
       transform: translateX(100%);
     }
+    /* Visual indicator when preference doesn't match actual schedule */
+    .nap-toggle-switch.preference-mismatch {
+      border-color: rgba(248, 113, 113, 0.7);
+      box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.15), 0 0 12px rgba(248, 113, 113, 0.3);
+      animation: pulse-warning 2s ease-in-out infinite;
+    }
+    @keyframes pulse-warning {
+      0%, 100% {
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.15), 0 0 12px rgba(248, 113, 113, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.25), 0 0 16px rgba(248, 113, 113, 0.4);
+      }
+    }
 
     .buttons-row {
       display: flex;
@@ -1288,6 +1302,8 @@
         warningBox.style.background = "";
         warningBox.style.borderColor = "";
         warningBox.style.color = "";
+        // Clear preference mismatch indicator
+        napToggleSwitch.classList.remove('preference-mismatch');
 
         const wakeMins = toMinutes(wakeInput.value);
         let bedMins = toMinutes(bedInput.value);
@@ -1374,8 +1390,8 @@
             if (scheduleResult.ok) {
               autoDowngraded = true;
               requestedNapCount = 2;
-              useThreeNapsInput.checked = false;
-              updateToggleSwitch(false);
+              // Don't change checkbox - keep user's preference
+              napToggleSwitch.classList.add('preference-mismatch');
             }
           }
         } else {
@@ -1392,8 +1408,8 @@
             if (scheduleResult.ok) {
               autoUpgraded = true;
               requestedNapCount = 3;
-              useThreeNapsInput.checked = true;
-              updateToggleSwitch(true);
+              // Don't change checkbox - keep user's preference
+              napToggleSwitch.classList.add('preference-mismatch');
             }
           }
         }
