@@ -1167,6 +1167,7 @@
       actualNap3End.value = "";
       saveActualNaps();
       updateActualNapsInsights();
+      recomputeSchedule(); // Update schedule after clearing tracked naps
     }
 
     function clearSingleNap(napNum) {
@@ -1182,6 +1183,7 @@
       }
       saveActualNaps();
       updateActualNapsInsights();
+      recomputeSchedule(); // Update schedule after clearing tracked nap
     }
 
     function updateActualNapsInsights() {
@@ -2100,18 +2102,13 @@
             const autoAdjustment = tryAutoAdjustNapsToFit(3, params);
             if (autoAdjustment) {
               scheduleResult = autoAdjustment.schedule;
-              // Update nap input values to reflect the auto-adjustment
-              if (autoAdjustment.napLengths) {
-                nap1Input.value = autoAdjustment.napLengths[0];
-                nap2Input.value = autoAdjustment.napLengths[1];
-                nap3Input.value = autoAdjustment.napLengths[2];
-              }
+              // DO NOT modify input values - user's preferences should remain unchanged
+              // The adjustment only affects the displayed schedule, not their settings
               // Store the adjustment message to display later
               scheduleResult.autoAdjustMessage = autoAdjustment.message;
             } else {
               // If auto-adjustment didn't work, try auto-downgrade to 2 naps with appropriate defaults
-              nap1Input.value = 90;
-              nap2Input.value = 30;
+              // Use default 2-nap lengths for schedule, but don't modify user's input values
               const newNapLengths = [90, 30, Number(nap3Input.value) || 30];
               const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
               scheduleResult = tryBuildSchedule(2, newParams);
@@ -2132,18 +2129,13 @@
             const autoAdjustment = tryAutoAdjustNapsToFit(2, params);
             if (autoAdjustment) {
               scheduleResult = autoAdjustment.schedule;
-              // Update nap input values to reflect the auto-adjustment
-              if (autoAdjustment.napLengths) {
-                nap1Input.value = autoAdjustment.napLengths[0];
-                nap2Input.value = autoAdjustment.napLengths[1];
-              }
+              // DO NOT modify input values - user's preferences should remain unchanged
+              // The adjustment only affects the displayed schedule, not their settings
               // Store the adjustment message to display later
               scheduleResult.autoAdjustMessage = autoAdjustment.message;
             } else {
               // If auto-adjustment didn't work, try auto-upgrade to 3 naps with appropriate defaults
-              nap1Input.value = 30;
-              nap2Input.value = 60;
-              nap3Input.value = 30;
+              // Use default 3-nap lengths for schedule, but don't modify user's input values
               const newNapLengths = [30, 60, 30];
               const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
               scheduleResult = tryBuildSchedule(3, newParams);
