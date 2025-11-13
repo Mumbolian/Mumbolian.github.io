@@ -515,8 +515,8 @@
         nap3Input.value = 30;   // 30 min
       } else {
         // 2 nap schedule defaults
-        nap1Input.value = 60;   // 1h
-        nap2Input.value = 90;   // 1.5h
+        nap1Input.value = 90;   // 1.5h
+        nap2Input.value = 60;   // 1h
         nap3Input.value = 30;   // not used for 2 naps
       }
 
@@ -537,8 +537,8 @@
 
         // Use appropriate defaults based on saved preference
         const preferThree = !!s.preferThree;
-        nap1Input.value = s.nap1 || (preferThree ? 30 : 60);
-        nap2Input.value = s.nap2 || 90;
+        nap1Input.value = s.nap1 || (preferThree ? 30 : 90);
+        nap2Input.value = s.nap2 || (preferThree ? 90 : 60);
         nap3Input.value = s.nap3 || 30;
       } else {
         applyDefaults(true); // Force 3 naps for new users
