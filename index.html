@@ -585,11 +585,13 @@
 
   <div class="footer">
     <span>Settings are saved in this browser (localStorage).</span>
+    <span id="versionDisplay" style="margin-left: 10px; opacity: 0.7;"></span>
   </div>
 </main>
 
 <script>
   (function () {
+    const APP_VERSION = "1.1.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     let isRecomputing = false; // Flag to prevent recursive recomputation
 
@@ -933,228 +935,168 @@
       };
     }
 
+    function generateNapCombinations(originalNapLengths, napCount, minNap, maxAdjust) {
+      // Generate smart nap length combinations to try
+      // Start with minimal changes, then progressively try more adjustments
+
+      const combinations = [];
+
+      // 1. Try original lengths first
+      combinations.push([...originalNapLengths]);
+
+      // 2. Try single nap adjustments (±5, ±10, ±15, ±20, ±25, ±30 min)
+      for (let i = 0; i < napCount; i++) {
+        for (let adj = -maxAdjust; adj <= maxAdjust; adj += 5) {
+          if (adj === 0) continue;
+          const newLength = originalNapLengths[i] + adj;
+          if (newLength >= minNap) {
+            const combo = [...originalNapLengths];
+            combo[i] = newLength;
+            combinations.push(combo);
+          }
+        }
+      }
+
+      // 3. Try pairwise adjustments (shift time between two naps)
+      for (let i = 0; i < napCount; i++) {
+        for (let j = i + 1; j < napCount; j++) {
+          for (let transfer = 5; transfer <= 30; transfer += 5) {
+            // Transfer from i to j
+            if (originalNapLengths[i] - transfer >= minNap) {
+              const combo = [...originalNapLengths];
+              combo[i] = originalNapLengths[i] - transfer;
+              combo[j] = originalNapLengths[j] + transfer;
+              combinations.push(combo);
+            }
+            // Transfer from j to i
+            if (originalNapLengths[j] - transfer >= minNap) {
+              const combo = [...originalNapLengths];
+              combo[j] = originalNapLengths[j] - transfer;
+              combo[i] = originalNapLengths[i] + transfer;
+              combinations.push(combo);
+            }
+          }
+        }
+      }
+
+      return combinations;
+    }
+
     function adjustScheduleForConstraints(params) {
       const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths, napCount } = params;
 
       // Get constraint values
       const mustBeAwakeByStr = mustBeAwakeByInput.value;
+      const sleepWindowStartStr = sleepWindowStartInput.value;
+      const sleepWindowEndStr = sleepWindowEndInput.value;
 
-      // If no "must be awake by" constraint, return null (no adjustment needed)
-      if (!mustBeAwakeByStr) {
+      // If no constraints at all, return null (no adjustment needed)
+      if (!mustBeAwakeByStr && !(sleepWindowStartStr && sleepWindowEndStr)) {
         return null;
       }
 
-      let mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
-      if (mustBeAwakeBy === null) {
-        return null;
+      // Parse and normalize "must be awake by" constraint if present
+      let mustBeAwakeBy = null;
+      if (mustBeAwakeByStr) {
+        mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
+        if (mustBeAwakeBy !== null) {
+          while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
+          while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+        }
       }
 
-      // Normalize constraint time
-      while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
-      while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+      // Parse and normalize "must be asleep during" constraint if present
+      let sleepStart = null;
+      let sleepEnd = null;
+      if (sleepWindowStartStr && sleepWindowEndStr) {
+        sleepStart = toMinutes(sleepWindowStartStr);
+        sleepEnd = toMinutes(sleepWindowEndStr);
+        if (sleepStart !== null && sleepEnd !== null) {
+          while (sleepStart < wakeMins - 12 * 60) sleepStart += 24 * 60;
+          while (sleepStart > wakeMins + 12 * 60) sleepStart -= 24 * 60;
+          while (sleepEnd < wakeMins - 12 * 60) sleepEnd += 24 * 60;
+          while (sleepEnd > wakeMins + 12 * 60) sleepEnd -= 24 * 60;
+          if (sleepEnd <= sleepStart) {
+            sleepEnd += 24 * 60;
+          }
+        }
+      }
 
-      // Build the schedule and check which nap conflicts
+      // Build the schedule and check constraints
       let scheduleResult = tryBuildSchedule(napCount, params);
       if (!scheduleResult.ok) {
         return null; // Can't even build basic schedule
       }
 
-      // Check if constraint is already satisfied
+      // Check if constraints are already satisfied
       const violations = validateConstraints(scheduleResult, wakeMins, bedMins);
       if (violations.length === 0) {
         return null; // Already satisfied, no adjustment needed
       }
 
-      // Strategy 1: Adjust wake windows to shift naps
-      // First try reducing maxWake to shift naps earlier
-      for (let reduction = 5; reduction <= 60; reduction += 5) {
-        const adjustedMaxWake = Math.max(minWake, maxWake - reduction);
-        if (adjustedMaxWake === maxWake && reduction > 5) break; // Can't reduce further
+      // UNIFIED LINEAR PROGRAMMING APPROACH
+      // Try adjusting bedtime + nap lengths simultaneously to satisfy constraints
+      // Wake windows are distributed automatically by tryBuildSchedule with increasing pattern
 
-        const testParams = { ...params, maxWake: adjustedMaxWake };
-        const testSchedule = tryBuildSchedule(napCount, testParams);
+      const MIN_NAP = 30;
+      const MAX_NAP_ADJUST = 30; // Max adjustment per nap (+ or -)
 
-        if (testSchedule.ok) {
-          const testViolations = validateConstraints(testSchedule, wakeMins, bedMins);
-          if (testViolations.length === 0) {
-            return {
-              schedule: testSchedule,
-              strategy: 'wake-windows',
-              changes: { maxWake: adjustedMaxWake },
-              message: `Reduced max wake window by ${maxWake - adjustedMaxWake} min to shift naps earlier`
-            };
-          }
-        }
-      }
+      // Bedtime adjustments to try (in order of preference)
+      const bedtimeAdjustments = [
+        0,    // Try with original bedtime first
+        -15, -30, -45,  // Earlier bedtimes
+        15, 30          // Later bedtimes
+      ];
 
-      // Also try increasing maxWake to shift naps later (if there's room)
-      // Allow up to +60 min from user's maxWake, respecting their preferences
-      // No hard ceiling - let natural schedule constraints be the limit
-      for (let increase = 5; increase <= 60; increase += 5) {
-        const adjustedMaxWake = maxWake + increase;
+      // Try each bedtime adjustment with nap length variations
+      for (const bedAdj of bedtimeAdjustments) {
+        const adjustedBedMins = bedMins + bedAdj;
 
-        const testParams = { ...params, maxWake: adjustedMaxWake };
-        const testSchedule = tryBuildSchedule(napCount, testParams);
+        // Generate nap length combinations to try
+        const napCombinations = generateNapCombinations(napLengths, napCount, MIN_NAP, MAX_NAP_ADJUST);
 
-        if (testSchedule.ok) {
-          const testViolations = validateConstraints(testSchedule, wakeMins, bedMins);
-          if (testViolations.length === 0) {
-            return {
-              schedule: testSchedule,
-              strategy: 'wake-windows',
-              changes: { maxWake: adjustedMaxWake },
-              message: `Increased max wake window by ${adjustedMaxWake - maxWake} min to shift naps later`
-            };
-          }
-        }
-      }
+        for (const testNapLengths of napCombinations) {
+          const testParams = {
+            ...params,
+            bedMins: adjustedBedMins,
+            napLengths: testNapLengths
+          };
 
-      // Strategy 2: Adjust bedtime
-      // Try moving bedtime earlier (shortens day, compresses schedule)
-      for (let adjustment = 15; adjustment <= 45; adjustment += 15) {
-        const earlierBedMins = bedMins - adjustment;
-        const testParams2 = { ...params, bedMins: earlierBedMins };
-        const testSchedule2 = tryBuildSchedule(napCount, testParams2);
+          const testSchedule = tryBuildSchedule(napCount, testParams);
 
-        if (testSchedule2.ok) {
-          const testViolations2 = validateConstraints(testSchedule2, wakeMins, earlierBedMins);
-          if (testViolations2.length === 0) {
-            return {
-              schedule: testSchedule2,
-              strategy: 'bedtime',
-              changes: { bedMins: earlierBedMins },
-              message: `Compressed schedule by moving bedtime earlier by ${adjustment} min to ${fromMinutes(earlierBedMins)}`
-            };
-          }
-        }
-      }
+          if (testSchedule.ok) {
+            const testViolations = validateConstraints(testSchedule, wakeMins, adjustedBedMins);
+            if (testViolations.length === 0) {
+              // Found a solution!
+              const changes = [];
+              if (bedAdj !== 0) {
+                changes.push(`bedtime ${bedAdj > 0 ? 'later' : 'earlier'} by ${Math.abs(bedAdj)} min to ${fromMinutes(adjustedBedMins)}`);
+              }
 
-      // Also try moving bedtime later (extends day, allows more flexibility)
-      // Limited to +30 minutes to respect user's bedtime preferences
-      for (let adjustment = 15; adjustment <= 30; adjustment += 15) {
-        const laterBedMins = bedMins + adjustment;
-        const testParams2b = { ...params, bedMins: laterBedMins };
-        const testSchedule2b = tryBuildSchedule(napCount, testParams2b);
+              const napChanges = [];
+              for (let i = 0; i < napCount; i++) {
+                const diff = testNapLengths[i] - napLengths[i];
+                if (diff !== 0) {
+                  napChanges.push(`Nap ${i + 1} ${diff > 0 ? '+' : ''}${diff} min`);
+                }
+              }
+              if (napChanges.length > 0) {
+                changes.push(`adjusted naps: ${napChanges.join(', ')}`);
+              }
 
-        if (testSchedule2b.ok) {
-          const testViolations2b = validateConstraints(testSchedule2b, wakeMins, laterBedMins);
-          if (testViolations2b.length === 0) {
-            return {
-              schedule: testSchedule2b,
-              strategy: 'bedtime',
-              changes: { bedMins: laterBedMins },
-              message: `Extended schedule by moving bedtime later by ${adjustment} min to ${fromMinutes(laterBedMins)}`
-            };
-          }
-        }
-      }
-
-      // Strategy 3: Reduce conflicting nap (without redistribution first)
-      // Find which nap conflicts
-      const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
-      let conflictingNapIndex = -1;
-
-      for (let i = 0; i < naps.length; i++) {
-        const nap = naps[i];
-        const [startStr, endStr] = nap.timeRange.split(" – ");
-        let napStart = toMinutes(startStr);
-        let napEnd = toMinutes(endStr);
-
-        // Normalize
-        while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
-        while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
-        while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
-        while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
-
-        if (mustBeAwakeBy >= napStart && mustBeAwakeBy < napEnd) {
-          conflictingNapIndex = i;
-          break;
-        }
-      }
-
-      if (conflictingNapIndex !== -1) {
-        const MIN_NAP = 30;
-        const MAX_CHANGE = 30; // Increased from 15 to allow more aggressive adjustments
-
-        // First try: Just reduce the conflicting nap without redistributing
-        // This avoids pushing the nap start time later
-        for (let reduction = 5; reduction <= MAX_CHANGE; reduction += 5) {
-          const newLength = Math.max(MIN_NAP, napLengths[conflictingNapIndex] - reduction);
-          const actualReduction = napLengths[conflictingNapIndex] - newLength;
-
-          if (actualReduction === 0) continue;
-
-          const adjustedNapLengths = [...napLengths];
-          adjustedNapLengths[conflictingNapIndex] = newLength;
-
-          const testParams3 = { ...params, napLengths: adjustedNapLengths };
-          const testSchedule3 = tryBuildSchedule(napCount, testParams3);
-
-          if (testSchedule3.ok) {
-            const testViolations3 = validateConstraints(testSchedule3, wakeMins, bedMins);
-            if (testViolations3.length === 0) {
               return {
-                schedule: testSchedule3,
-                strategy: 'nap-reduction',
-                changes: { napLengths: adjustedNapLengths },
-                message: `Shortened Nap ${conflictingNapIndex + 1} by ${actualReduction} min to satisfy constraint`,
-                napChanges: adjustedNapLengths
+                schedule: testSchedule,
+                strategy: 'unified-adjustment',
+                changes: { bedMins: adjustedBedMins, napLengths: testNapLengths },
+                message: `Adjusted schedule: ${changes.join(', ')}`,
+                napChanges: testNapLengths
               };
             }
           }
         }
-
-        // Second try: Reduce conflicting nap and redistribute to naps AFTER it only
-        // This prevents pushing the conflicting nap's start time later
-        const napsAfter = [];
-        for (let i = conflictingNapIndex + 1; i < napCount; i++) {
-          napsAfter.push(i);
-        }
-
-        if (napsAfter.length > 0) {
-          for (let reduction = 5; reduction <= 15; reduction += 5) {
-            const newConflictingLength = Math.max(MIN_NAP, napLengths[conflictingNapIndex] - reduction);
-            const actualReduction = napLengths[conflictingNapIndex] - newConflictingLength;
-
-            if (actualReduction === 0) continue;
-
-            const adjustedNapLengths = [...napLengths];
-            adjustedNapLengths[conflictingNapIndex] = newConflictingLength;
-
-            // Distribute the reduction only to naps AFTER the conflicting one
-            const addPerNap = Math.floor(actualReduction / napsAfter.length);
-            let remainder = actualReduction % napsAfter.length;
-
-            for (let i of napsAfter) {
-              const add = addPerNap + (remainder > 0 ? 1 : 0);
-              if (remainder > 0) remainder--;
-
-              // Check we don't exceed max change
-              if (add <= 15) {
-                adjustedNapLengths[i] = napLengths[i] + add;
-              }
-            }
-
-            const testParams3 = { ...params, napLengths: adjustedNapLengths };
-            const testSchedule3 = tryBuildSchedule(napCount, testParams3);
-
-            if (testSchedule3.ok) {
-              const testViolations3 = validateConstraints(testSchedule3, wakeMins, bedMins);
-              if (testViolations3.length === 0) {
-                return {
-                  schedule: testSchedule3,
-                  strategy: 'reallocation',
-                  changes: { napLengths: adjustedNapLengths },
-                  message: `Reduced Nap ${conflictingNapIndex + 1} by ${actualReduction} min and redistributed to later naps`,
-                  napChanges: adjustedNapLengths
-                };
-              }
-            }
-          }
-        }
       }
 
-      // Strategy 4: Try alternative nap count (2 vs 3)
+      // Strategy 2: Try alternative nap count (2 vs 3)
       const alternateNapCount = napCount === 2 ? 3 : 2;
       const alternateNapLengths = alternateNapCount === 3 ? [30, 60, 30] : [90, 30, 30];
       const testParams4 = { ...params, napCount: alternateNapCount, napLengths: alternateNapLengths };
@@ -1602,6 +1544,9 @@
     initFromStorageOrDefaults();
     updateConstraintsButton();
     recomputeSchedule();
+
+    // Display app version
+    document.getElementById("versionDisplay").textContent = `v${APP_VERSION}`;
   })();
 </script>
 </body>

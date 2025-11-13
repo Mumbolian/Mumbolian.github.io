@@ -36,6 +36,7 @@ This tool formalises that mental model in a way that's simple enough to use on a
 ## Features
 
 ### Core Features
+- **Version tracking**: App version displayed in footer for debugging and testing purposes
 - **Local-only**: All settings are saved in your browser (localStorage). No server, no login, no tracking.
 - **Automatic downgrade**: If 3 naps won't fit your constraints, the app automatically switches to 2 naps with appropriate defaults (90 min, 30 min).
 - **Wake window display**: Each nap and bedtime shows the active wake window duration before it (e.g., "↑ 2h30 awake").
@@ -50,12 +51,15 @@ Set time-based requirements and let the app automatically adjust the schedule to
 - **"Must be awake by"** constraint: Ensures baby is awake by a specific time (e.g., 12:30 PM for leaving the house)
 - **"Must be asleep during"** constraint: Ensures baby is napping during a time window (e.g., 10:00-11:00 AM for a work call)
 
-The app uses a sophisticated multi-strategy approach to automatically satisfy constraints:
+The app uses a unified linear programming approach to automatically satisfy constraints:
 
-1. **Adjust wake windows** - Compresses or expands wake windows by up to 60 minutes to shift naps earlier or later (least invasive, respects user's max limits)
-2. **Adjust bedtime** - Moves bedtime earlier by 15-45 minutes or later by 15-30 minutes (respects user's bedtime preferences)
-3. **Reduce conflicting nap** - Shortens conflicting nap by up to 30 minutes, with optional redistribution to later naps only
-4. **Switch nap count** - Tries alternative 2-nap vs 3-nap schedule if needed
+1. **Unified adjustment** - Simultaneously adjusts bedtime (±15-45 min) and nap lengths (±30 min) to meet constraints while respecting wake window limits
+2. **Switch nap count** - Tries alternative 2-nap vs 3-nap schedule if unified adjustment can't find a solution
+
+**Key principles:**
+- Wake window parameters (minWake, maxWake, lastWake) are **hard biological constraints** and never adjusted
+- Wake windows are distributed automatically with an **increasing pattern** throughout the day (preferred but not required)
+- Adjustments are tried in order of minimal change (original bedtime + minor nap tweaks first)
 
 Visual feedback shows which strategy was used and whether constraints are satisfied.
 
@@ -108,51 +112,47 @@ For a given nap count (2 or 3):
 - All earlier wake windows are dynamic, growing from `minWake` toward `maxWake`
 - If 3 naps can't fit, automatically switches to 2-nap schedule
 
-### Constraint Satisfaction Algorithm (NEW)
+### Constraint Satisfaction Algorithm (Linear Programming Approach)
 
-When schedule constraints are set, the app automatically tries to adjust the schedule using these strategies in order:
+When schedule constraints are set, the app uses a unified approach to find a feasible solution:
 
-#### Strategy 1: Adjust Wake Windows (Bidirectional)
-- **Compress**: Reduces `maxWake` by 5-60 minutes in 5-minute increments to shift naps earlier
-- **Expand**: Increases `maxWake` by 5-60 minutes in 5-minute increments to shift naps later
-- Preserves nap lengths and bedtime
-- **No arbitrary ceiling** - only limited by natural schedule constraints
-- **Least invasive** - tries this first
+**Important:** Wake window parameters (minWake, maxWake, lastWake) are biological constraints and are never modified. All adjustments work within these hard limits.
 
-Example: `maxWake` 210 → 180 minutes shifts schedule earlier
-Example: `maxWake` 210 → 240 minutes shifts schedule later (if schedule permits)
+#### Strategy 1: Unified Linear Adjustment
 
-#### Strategy 2: Adjust Bedtime (Bidirectional)
-- **Earlier**: Moves bedtime 15-45 minutes earlier in 15-minute increments (shortens day)
-- **Later**: Moves bedtime 15-30 minutes later in 15-minute increments (extends day)
-- All naps and wake windows adjust to fit the new day length
-- Can trigger 3→2 nap reduction (when compressing) or 2→3 nap addition (when extending)
-- **Limited to ±45/-30 min to respect bedtime routines**
+Simultaneously adjusts multiple parameters to satisfy constraints:
 
-Example: Bedtime 20:30 → 19:45 compresses by 45 minutes
-Example: Bedtime 20:30 → 21:00 extends by 30 minutes
+**Variables adjusted:**
+- Bedtime: ±15-45 minutes (tried in order: 0, -15, -30, -45, +15, +30)
+- Nap lengths: ±30 minutes per nap (tried intelligently)
+  - Single nap adjustments: ±5, ±10, ±15, ±20, ±25, ±30 minutes
+  - Pairwise transfers: Move time between two naps (e.g., reduce Nap 1 by 10, extend Nap 2 by 10)
 
-#### Strategy 3: Reduce Conflicting Nap
-- **First attempt**: Reduces conflicting nap by 5-30 minutes WITHOUT redistribution
-  - Avoids pushing nap start time later
-  - Extra awake time distributed across wake windows naturally
-  - Most effective for satisfying "awake by" constraints
-- **Second attempt**: Reduces conflicting nap and redistributes to naps AFTER it only
-  - Prevents pushing the conflicting nap's start time later
-  - Only redistributes to later naps in the schedule
-  - Maximum 15 minutes redistribution per receiving nap
-- Constraints:
-  - Minimum 30 minutes per nap
-  - Maximum 30 minutes reduction for conflicting nap
+**Wake windows:**
+- Automatically distributed by `tryBuildSchedule` algorithm
+- Prefers increasing pattern (earlier windows shorter, later windows longer)
+- Always respects [minWake, maxWake] bounds
+- Last wake window is fixed
 
-Example: Nap 2 (12:00-13:00) conflicts with "awake by 12:48"
-→ Reduce Nap 2 to 48 minutes → ends at 12:48 ✓
+**How it works:**
+1. For each bedtime adjustment (minimal first)
+2. Try various nap length combinations (single adjustments, then pairwise transfers)
+3. Let `tryBuildSchedule` distribute wake windows optimally
+4. Validate constraints are satisfied
+5. Return first feasible solution
 
-#### Strategy 4: Switch Nap Count
+**Example:** "Must be asleep 15:00-15:30"
+- Tries: Original bedtime + extend Nap 3 by 15 min
+- If that fails: Bedtime -15 min + reduce Nap 1 by 10 min
+- If that fails: Bedtime -30 min + various nap combinations
+- Result: "Adjusted schedule: bedtime earlier by 30 min to 20:00, adjusted naps: Nap 1 -10 min"
+
+#### Strategy 2: Switch Nap Count
 - Tries alternative nap count (2 ↔ 3)
 - Uses default lengths for that schedule type
   - 2-nap: 90, 30 minutes
   - 3-nap: 30, 60, 30 minutes
+- Only used if unified adjustment finds no solution
 - Can drastically change schedule layout
 
 ### Validation
