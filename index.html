@@ -204,7 +204,7 @@
     }
     .nap-row span.label {
       color: #d1d5db;
-      width: 58px;
+      width: 90px;
     }
     .nap-row .unit {
       font-size: 0.72rem;
@@ -321,18 +321,41 @@
 
       <div class="nap-rows">
         <div class="nap-row">
-          <span class="label">Nap 1</span>
+          <span class="label">Nap 1 length</span>
           <input type="number" id="nap1Length" min="10" max="240" step="5" />
           <span class="unit">mins</span>
         </div>
         <div class="nap-row">
-          <span class="label">Nap 2</span>
+          <span class="label">Nap 2 length</span>
           <input type="number" id="nap2Length" min="10" max="240" step="5" />
           <span class="unit">mins</span>
         </div>
         <div class="nap-row" id="nap3Row">
-          <span class="label">Nap 3</span>
+          <span class="label">Nap 3 length</span>
           <input type="number" id="nap3Length" min="10" max="240" step="5" />
+          <span class="unit">mins</span>
+        </div>
+      </div>
+
+      <div class="inline" style="margin-top:6px;">
+        <input type="checkbox" id="useManualWake" />
+        <label for="useManualWake">Manually set wake windows (before naps)</label>
+      </div>
+
+      <div class="nap-rows" id="wakeWindowsBlock" style="display:none;">
+        <div class="nap-row">
+          <span class="label">Before nap 1</span>
+          <input type="number" id="wwBefore1" min="0" max="360" step="5" />
+          <span class="unit">mins</span>
+        </div>
+        <div class="nap-row">
+          <span class="label">Between 1 &amp; 2</span>
+          <input type="number" id="wwBetween12" min="0" max="360" step="5" />
+          <span class="unit">mins</span>
+        </div>
+        <div class="nap-row" id="wwBetween23Row">
+          <span class="label">Between 2 &amp; 3</span>
+          <input type="number" id="wwBetween23" min="0" max="360" step="5" />
           <span class="unit">mins</span>
         </div>
       </div>
@@ -342,7 +365,8 @@
         <button type="button" id="copySchedule">Copy schedule text</button>
       </div>
       <p class="subtext">
-        Tip: tweak nap lengths or bedtime until the wake windows look sensible for your baby.
+        Auto mode splits wake windows evenly. Manual mode lets you set wake windows before naps;
+        the last stretch adjusts to hit your target bedtime.
       </p>
     </section>
 
@@ -360,13 +384,13 @@
 
   <div class="footer">
     <span>Settings are saved in this browser (localStorage).</span>
-    <span>Built for <code>bingpotstudio.com</code> – you can always tweak the logic later.</span>
+    <span>Built for <code>bingpotstudio.com</code> – tweak the logic anytime.</span>
   </div>
 </main>
 
 <script>
   (function () {
-    const STORAGE_KEY = "napPlannerSettings_v1";
+    const STORAGE_KEY = "napPlannerSettings_v2";
 
     const wakeInput = document.getElementById("wakeTime");
     const bedInput = document.getElementById("bedTime");
@@ -375,6 +399,13 @@
     const nap2Input = document.getElementById("nap2Length");
     const nap3Input = document.getElementById("nap3Length");
     const nap3Row = document.getElementById("nap3Row");
+
+    const useManualWakeInput = document.getElementById("useManualWake");
+    const wakeWindowsBlock = document.getElementById("wakeWindowsBlock");
+    const wwBefore1Input = document.getElementById("wwBefore1");
+    const wwBetween12Input = document.getElementById("wwBetween12");
+    const wwBetween23Input = document.getElementById("wwBetween23");
+    const wwBetween23Row = document.getElementById("wwBetween23Row");
 
     const scheduleList = document.getElementById("scheduleList");
     const summaryLabel = document.getElementById("summaryLabel");
@@ -423,12 +454,31 @@
         useThreeNaps: !!useThreeNapsInput.checked,
         nap1: Number(nap1Input.value) || 0,
         nap2: Number(nap2Input.value) || 0,
-        nap3: Number(nap3Input.value) || 0
+        nap3: Number(nap3Input.value) || 0,
+        useManualWake: !!useManualWakeInput.checked,
+        wwBefore1: Number(wwBefore1Input.value) || 0,
+        wwBetween12: Number(wwBetween12Input.value) || 0,
+        wwBetween23: Number(wwBetween23Input.value) || 0
       };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
       } catch {
         // ignore
+      }
+    }
+
+    function updateNap3Visibility() {
+      const three = useThreeNapsInput.checked;
+      nap3Row.style.display = three ? "grid" : "none";
+      updateManualWakeVisibility();
+    }
+
+    function updateManualWakeVisibility() {
+      const manual = useManualWakeInput.checked;
+      wakeWindowsBlock.style.display = manual ? "flex" : "none";
+      if (manual) {
+        const three = useThreeNapsInput.checked;
+        wwBetween23Row.style.display = three ? "grid" : "none";
       }
     }
 
@@ -439,7 +489,14 @@
       nap1Input.value = 60;  // 1h
       nap2Input.value = 90;  // 1.5h
       nap3Input.value = 30;  // cat nap if enabled
+
+      useManualWakeInput.checked = false;
+      wwBefore1Input.value = 120;   // 2h
+      wwBetween12Input.value = 150; // 2.5h
+      wwBetween23Input.value = 180; // 3h (if used)
+
       updateNap3Visibility();
+      updateManualWakeVisibility();
     }
 
     function initFromStorageOrDefaults() {
@@ -451,18 +508,21 @@
         nap1Input.value = s.nap1 || 60;
         nap2Input.value = s.nap2 || 90;
         nap3Input.value = s.nap3 || 30;
+
+        useManualWakeInput.checked = !!s.useManualWake;
+        wwBefore1Input.value = s.wwBefore1 || 120;
+        wwBetween12Input.value = s.wwBetween12 || 150;
+        wwBetween23Input.value = s.wwBetween23 || 180;
       } else {
         applyDefaults();
       }
       updateNap3Visibility();
-    }
-
-    function updateNap3Visibility() {
-      nap3Row.style.display = useThreeNapsInput.checked ? "grid" : "none";
+      updateManualWakeVisibility();
     }
 
     function recomputeSchedule() {
       updateNap3Visibility();
+      updateManualWakeVisibility();
       saveSettings();
 
       scheduleList.innerHTML = "";
@@ -480,7 +540,7 @@
 
       let bedMins = bedMinsRaw;
       if (bedMins <= wakeMins) {
-        bedMins += 24 * 60; // assume bedtime is the same 'sleep day', just later
+        bedMins += 24 * 60; // bedtime is later the same 'day'
       }
 
       const useThree = useThreeNapsInput.checked;
@@ -509,23 +569,49 @@
                 "Total nap time is very high for this wake–bed window. Try shortening naps or moving bedtime later.";
       }
 
-      const wakeWindowsCount = napCount + 1;
-      const baseWakeWindow = Math.max(0, Math.floor(remainingAwake / wakeWindowsCount));
-      let remainder = Math.max(0, remainingAwake - baseWakeWindow * wakeWindowsCount);
+      const useManual = useManualWakeInput.checked;
+      let wakeWindows = [];
 
-      const wakeWindows = [];
-      for (let i = 0; i < wakeWindowsCount; i++) {
-        let extra = 0;
-        if (remainder > 0) {
-          extra = 5;
-          remainder -= 5;
+      if (useManual) {
+        const ww1 = Number(wwBefore1Input.value) || 0;
+        const ww12 = Number(wwBetween12Input.value) || 0;
+        const ww23 = useThree ? (Number(wwBetween23Input.value) || 0) : 0;
+
+        const earlierWWs = [ww1, ww12];
+        if (useThree) earlierWWs.push(ww23);
+
+        const sumEarlier = earlierWWs.reduce((a, b) => a + b, 0);
+        let finalWW = remainingAwake - sumEarlier;
+
+        if (sumEarlier > remainingAwake) {
+          warningBox.style.display = "block";
+          warningBox.textContent =
+                  "Chosen wake windows are too long for this wake–bed window. The last stretch has been squeezed.";
+          finalWW = 0;
+        } else if (finalWW < 45) {
+          warningBox.style.display = "block";
+          warningBox.textContent =
+                  "The last wake window before bed is quite short. Check that the timings match what you expect.";
         }
-        wakeWindows.push(baseWakeWindow + extra);
+
+        wakeWindows = [...earlierWWs, Math.max(0, finalWW)];
+      } else {
+        const wakeWindowsCount = napCount + 1;
+        const baseWakeWindow = Math.max(0, Math.floor(remainingAwake / wakeWindowsCount));
+        let remainder = Math.max(0, remainingAwake - baseWakeWindow * wakeWindowsCount);
+
+        for (let i = 0; i < wakeWindowsCount; i++) {
+          let extra = 0;
+          if (remainder > 0) {
+            extra = 5;
+            remainder -= 5;
+          }
+          wakeWindows.push(baseWakeWindow + extra);
+        }
       }
 
       const items = [];
 
-      // Wake-up
       items.push({
         label: "Wake-up",
         timeRange: fromMinutes(wakeMins),
@@ -537,7 +623,7 @@
       const wakeWindowDurations = [];
 
       for (let i = 0; i < napCount; i++) {
-        const ww = wakeWindows[i];
+        const ww = wakeWindows[i] || 0;
         const napLen = napLengths[i];
 
         cursor += ww;
@@ -608,9 +694,10 @@
       wakeWindowsText.textContent = wwStrings.join("  •  ");
 
       const totalNapHours = (totalNapTime / 60).toFixed(2);
-      summaryLabel.textContent = `${napCount} naps • ${totalNapHours}h total daytime sleep`;
+      summaryLabel.textContent = `${napCount} naps • ${totalNapHours}h total daytime sleep${
+              useManual ? " • manual wake windows" : ""
+      }`;
 
-      // Attach schedule text to copy button
       copyBtn.dataset.scheduleText = scheduleTextLines.join("\n");
     }
 
@@ -634,7 +721,18 @@
       }
     });
 
-    [wakeInput, bedInput, useThreeNapsInput, nap1Input, nap2Input, nap3Input].forEach((el) => {
+    [
+      wakeInput,
+      bedInput,
+      useThreeNapsInput,
+      nap1Input,
+      nap2Input,
+      nap3Input,
+      useManualWakeInput,
+      wwBefore1Input,
+      wwBetween12Input,
+      wwBetween23Input
+    ].forEach((el) => {
       el.addEventListener("input", recomputeSchedule);
     });
 
