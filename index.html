@@ -1455,23 +1455,13 @@
             message: adjustment.message
           };
 
-          // Update inputs to reflect the adjustment based on strategy
-          if (adjustment.strategy === 'wake-windows') {
-            maxWakeInput.value = adjustment.changes.maxWake;
-          } else if (adjustment.strategy === 'bedtime') {
+          // Track adjusted bedtime for validation (but don't modify input)
+          if (adjustment.strategy === 'bedtime') {
             adjustedBedMins = adjustment.changes.bedMins;
-            bedInput.value = fromMinutes(adjustedBedMins);
-          } else if (adjustment.strategy === 'reallocation' && adjustment.napChanges) {
-            nap1Input.value = adjustment.napChanges[0];
-            nap2Input.value = adjustment.napChanges[1];
-            if (adjustment.napChanges[2]) nap3Input.value = adjustment.napChanges[2];
-          } else if (adjustment.strategy === 'nap-count' && adjustment.napChanges) {
-            const newNapCount = adjustment.changes.napCount;
-            useThreeNapsInput.checked = (newNapCount === 3);
-            nap1Input.value = adjustment.napChanges[0];
-            nap2Input.value = adjustment.napChanges[1];
-            if (adjustment.napChanges[2]) nap3Input.value = adjustment.napChanges[2];
           }
+
+          // DO NOT modify input values - user's preferences should remain unchanged
+          // The adjustment only affects the displayed schedule, not their settings
         }
 
         const {
