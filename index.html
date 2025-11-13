@@ -986,6 +986,7 @@
       }
 
       // Strategy 2: Move bedtime earlier by 15 minutes
+      // This shortens the day, forcing everything to compress and shift earlier
       const earlierBedMins = bedMins - 15;
       const testParams2 = { ...params, bedMins: earlierBedMins };
       const testSchedule2 = tryBuildSchedule(napCount, testParams2);
@@ -997,7 +998,7 @@
             schedule: testSchedule2,
             strategy: 'bedtime',
             changes: { bedMins: earlierBedMins },
-            message: `Moved bedtime 15 min earlier to ${fromMinutes(earlierBedMins)}`
+            message: `Compressed schedule by moving bedtime earlier to ${fromMinutes(earlierBedMins)}`
           };
         }
       }
