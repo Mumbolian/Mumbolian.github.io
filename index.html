@@ -670,7 +670,7 @@
 
       <div class="form-grid">
         <div class="form-row">
-          <label for="wakeTime">Wake-up time</label>
+          <label for="wakeTime">Wake-Up Time</label>
           <input type="time" id="wakeTime" />
         </div>
         <div class="form-row">
@@ -680,11 +680,11 @@
       </div>
 
       <div class="nap-toggle-container">
-        <span class="nap-toggle-label">Nap preference:</span>
+        <span class="nap-toggle-label">Nap Preference:</span>
         <div class="nap-toggle-switch" id="napToggleSwitch">
           <div class="nap-toggle-slider"></div>
-          <div class="nap-toggle-option" data-value="2">2 naps</div>
-          <div class="nap-toggle-option active" data-value="3">3 naps</div>
+          <div class="nap-toggle-option" data-value="2">2 Naps</div>
+          <div class="nap-toggle-option active" data-value="3">3 Naps</div>
         </div>
         <!-- Hidden checkbox to maintain compatibility with existing JS -->
         <input type="checkbox" id="useThreeNaps" style="display: none;" />
@@ -693,29 +693,29 @@
       <div class="nap-toggle-container" style="margin-top: 12px;">
         <label class="nap-toggle-label" for="powerSleepEnabled" style="cursor: pointer;">
           <input type="checkbox" id="powerSleepEnabled" style="margin-right: 8px; cursor: pointer;" />
-          Power sleep mode
+          Power Sleep Mode
         </label>
         <span class="subtext" style="font-size: 0.85rem; opacity: 0.7; margin-left: 4px;">(boosts naps to target)</span>
       </div>
 
       <button type="button" id="toggleWakeWindows" class="collapse-toggle">
         <span class="toggle-arrow">▶</span>
-        Wake window settings
+        Wake Window Settings
       </button>
 
       <div class="nap-rows" id="wakeWindowsSection" style="display: none;">
         <div class="nap-row">
-          <span class="label">Last wake window</span>
+          <span class="label">Last Wake Window</span>
           <input type="number" id="lastWake" min="30" max="360" step="5" />
           <span class="unit">mins</span>
         </div>
         <div class="nap-row">
-          <span class="label">Min wake window</span>
+          <span class="label">Min Wake Window</span>
           <input type="number" id="minWake" min="30" max="360" step="5" />
           <span class="unit">mins</span>
         </div>
         <div class="nap-row">
-          <span class="label">Max wake window</span>
+          <span class="label">Max Wake Window</span>
           <input type="number" id="maxWake" min="30" max="360" step="5" />
           <span class="unit">mins</span>
         </div>
@@ -729,20 +729,20 @@
       <input type="hidden" id="nap3Length" />
 
       <div class="buttons-row">
-        <button type="button" id="openNapConfig" title="Configure nap lengths for 2-nap and 3-nap modes">⚙️ Naps</button>
-        <button type="button" id="resetDefaults" title="Reset all settings to defaults">↻ Reset</button>
-        <button type="button" id="copySchedule" title="Copy schedule to share via text/WhatsApp">↗️ Share</button>
+        <button type="button" id="openNapConfig" title="Configure Nap Lengths for 2-Nap and 3-Nap Modes">⚙️ Naps</button>
+        <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">↻ Reset</button>
+        <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">↗️ Share</button>
       </div>
       <div class="buttons-row">
-        <button type="button" id="openActualNaps" title="Track today's actual nap times">📊 Track</button>
-        <button type="button" id="openConstraints" title="Set schedule constraints">🎯 Constraints</button>
+        <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">📊 Track</button>
+        <button type="button" id="openConstraints" title="Set Schedule Constraints">🎯 Constraints</button>
       </div>
     </section>
 
     <!-- Output -->
     <section class="card secondary">
       <h2>
-        Today's schedule
+        Today's Schedule
         <span id="summaryLabel"></span>
       </h2>
       <ul class="schedule-list" id="scheduleList"></ul>
@@ -764,10 +764,10 @@
 
       <div class="modal-body">
         <div class="constraint-section">
-          <h4>Need baby awake by a certain time?</h4>
+          <h4>Need Baby Awake by a Certain Time?</h4>
           <p class="constraint-description">For leaving the house, appointments, etc.</p>
           <div class="form-row">
-            <label for="mustBeAwakeBy">Baby must be awake by</label>
+            <label for="mustBeAwakeBy">Baby Must Be Awake By</label>
             <input type="time" id="mustBeAwakeBy" />
           </div>
           <button type="button" id="clearAwakeBy" class="clear-btn">Clear</button>
@@ -776,7 +776,7 @@
         <hr style="border:none;border-top:1px solid rgba(51,65,85,0.9);margin:14px 0;" />
 
         <div class="constraint-section">
-          <h4>Need baby asleep during a time window?</h4>
+          <h4>Need Baby Asleep During a Time Window?</h4>
           <p class="constraint-description">For calls, quiet time, sibling pickup, etc.</p>
           <div class="form-grid">
             <div class="form-row">
@@ -901,12 +901,12 @@
           <p class="constraint-description">Typically used for: 90 min + 30 min naps</p>
           <div class="nap-rows">
             <div class="nap-row">
-              <span class="label">Nap 1 length</span>
+              <span class="label">Nap 1 Length</span>
               <input type="number" id="config2NapNap1" min="10" max="240" step="5" />
               <span class="unit">mins</span>
             </div>
             <div class="nap-row">
-              <span class="label">Nap 2 length</span>
+              <span class="label">Nap 2 Length</span>
               <input type="number" id="config2NapNap2" min="10" max="240" step="5" />
               <span class="unit">mins</span>
             </div>
@@ -921,17 +921,17 @@
           <p class="constraint-description">Typically used for: 30 min + 60 min + 30 min naps</p>
           <div class="nap-rows">
             <div class="nap-row">
-              <span class="label">Nap 1 length</span>
+              <span class="label">Nap 1 Length</span>
               <input type="number" id="config3NapNap1" min="10" max="240" step="5" />
               <span class="unit">mins</span>
             </div>
             <div class="nap-row">
-              <span class="label">Nap 2 length</span>
+              <span class="label">Nap 2 Length</span>
               <input type="number" id="config3NapNap2" min="10" max="240" step="5" />
               <span class="unit">mins</span>
             </div>
             <div class="nap-row">
-              <span class="label">Nap 3 length</span>
+              <span class="label">Nap 3 Length</span>
               <input type="number" id="config3NapNap3" min="10" max="240" step="5" />
               <span class="unit">mins</span>
             </div>
@@ -946,7 +946,7 @@
           <p class="constraint-description">Total nap time target for power sleep mode (typically 3 hours = 180 mins)</p>
           <div class="nap-rows">
             <div class="nap-row">
-              <span class="label">Power sleep target</span>
+              <span class="label">Power Sleep Target</span>
               <input type="number" id="powerSleepTarget" min="60" max="300" step="15" value="180" />
               <span class="unit">mins</span>
             </div>
