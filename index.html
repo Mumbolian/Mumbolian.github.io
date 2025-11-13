@@ -492,22 +492,35 @@
       nap3Row.style.display = showThree ? "grid" : "none";
     }
 
-    function applyDefaults() {
+    function applyDefaults(forceThreeNaps = null) {
       wakeInput.value = "07:00";
       bedInput.value = "20:30";            // default fixed bedtime
 
-      useThreeNapsInput.checked = true;    // prefer 3 naps initially
+      // If forceThreeNaps is specified, use that; otherwise keep current state
+      if (forceThreeNaps !== null) {
+        useThreeNapsInput.checked = forceThreeNaps;
+      }
 
       firstWakeInput.value = 150;          // 2h30
       lastWakeInput.value = 210;           // 3h30
       minWakeInput.value = 150;            // 2h30 min
       maxWakeInput.value = 210;            // 3h30 max
 
-      nap1Input.value = 60;   // 1h
-      nap2Input.value = 90;   // 1.5h
-      nap3Input.value = 30;   // cat nap
+      // Set nap length defaults based on number of naps
+      const preferThree = useThreeNapsInput.checked;
+      if (preferThree) {
+        // 3 nap schedule defaults
+        nap1Input.value = 30;   // 30 min
+        nap2Input.value = 60;   // 1h
+        nap3Input.value = 30;   // 30 min
+      } else {
+        // 2 nap schedule defaults
+        nap1Input.value = 90;   // 1.5h
+        nap2Input.value = 30;   // 30 min
+        nap3Input.value = 30;   // not used for 2 naps
+      }
 
-      updateNap3Visibility(3);
+      updateNap3Visibility(preferThree ? 3 : 2);
     }
 
     function initFromStorageOrDefaults() {
@@ -522,11 +535,13 @@
         minWakeInput.value = s.minWake || 150;
         maxWakeInput.value = s.maxWake || 210;
 
-        nap1Input.value = s.nap1 || 60;
-        nap2Input.value = s.nap2 || 90;
+        // Use appropriate defaults based on saved preference
+        const preferThree = !!s.preferThree;
+        nap1Input.value = s.nap1 || (preferThree ? 30 : 90);
+        nap2Input.value = s.nap2 || (preferThree ? 60 : 30);
         nap3Input.value = s.nap3 || 30;
       } else {
-        applyDefaults();
+        applyDefaults(true); // Force 3 naps for new users
       }
       updateNap3Visibility();
     }
@@ -610,7 +625,8 @@
           timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
           extra: `${napLen} min`,
           badge: "Nap",
-          badgeClass: ""
+          badgeClass: "",
+          wakeWindow: ww  // Add wake window before this nap
         });
 
         cursor = napEnd;
@@ -627,7 +643,8 @@
         label: "Bedtime",
         timeRange: fromMinutes(resultingBedtimeMins),
         badge: "End of day",
-        badgeClass: "bed"
+        badgeClass: "bed",
+        wakeWindow: finalWakeWindow  // Add wake window before bedtime
       });
 
       return {
@@ -751,6 +768,10 @@
         left.innerHTML = `<strong>${item.label}</strong><br/><span class="time">${item.timeRange}</span>`;
         if (item.extra) {
           left.innerHTML += `<br/><span class="subtext">${item.extra}</span>`;
+        }
+        // Add wake window duration if present
+        if (item.wakeWindow) {
+          left.innerHTML += `<br/><span class="subtext" style="color: #facc15;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
         }
 
         if (item.badge) {
