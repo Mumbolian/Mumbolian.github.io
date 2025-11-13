@@ -644,7 +644,6 @@
     <section class="card">
       <h2>
         Planned Schedule Inputs
-        <span>Schedule updates instantly as you tweak</span>
       </h2>
 
       <div class="form-grid">
@@ -718,10 +717,6 @@
         <button type="button" id="openActualNaps">📊 Track Actual Naps</button>
         <button type="button" id="openConstraints">🎯 Schedule Constraints</button>
       </div>
-      <p class="subtext">
-        Bedtime and the last wake window are fixed. We fit the rest of the day in between using
-        wake windows that grow from the first window up to the last, respecting your min/max limits.
-      </p>
     </section>
 
     <!-- Output -->
@@ -874,7 +869,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.6.2"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.6.3"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -2218,9 +2213,7 @@
           const absDiff = Math.abs(diff);
           const sign = diff === 0 ? "" : diff > 0 ? "+" : "-";
           const diffStr = formatDuration(absDiff);
-          bedtimeNote.textContent = `Bedtime is fixed at ${fromMinutes(
-                  originalTargetBed
-          )}. Schedule lands exactly there (${sign}${diffStr} difference after day normalisation).`;
+          bedtimeNote.textContent = `Bedtime is fixed at ${fromMinutes(originalTargetBed)}.`;
         } else {
           bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(bedtimeMins)}`;
         }
