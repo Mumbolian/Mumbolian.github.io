@@ -933,6 +933,90 @@
       };
     }
 
+    function adjustScheduleForConstraints(params) {
+      const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths, napCount } = params;
+
+      // Get constraint values
+      const mustBeAwakeByStr = mustBeAwakeByInput.value;
+
+      // If no "must be awake by" constraint, return null (no adjustment needed)
+      if (!mustBeAwakeByStr) {
+        return null;
+      }
+
+      let mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
+      if (mustBeAwakeBy === null) {
+        return null;
+      }
+
+      // Normalize constraint time
+      while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
+      while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+
+      // Build the schedule and check which nap conflicts
+      let scheduleResult = tryBuildSchedule(napCount, params);
+      if (!scheduleResult.ok) {
+        return null; // Can't even build basic schedule
+      }
+
+      // Find if any nap conflicts with the constraint
+      const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
+      let conflictingNapIndex = -1;
+
+      for (let i = 0; i < naps.length; i++) {
+        const nap = naps[i];
+        const [startStr, endStr] = nap.timeRange.split(" – ");
+        let napStart = toMinutes(startStr);
+        let napEnd = toMinutes(endStr);
+
+        // Normalize
+        while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
+        while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
+        while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
+        while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
+
+        // Check if constraint time falls during this nap
+        if (mustBeAwakeBy >= napStart && mustBeAwakeBy < napEnd) {
+          conflictingNapIndex = i;
+          break;
+        }
+      }
+
+      // If no conflict, no adjustment needed
+      if (conflictingNapIndex === -1) {
+        return null;
+      }
+
+      // Adjust the conflicting nap's length to end before the constraint time
+      const adjustedNapLengths = [...napLengths];
+      const nap = naps[conflictingNapIndex];
+      const [startStr] = nap.timeRange.split(" – ");
+      let napStart = toMinutes(startStr);
+
+      // Normalize
+      while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
+      while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
+
+      // Calculate new nap length: from start to constraint time
+      const newNapLength = Math.max(10, mustBeAwakeBy - napStart); // At least 10 mins
+      adjustedNapLengths[conflictingNapIndex] = newNapLength;
+
+      // Try building schedule with adjusted nap length
+      const adjustedParams = { ...params, napLengths: adjustedNapLengths };
+      const adjustedSchedule = tryBuildSchedule(napCount, adjustedParams);
+
+      if (adjustedSchedule.ok) {
+        return {
+          schedule: adjustedSchedule,
+          adjustedNapIndex: conflictingNapIndex,
+          originalLength: napLengths[conflictingNapIndex],
+          newLength: newNapLength
+        };
+      }
+
+      return null; // Adjustment didn't work
+    }
+
     function validateConstraints(scheduleResult, wakeMins, bedMins) {
       const violations = [];
 
@@ -1161,6 +1245,29 @@
           return;
         }
 
+        // Try to adjust schedule for constraints
+        let constraintAdjustmentInfo = null;
+        const adjustment = adjustScheduleForConstraints({ wakeMins, bedMins, lastWake, minWake, maxWake, napLengths, napCount: scheduleResult.napCountUsed });
+
+        if (adjustment) {
+          // Use the adjusted schedule
+          scheduleResult = adjustment.schedule;
+          constraintAdjustmentInfo = {
+            napIndex: adjustment.adjustedNapIndex,
+            originalLength: adjustment.originalLength,
+            newLength: adjustment.newLength
+          };
+
+          // Update the nap input to reflect the adjustment
+          if (adjustment.adjustedNapIndex === 0) {
+            nap1Input.value = adjustment.newLength;
+          } else if (adjustment.adjustedNapIndex === 1) {
+            nap2Input.value = adjustment.newLength;
+          } else if (adjustment.adjustedNapIndex === 2) {
+            nap3Input.value = adjustment.newLength;
+          }
+        }
+
         const {
           items,
           wakeWindowDurations,
@@ -1249,6 +1356,16 @@
 
         // Display constraint violations if any, or success message if constraints are set and met
         const hasConstraints = !!(mustBeAwakeByInput.value || (sleepWindowStartInput.value && sleepWindowEndInput.value));
+
+        // Show adjustment info if schedule was modified
+        if (constraintAdjustmentInfo) {
+          const napNum = constraintAdjustmentInfo.napIndex + 1;
+          const oldLen = constraintAdjustmentInfo.originalLength;
+          const newLen = constraintAdjustmentInfo.newLength;
+          const reduction = oldLen - newLen;
+          modeNote.textContent = (modeNote.textContent ? modeNote.textContent + " " : "") +
+            `✓ Adjusted Nap ${napNum} (reduced by ${reduction} min) to meet awake-by constraint.`;
+        }
 
         if (constraintViolations.length > 0) {
           warningBox.style.display = "block";
