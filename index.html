@@ -949,25 +949,27 @@
           while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
           while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
 
-          // Find the last nap end time
+          // Check if any nap overlaps with the "must be awake by" time
           const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
-          if (naps.length > 0) {
-            const lastNap = naps[naps.length - 1];
-            // Extract end time from timeRange "HH:MM – HH:MM"
-            const endTimeStr = lastNap.timeRange.split(" – ")[1];
-            let lastNapEnd = toMinutes(endTimeStr);
+          for (const nap of naps) {
+            const [startStr, endStr] = nap.timeRange.split(" – ");
+            let napStart = toMinutes(startStr);
+            let napEnd = toMinutes(endStr);
 
             // Normalize to same day cycle
-            while (lastNapEnd < wakeMins - 12 * 60) lastNapEnd += 24 * 60;
-            while (lastNapEnd > wakeMins + 12 * 60) lastNapEnd -= 24 * 60;
+            while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
+            while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
+            while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
+            while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
 
-            if (lastNapEnd > mustBeAwakeBy) {
-              const diff = lastNapEnd - mustBeAwakeBy;
+            // Check if the constraint time falls during this nap
+            if (mustBeAwakeBy >= napStart && mustBeAwakeBy < napEnd) {
               violations.push({
                 type: 'awake-by',
-                message: `Last nap ends at ${endTimeStr}, but baby needs to be awake by ${mustBeAwakeByStr} (${formatDuration(diff)} too late).`,
-                suggestion: `Try: (1) Reduce last nap length by ${formatDuration(diff)}+, (2) Shorten earlier naps, or (3) Move wake time earlier.`
+                message: `${nap.label} runs from ${startStr} to ${endStr}, but baby needs to be awake by ${mustBeAwakeByStr}.`,
+                suggestion: `Try: (1) Start ${nap.label} earlier, (2) Shorten ${nap.label}, or (3) Move wake time earlier to shift the schedule.`
               });
+              break; // Only report the first conflicting nap
             }
           }
         }
