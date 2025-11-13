@@ -1048,10 +1048,46 @@
         }
       }
 
-      // Strategy 3: Reallocate nap time
-      // Keep total nap time the same, no nap < 30 min, max ±15 min change per nap
-      const totalNapTime = napLengths.slice(0, napCount).reduce((a, b) => a + b, 0);
+      // Strategy 2: Adjust bedtime (bidirectional - earlier OR later)
+      // Try moving bedtime earlier (shortens day, compresses schedule)
+      for (let adjustment = 15; adjustment <= 45; adjustment += 15) {
+        const earlierBedMins = bedMins - adjustment;
+        const testParams2 = { ...params, bedMins: earlierBedMins };
+        const testSchedule2 = tryBuildSchedule(napCount, testParams2);
 
+        if (testSchedule2.ok) {
+          const testViolations2 = validateConstraints(testSchedule2, wakeMins, earlierBedMins);
+          if (testViolations2.length === 0) {
+            return {
+              schedule: testSchedule2,
+              strategy: 'bedtime',
+              changes: { bedMins: earlierBedMins },
+              message: `Compressed schedule by moving bedtime earlier by ${adjustment} min to ${fromMinutes(earlierBedMins)}`
+            };
+          }
+        }
+      }
+
+      // Also try moving bedtime later (extends day, allows more flexibility)
+      for (let adjustment = 15; adjustment <= 45; adjustment += 15) {
+        const laterBedMins = bedMins + adjustment;
+        const testParams2b = { ...params, bedMins: laterBedMins };
+        const testSchedule2b = tryBuildSchedule(napCount, testParams2b);
+
+        if (testSchedule2b.ok) {
+          const testViolations2b = validateConstraints(testSchedule2b, wakeMins, laterBedMins);
+          if (testViolations2b.length === 0) {
+            return {
+              schedule: testSchedule2b,
+              strategy: 'bedtime',
+              changes: { bedMins: laterBedMins },
+              message: `Extended schedule by moving bedtime later by ${adjustment} min to ${fromMinutes(laterBedMins)}`
+            };
+          }
+        }
+      }
+
+      // Strategy 3: Reduce conflicting nap (without redistribution first)
       // Find which nap conflicts
       const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
       let conflictingNapIndex = -1;
@@ -1075,37 +1111,68 @@
       }
 
       if (conflictingNapIndex !== -1) {
-        // Try reducing conflicting nap and redistributing to others
-        const adjustedNapLengths = [...napLengths];
         const MIN_NAP = 30;
-        const MAX_CHANGE = 15;
+        const MAX_CHANGE = 30; // Increased from 15 to allow more aggressive adjustments
 
+        // First try: Just reduce the conflicting nap without redistributing
+        // This avoids pushing the nap start time later
         for (let reduction = 5; reduction <= MAX_CHANGE; reduction += 5) {
-          const newConflictingLength = Math.max(MIN_NAP, napLengths[conflictingNapIndex] - reduction);
-          const actualReduction = napLengths[conflictingNapIndex] - newConflictingLength;
+          const newLength = Math.max(MIN_NAP, napLengths[conflictingNapIndex] - reduction);
+          const actualReduction = napLengths[conflictingNapIndex] - newLength;
 
           if (actualReduction === 0) continue;
 
-          adjustedNapLengths[conflictingNapIndex] = newConflictingLength;
+          const adjustedNapLengths = [...napLengths];
+          adjustedNapLengths[conflictingNapIndex] = newLength;
 
-          // Distribute the reduction to other naps
-          const otherNapIndices = Array.from({ length: napCount }, (_, i) => i).filter(i => i !== conflictingNapIndex);
-          const addPerNap = Math.floor(actualReduction / otherNapIndices.length);
-          let remainder = actualReduction % otherNapIndices.length;
+          const testParams3 = { ...params, napLengths: adjustedNapLengths };
+          const testSchedule3 = tryBuildSchedule(napCount, testParams3);
 
-          for (let i of otherNapIndices) {
-            const add = addPerNap + (remainder > 0 ? 1 : 0);
-            if (remainder > 0) remainder--;
-
-            // Check we don't exceed max change
-            if (Math.abs(napLengths[i] + add - napLengths[i]) <= MAX_CHANGE) {
-              adjustedNapLengths[i] = napLengths[i] + add;
+          if (testSchedule3.ok) {
+            const testViolations3 = validateConstraints(testSchedule3, wakeMins, bedMins);
+            if (testViolations3.length === 0) {
+              return {
+                schedule: testSchedule3,
+                strategy: 'nap-reduction',
+                changes: { napLengths: adjustedNapLengths },
+                message: `Shortened Nap ${conflictingNapIndex + 1} by ${actualReduction} min to satisfy constraint`,
+                napChanges: adjustedNapLengths
+              };
             }
           }
+        }
 
-          // Verify total is preserved
-          const newTotal = adjustedNapLengths.slice(0, napCount).reduce((a, b) => a + b, 0);
-          if (Math.abs(newTotal - totalNapTime) <= napCount) { // Allow small rounding error
+        // Second try: Reduce conflicting nap and redistribute to naps AFTER it only
+        // This prevents pushing the conflicting nap's start time later
+        const napsAfter = [];
+        for (let i = conflictingNapIndex + 1; i < napCount; i++) {
+          napsAfter.push(i);
+        }
+
+        if (napsAfter.length > 0) {
+          for (let reduction = 5; reduction <= 15; reduction += 5) {
+            const newConflictingLength = Math.max(MIN_NAP, napLengths[conflictingNapIndex] - reduction);
+            const actualReduction = napLengths[conflictingNapIndex] - newConflictingLength;
+
+            if (actualReduction === 0) continue;
+
+            const adjustedNapLengths = [...napLengths];
+            adjustedNapLengths[conflictingNapIndex] = newConflictingLength;
+
+            // Distribute the reduction only to naps AFTER the conflicting one
+            const addPerNap = Math.floor(actualReduction / napsAfter.length);
+            let remainder = actualReduction % napsAfter.length;
+
+            for (let i of napsAfter) {
+              const add = addPerNap + (remainder > 0 ? 1 : 0);
+              if (remainder > 0) remainder--;
+
+              // Check we don't exceed max change
+              if (add <= 15) {
+                adjustedNapLengths[i] = napLengths[i] + add;
+              }
+            }
+
             const testParams3 = { ...params, napLengths: adjustedNapLengths };
             const testSchedule3 = tryBuildSchedule(napCount, testParams3);
 
@@ -1116,7 +1183,7 @@
                   schedule: testSchedule3,
                   strategy: 'reallocation',
                   changes: { napLengths: adjustedNapLengths },
-                  message: `Reduced Nap ${conflictingNapIndex + 1} by ${actualReduction} min and redistributed to other naps`,
+                  message: `Reduced Nap ${conflictingNapIndex + 1} by ${actualReduction} min and redistributed to later naps`,
                   napChanges: adjustedNapLengths
                 };
               }
