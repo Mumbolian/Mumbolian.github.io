@@ -188,6 +188,30 @@
     button.primary:hover {
       filter: brightness(1.05);
     }
+    button.collapse-toggle {
+      width: 100%;
+      text-align: left;
+      margin: 8px 0 4px;
+      padding: 6px 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+      background: rgba(15, 23, 42, 0.5);
+    }
+    button.collapse-toggle:hover {
+      color: #e5e7eb;
+      background: rgba(15, 23, 42, 0.8);
+    }
+    .toggle-arrow {
+      display: inline-block;
+      transition: transform 0.2s ease;
+      font-size: 0.65rem;
+    }
+    .toggle-arrow.expanded {
+      transform: rotate(90deg);
+    }
 
     .nap-rows {
       margin-top: 4px;
@@ -329,7 +353,12 @@
         <label for="useThreeNaps">Prefer 3 naps (we'll drop to 2 if needed)</label>
       </div>
 
-      <div class="nap-rows">
+      <button type="button" id="toggleWakeWindows" class="collapse-toggle">
+        <span class="toggle-arrow">▶</span>
+        Wake window settings
+      </button>
+
+      <div class="nap-rows" id="wakeWindowsSection" style="display: none;">
         <div class="nap-row">
           <span class="label">Last wake window</span>
           <input type="number" id="lastWake" min="30" max="360" step="5" />
@@ -422,6 +451,21 @@
     const warningBox = document.getElementById("warningBox");
     const resetBtn = document.getElementById("resetDefaults");
     const copyBtn = document.getElementById("copySchedule");
+
+    const toggleWakeWindowsBtn = document.getElementById("toggleWakeWindows");
+    const wakeWindowsSection = document.getElementById("wakeWindowsSection");
+
+    // Toggle wake windows section
+    toggleWakeWindowsBtn.addEventListener("click", () => {
+      const isHidden = wakeWindowsSection.style.display === "none";
+      wakeWindowsSection.style.display = isHidden ? "flex" : "none";
+      const arrow = toggleWakeWindowsBtn.querySelector(".toggle-arrow");
+      if (isHidden) {
+        arrow.classList.add("expanded");
+      } else {
+        arrow.classList.remove("expanded");
+      }
+    });
 
     function toMinutes(timeStr) {
       if (!timeStr || !/^\d{2}:\d{2}$/.test(timeStr)) return null;
