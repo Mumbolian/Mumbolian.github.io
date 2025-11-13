@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Bingpot Studio – Nap Scheduler</title>
+  <title>T Man's Snooze Schedule</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root {
@@ -297,11 +297,7 @@
 <main>
   <header>
     <div class="title-block">
-      <h1>Bingpot Studio – Nap Planner</h1>
-      <p>
-        Fixed bedtime. Fixed last wake window. We shift the earlier wake windows within your min/max limits,
-        and drop to 2 naps automatically if 3 no longer fits.
-      </p>
+      <h1>T Man's Snooze Schedule</h1>
     </div>
     <div class="pill">
       <span class="dot"></span>
@@ -402,7 +398,6 @@
 
   <div class="footer">
     <span>Settings are saved in this browser (localStorage).</span>
-    <span>Built for <code>bingpotstudio.com</code> – adjust parameters as your baby grows.</span>
   </div>
 </main>
 
@@ -682,15 +677,27 @@
         bedMins += 24 * 60;
       }
 
-      let minWake = Number(minWakeInput.value) || 150;
-      let maxWake = Number(maxWakeInput.value) || 210;
+      const minWake = Number(minWakeInput.value);
+      const maxWake = Number(maxWakeInput.value);
 
-      if (maxWake < minWake) {
-        maxWake = minWake;
-        maxWakeInput.value = maxWake;
+      if (!minWake || !maxWake || minWake <= 0 || maxWake <= 0) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Please enter valid min and max wake window values (greater than 0).";
+        return;
       }
 
-      let lastWake = Number(lastWakeInput.value) || maxWake;
+      if (maxWake < minWake) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Max wake window must be greater than or equal to min wake window.";
+        return;
+      }
+
+      let lastWake = Number(lastWakeInput.value);
+      if (!lastWake || lastWake <= 0) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Please enter a valid last wake window value (greater than 0).";
+        return;
+      }
       // Clamp last wake to min/max, since it's also a wake window
       if (lastWake < minWake) lastWake = minWake;
       if (lastWake > maxWake) lastWake = maxWake;
@@ -698,7 +705,12 @@
         lastWakeInput.value = lastWake;
       }
 
-      const firstWake = Number(firstWakeInput.value) || minWake;
+      const firstWake = Number(firstWakeInput.value);
+      if (!firstWake || firstWake <= 0) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Please enter a valid first wake window value (greater than 0).";
+        return;
+      }
       // First wake isn't used directly in the math now, but kept as a "hint" parameter we could use later.
 
       const nap1Len = Number(nap1Input.value) || 0;
@@ -717,6 +729,7 @@
 
       let scheduleResult = null;
       let autoDowngraded = false;
+      let threeNapFailReason = null;
 
       const params = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths };
 
@@ -724,6 +737,7 @@
       if (requestedNapCount === 3) {
         scheduleResult = tryBuildSchedule(3, params);
         if (!scheduleResult.ok) {
+          threeNapFailReason = scheduleResult.reason;
           // fallback to 2 naps
           scheduleResult = tryBuildSchedule(2, params);
           if (scheduleResult.ok) {
@@ -739,10 +753,26 @@
 
       if (!scheduleResult || !scheduleResult.ok) {
         warningBox.style.display = "block";
-        warningBox.textContent =
-                scheduleResult && scheduleResult.reason
-                        ? scheduleResult.reason + " Try reducing nap lengths or relaxing min/max wake limits."
-                        : "Could not fit day between wake and bed with these settings. Try adjusting nap lengths or wake limits.";
+        let errorMsg = "Could not create a valid schedule. ";
+
+        if (scheduleResult && scheduleResult.reason) {
+          errorMsg += scheduleResult.reason + " ";
+        }
+
+        // Provide specific guidance based on the error
+        if (scheduleResult && scheduleResult.reason && scheduleResult.reason.includes("outside the min/max limits")) {
+          errorMsg += "Try: (1) Increase max wake window, (2) Decrease min wake window, or (3) Reduce nap lengths.";
+        } else if (scheduleResult && scheduleResult.reason && scheduleResult.reason.includes("Not enough time")) {
+          errorMsg += "Try: (1) Reduce total nap time, (2) Move bedtime later, or (3) Reduce last wake window.";
+        } else {
+          errorMsg += "Try adjusting nap lengths, wake windows, or wake/bed times.";
+        }
+
+        if (preferThree && threeNapFailReason) {
+          errorMsg += " (Note: 3 naps also failed - " + threeNapFailReason + ")";
+        }
+
+        warningBox.textContent = errorMsg;
         updateNap3Visibility(2);
         return;
       }
@@ -826,7 +856,7 @@
 
       if (autoDowngraded) {
         modeNote.textContent =
-                "3 naps couldn't fit within the min/max wake window limits, so this is a 2-nap day instead.";
+                "⚠️ Automatically switched to 2 naps (3 naps couldn't fit: " + threeNapFailReason + ")";
       } else {
         modeNote.textContent = "";
       }
