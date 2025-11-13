@@ -52,8 +52,8 @@ Set time-based requirements and let the app automatically adjust the schedule to
 
 The app uses a sophisticated multi-strategy approach to automatically satisfy constraints:
 
-1. **Adjust wake windows** - Compresses wake windows to shift naps earlier (least invasive)
-2. **Move bedtime earlier** - Shortens the day to force schedule compression
+1. **Adjust wake windows** - Compresses or expands wake windows to shift naps earlier or later (least invasive)
+2. **Adjust bedtime** - Moves bedtime earlier (shortens day) or later (extends day) by 15 minutes
 3. **Reallocate nap time** - Redistributes nap durations while keeping total sleep constant (max ±15 min per nap, minimum 30 min each)
 4. **Switch nap count** - Tries alternative 2-nap vs 3-nap schedule if needed
 
@@ -113,20 +113,22 @@ For a given nap count (2 or 3):
 When schedule constraints are set, the app automatically tries to adjust the schedule using these strategies in order:
 
 #### Strategy 1: Adjust Wake Windows
-- Reduces `maxWake` by 5-30 minutes in 5-minute increments
-- Compresses wake windows to shift all naps earlier in the day
+- **Compress**: Reduces `maxWake` by 5-30 minutes in 5-minute increments to shift naps earlier
+- **Expand**: Increases `maxWake` by 5-30 minutes in 5-minute increments (up to 5 hour maximum) to shift naps later
 - Preserves nap lengths and bedtime
 - **Least invasive** - tries this first
 
-Example: `maxWake` 210 → 200 minutes shifts entire schedule ~10 minutes earlier
+Example: `maxWake` 210 → 200 minutes shifts schedule ~10 minutes earlier
+Example: `maxWake` 210 → 220 minutes shifts schedule ~10 minutes later
 
-#### Strategy 2: Move Bedtime Earlier
-- Moves bedtime 15 minutes earlier
-- Shortens the total day, forcing schedule compression
-- All naps and wake windows compress to fit in less time
-- Can trigger 3→2 nap reduction
+#### Strategy 2: Adjust Bedtime
+- **Earlier**: Moves bedtime 15 minutes earlier, shortening the day and forcing schedule compression
+- **Later**: Moves bedtime 15 minutes later, extending the day and allowing more flexibility
+- All naps and wake windows adjust to fit the new day length
+- Can trigger 3→2 nap reduction (when compressing) or 2→3 nap addition (when extending)
 
 Example: Bedtime 20:30 → 20:15 compresses everything by 15 minutes
+Example: Bedtime 20:30 → 20:45 extends everything by 15 minutes
 
 #### Strategy 3: Reallocate Nap Time
 - Reduces conflicting nap and redistributes time to other naps
