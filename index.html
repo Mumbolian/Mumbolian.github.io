@@ -1295,7 +1295,9 @@
 
         let scheduleResult = null;
         let autoDowngraded = false;
+        let autoUpgraded = false;
         let threeNapFailReason = null;
+        let twoNapFailReason = null;
 
         const params = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths };
 
@@ -1318,6 +1320,21 @@
           }
         } else {
           scheduleResult = tryBuildSchedule(2, params);
+          if (!scheduleResult.ok) {
+            twoNapFailReason = scheduleResult.reason;
+            // Auto-upgrade to 3 naps with appropriate defaults
+            nap1Input.value = 30;
+            nap2Input.value = 60;
+            nap3Input.value = 30;
+            const newNapLengths = [30, 60, 30];
+            const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+            scheduleResult = tryBuildSchedule(3, newParams);
+            if (scheduleResult.ok) {
+              autoUpgraded = true;
+              requestedNapCount = 3;
+              useThreeNapsInput.checked = true;
+            }
+          }
         }
 
         if (!scheduleResult || !scheduleResult.ok) {
@@ -1339,6 +1356,10 @@
 
           if (threeNapFailReason) {
             errorMsg += " (Note: 3 naps also failed - " + threeNapFailReason + ")";
+          }
+
+          if (twoNapFailReason) {
+            errorMsg += " (Note: 2 naps also failed - " + twoNapFailReason + ")";
           }
 
           warningBox.textContent = errorMsg;
@@ -1450,6 +1471,8 @@
 
         if (autoDowngraded) {
           modeNote.textContent = "⚠️ Automatically switched to 2 naps (3 naps couldn't fit: " + threeNapFailReason + ")";
+        } else if (autoUpgraded) {
+          modeNote.textContent = "✓ Automatically switched to 3 naps (2 naps couldn't fit: " + twoNapFailReason + ")";
         } else {
           modeNote.textContent = "";
         }
