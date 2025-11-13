@@ -1,4 +1,4 @@
-# T Man's Snooze Schedule
+# T-Man's Snooze Schedule
 
 A tiny browser-only nap scheduling tool built for tired parents.
 
