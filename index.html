@@ -878,7 +878,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.6.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.6.1"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -2209,8 +2209,8 @@
         wakeWindowsText.textContent = wwStrings.join("  •  ");
 
         // Bedtime note (should match target)
-        const totalNapHours = (totalNapTime / 60).toFixed(2);
-        summaryLabel.textContent = `${napCountUsed} naps • ${totalNapHours}h total daytime sleep`;
+        const totalNapFormatted = formatDuration(totalNapTime);
+        summaryLabel.textContent = `${napCountUsed} naps • ${totalNapFormatted} total daytime sleep`;
 
         const originalTargetBed = toMinutes(bedInput.value);
         if (originalTargetBed != null) {
