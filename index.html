@@ -331,11 +331,6 @@
 
       <div class="nap-rows">
         <div class="nap-row">
-          <span class="label">First wake window</span>
-          <input type="number" id="firstWake" min="30" max="360" step="5" />
-          <span class="unit">mins</span>
-        </div>
-        <div class="nap-row">
           <span class="label">Last wake window</span>
           <input type="number" id="lastWake" min="30" max="360" step="5" />
           <span class="unit">mins</span>
@@ -410,7 +405,6 @@
     const bedInput = document.getElementById("bedTime");
     const useThreeNapsInput = document.getElementById("useThreeNaps");
 
-    const firstWakeInput = document.getElementById("firstWake");
     const lastWakeInput = document.getElementById("lastWake");
     const minWakeInput = document.getElementById("minWake");
     const maxWakeInput = document.getElementById("maxWake");
@@ -467,7 +461,6 @@
         wakeTime: wakeInput.value || "",
         bedTime: bedInput.value || "",
         preferThree: !!useThreeNapsInput.checked,
-        firstWake: Number(firstWakeInput.value) || 0,
         lastWake: Number(lastWakeInput.value) || 0,
         minWake: Number(minWakeInput.value) || 0,
         maxWake: Number(maxWakeInput.value) || 0,
@@ -497,7 +490,6 @@
         useThreeNapsInput.checked = forceThreeNaps;
       }
 
-      firstWakeInput.value = 150;          // 2h30
       lastWakeInput.value = 210;           // 3h30
       minWakeInput.value = 135;            // 2h15 min
       maxWakeInput.value = 210;            // 3h30 max
@@ -526,7 +518,6 @@
         if (s.bedTime) bedInput.value = s.bedTime;
         useThreeNapsInput.checked = !!s.preferThree;
 
-        firstWakeInput.value = s.firstWake || 150;
         lastWakeInput.value = s.lastWake || 210;
         minWakeInput.value = s.minWake || 135;
         maxWakeInput.value = s.maxWake || 210;
@@ -684,10 +675,18 @@
 
         const minWake = Number(minWakeInput.value);
         const maxWake = Number(maxWakeInput.value);
+        const lastWake = Number(lastWakeInput.value);
 
-        if (!minWake || !maxWake || minWake <= 0 || maxWake <= 0) {
+        // Validate all wake window inputs
+        if (!minWake || minWake <= 0) {
           warningBox.style.display = "block";
-          warningBox.textContent = "Please enter valid min and max wake window values (greater than 0).";
+          warningBox.textContent = "Min wake window must be greater than 0.";
+          return;
+        }
+
+        if (!maxWake || maxWake <= 0) {
+          warningBox.style.display = "block";
+          warningBox.textContent = "Max wake window must be greater than 0.";
           return;
         }
 
@@ -697,26 +696,17 @@
           return;
         }
 
-        let lastWake = Number(lastWakeInput.value);
         if (!lastWake || lastWake <= 0) {
           warningBox.style.display = "block";
-          warningBox.textContent = "Please enter a valid last wake window value (greater than 0).";
+          warningBox.textContent = "Last wake window must be greater than 0.";
           return;
-        }
-        // Clamp last wake to min/max, since it's also a wake window
-        if (lastWake < minWake) lastWake = minWake;
-        if (lastWake > maxWake) lastWake = maxWake;
-        if (lastWake !== Number(lastWakeInput.value)) {
-          lastWakeInput.value = lastWake;
         }
 
-        const firstWake = Number(firstWakeInput.value);
-        if (!firstWake || firstWake <= 0) {
+        if (lastWake < minWake || lastWake > maxWake) {
           warningBox.style.display = "block";
-          warningBox.textContent = "Please enter a valid first wake window value (greater than 0).";
+          warningBox.textContent = `Last wake window must be between ${minWake} and ${maxWake} minutes.`;
           return;
         }
-        // First wake isn't used directly in the math now, but kept as a "hint" parameter we could use later.
 
         const nap1Len = Number(nap1Input.value) || 0;
         const nap2Len = Number(nap2Input.value) || 0;
@@ -913,7 +903,6 @@
     [
       wakeInput,
       bedInput,
-      firstWakeInput,
       lastWakeInput,
       minWakeInput,
       maxWakeInput,
