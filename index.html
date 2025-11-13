@@ -878,7 +878,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.5.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.5.1"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -1476,48 +1476,70 @@
           cursor = napEnd;
         } else {
           // Calculate planned nap time for remaining naps
-          // This is a simplified approach - we'll fit it in the remaining time
           const remainingNaps = napCount - i;
-          const remainingTime = bedMins - cursor;
-
-          // Calculate how much time we need for remaining naps and wake windows
-          let remainingNapTime = 0;
-          for (let j = i; j < napCount; j++) {
-            remainingNapTime += napLengths[j];
-          }
-
-          // Last wake window is fixed
           const isLastNap = (i === napCount - 1);
-          const targetWakeAfter = isLastNap ? lastWake : minWake;
 
-          const availableForWakeWindows = remainingTime - remainingNapTime;
-          const wakeWindowsNeeded = remainingNaps; // one before each nap
-
-          // Distribute wake windows
-          let wakeWindow;
           if (isLastNap) {
-            wakeWindow = lastWake;
+            // For the last nap, work backwards from bedtime
+            // We need lastWake minutes between nap end and bedtime
+            const napLen = napLengths[i];
+            const napEnd = bedMins - lastWake;
+            const napStart = napEnd - napLen;
+            const wakeWindow = napStart - cursor;
+
+            // Validate that the wake window is reasonable
+            if (wakeWindow < minWake) {
+              return { ok: false, reason: `Not enough time for wake window before last nap (need at least ${minWake} min, have ${wakeWindow} min)` };
+            }
+
+            items.push({
+              label: `Nap ${napNum}`,
+              timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
+              extra: `${napLen} min`,
+              badge: "Planned",
+              badgeClass: "planned",
+              wakeWindow: wakeWindow,
+              isActual: false
+            });
+
+            totalNapTime += napLen;
+            wakeWindowDurations.push(wakeWindow);
+            cursor = napEnd;
           } else {
-            wakeWindow = Math.max(minWake, Math.min(maxWake, availableForWakeWindows / wakeWindowsNeeded));
+            // For non-last naps, distribute remaining time
+            const remainingTime = bedMins - cursor;
+
+            // Calculate how much time we need for remaining naps
+            let remainingNapTime = 0;
+            for (let j = i; j < napCount; j++) {
+              remainingNapTime += napLengths[j];
+            }
+
+            // Reserve lastWake for the final wake window
+            const availableForWakeWindows = remainingTime - remainingNapTime - lastWake;
+            const wakeWindowsNeeded = remainingNaps; // one before each remaining nap
+
+            // Distribute wake windows evenly (or use min/max constraints)
+            const wakeWindow = Math.max(minWake, Math.min(maxWake, availableForWakeWindows / wakeWindowsNeeded));
+
+            const napStart = cursor + wakeWindow;
+            const napLen = napLengths[i];
+            const napEnd = napStart + napLen;
+
+            items.push({
+              label: `Nap ${napNum}`,
+              timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
+              extra: `${napLen} min`,
+              badge: "Planned",
+              badgeClass: "planned",
+              wakeWindow: wakeWindow,
+              isActual: false
+            });
+
+            totalNapTime += napLen;
+            wakeWindowDurations.push(wakeWindow);
+            cursor = napEnd;
           }
-
-          const napStart = cursor + wakeWindow;
-          const napLen = napLengths[i];
-          const napEnd = napStart + napLen;
-
-          items.push({
-            label: `Nap ${napNum}`,
-            timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
-            extra: `${napLen} min`,
-            badge: "Planned",
-            badgeClass: "planned",
-            wakeWindow: wakeWindow,
-            isActual: false
-          });
-
-          totalNapTime += napLen;
-          wakeWindowDurations.push(wakeWindow);
-          cursor = napEnd;
         }
       }
 
