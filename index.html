@@ -497,9 +497,9 @@
         useThreeNapsInput.checked = forceThreeNaps;
       }
 
-      firstWakeInput.value = 150;          // 2h30
+      firstWakeInput.value = 135;          // 2h15
       lastWakeInput.value = 210;           // 3h30
-      minWakeInput.value = 150;            // 2h30 min
+      minWakeInput.value = 135;            // 2h15 min
       maxWakeInput.value = 210;            // 3h30 max
 
       // Set nap length defaults based on number of naps
@@ -526,9 +526,9 @@
         if (s.bedTime) bedInput.value = s.bedTime;
         useThreeNapsInput.checked = !!s.preferThree;
 
-        firstWakeInput.value = s.firstWake || 150;
+        firstWakeInput.value = s.firstWake || 135;
         lastWakeInput.value = s.lastWake || 210;
-        minWakeInput.value = s.minWake || 150;
+        minWakeInput.value = s.minWake || 135;
         maxWakeInput.value = s.maxWake || 210;
 
         // Use appropriate defaults based on saved preference
@@ -732,12 +732,32 @@
         const preferThree = !!useThreeNapsInput.checked;
         let requestedNapCount = preferThree ? 3 : 2;
 
+        let scheduleResult = null;
+        let autoDowngraded = false;
+        let threeNapFailReason = null;
+
         const params = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths };
 
-        // Try requested nap count
-        const scheduleResult = requestedNapCount === 3
-          ? tryBuildSchedule(3, params)
-          : tryBuildSchedule(2, params);
+        // Try requested nap count, with auto-downgrade from 3 to 2 if needed
+        if (requestedNapCount === 3) {
+          scheduleResult = tryBuildSchedule(3, params);
+          if (!scheduleResult.ok) {
+            threeNapFailReason = scheduleResult.reason;
+            // Auto-downgrade to 2 naps with appropriate defaults
+            nap1Input.value = 90;
+            nap2Input.value = 30;
+            const newNapLengths = [90, 30, Number(nap3Input.value) || 30];
+            const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+            scheduleResult = tryBuildSchedule(2, newParams);
+            if (scheduleResult.ok) {
+              autoDowngraded = true;
+              requestedNapCount = 2;
+              useThreeNapsInput.checked = false;
+            }
+          }
+        } else {
+          scheduleResult = tryBuildSchedule(2, params);
+        }
 
         if (!scheduleResult || !scheduleResult.ok) {
           warningBox.style.display = "block";
@@ -748,18 +768,16 @@
           }
 
           // Provide specific guidance based on the error
-          if (preferThree) {
-            errorMsg += "Try: (1) Switch to 2 naps, or (2) ";
+          if (scheduleResult && scheduleResult.reason && scheduleResult.reason.includes("outside the min/max limits")) {
+            errorMsg += "Try: (1) Increase max wake window, (2) Decrease min wake window, or (3) Reduce nap lengths.";
+          } else if (scheduleResult && scheduleResult.reason && scheduleResult.reason.includes("Not enough time")) {
+            errorMsg += "Try: (1) Reduce total nap time, (2) Move bedtime later, or (3) Reduce last wake window.";
           } else {
-            errorMsg += "Try: (1) ";
+            errorMsg += "Try adjusting nap lengths, wake windows, or wake/bed times.";
           }
 
-          if (scheduleResult && scheduleResult.reason && scheduleResult.reason.includes("outside the min/max limits")) {
-            errorMsg += "Increase max wake window, (2) Decrease min wake window, or (3) Reduce nap lengths.";
-          } else if (scheduleResult && scheduleResult.reason && scheduleResult.reason.includes("Not enough time")) {
-            errorMsg += "Reduce total nap time, (2) Move bedtime later, or (3) Reduce last wake window.";
-          } else {
-            errorMsg += "Adjust nap lengths, wake windows, or wake/bed times.";
+          if (threeNapFailReason) {
+            errorMsg += " (Note: 3 naps also failed - " + threeNapFailReason + ")";
           }
 
           warningBox.textContent = errorMsg;
@@ -844,7 +862,11 @@
           bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(bedtimeMins)}`;
         }
 
-        modeNote.textContent = ""; // Clear any previous mode notes
+        if (autoDowngraded) {
+          modeNote.textContent = "⚠️ Automatically switched to 2 naps (3 naps couldn't fit: " + threeNapFailReason + ")";
+        } else {
+          modeNote.textContent = "";
+        }
 
         copyBtn.dataset.scheduleText = scheduleTextLines.join("\n");
       } finally {
