@@ -738,8 +738,12 @@
         scheduleResult = tryBuildSchedule(3, params);
         if (!scheduleResult.ok) {
           threeNapFailReason = scheduleResult.reason;
-          // fallback to 2 naps
-          scheduleResult = tryBuildSchedule(2, params);
+          // fallback to 2 naps with 2-nap defaults
+          nap1Input.value = 90;  // 1.5h
+          nap2Input.value = 30;  // 30 min
+          const newNapLengths = [90, 30, Number(nap3Input.value) || 30];
+          const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+          scheduleResult = tryBuildSchedule(2, newParams);
           if (scheduleResult.ok) {
             autoDowngraded = true;
             requestedNapCount = 2;
