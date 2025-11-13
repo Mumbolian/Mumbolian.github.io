@@ -315,6 +315,123 @@
         grid-template-columns: 1fr 1fr auto;
       }
     }
+
+    /* Modal Styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+    }
+    .modal-content {
+      position: relative;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+      width: 100%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+      z-index: 1001;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.9);
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+    .close-btn {
+      background: transparent;
+      border: none;
+      color: #9ca3af;
+      font-size: 1.8rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+    .close-btn:hover {
+      background: rgba(55, 65, 81, 0.5);
+      color: #e5e7eb;
+    }
+    .modal-body {
+      padding: 18px 20px;
+    }
+    .constraint-section {
+      margin-bottom: 4px;
+    }
+    .constraint-section h4 {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #e5e7eb;
+    }
+    .constraint-description {
+      margin: 0 0 10px;
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    .clear-btn {
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      margin-top: 6px;
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    .clear-btn:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+    .modal-footer {
+      padding: 14px 20px 18px;
+      border-top: 1px solid rgba(51, 65, 85, 0.9);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .modal-footer button {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      .modal {
+        padding: 0;
+      }
+      .modal-content {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -397,8 +514,9 @@
       </div>
 
       <div class="buttons-row">
-        <button type="button" id="resetDefaults">Reset to typical 7–8m pattern</button>
+        <button type="button" id="resetDefaults">Reset to defaults</button>
         <button type="button" id="copySchedule">Copy schedule text</button>
+        <button type="button" id="openConstraints">🎯 Schedule Constraints</button>
       </div>
       <p class="subtext">
         Bedtime and the last wake window are fixed. We fit the rest of the day in between using
@@ -420,6 +538,51 @@
     </section>
   </div>
 
+  <!-- Constraints Modal -->
+  <div id="constraintsModal" class="modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Schedule Constraints</h3>
+        <button type="button" id="closeModal" class="close-btn">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="constraint-section">
+          <h4>Need baby awake by a certain time?</h4>
+          <p class="constraint-description">For leaving the house, appointments, etc.</p>
+          <div class="form-row">
+            <label for="mustBeAwakeBy">Baby must be awake by</label>
+            <input type="time" id="mustBeAwakeBy" />
+          </div>
+          <button type="button" id="clearAwakeBy" class="clear-btn">Clear</button>
+        </div>
+
+        <hr style="border:none;border-top:1px solid rgba(51,65,85,0.9);margin:14px 0;" />
+
+        <div class="constraint-section">
+          <h4>Need baby asleep during a time window?</h4>
+          <p class="constraint-description">For calls, quiet time, sibling pickup, etc.</p>
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="sleepWindowStart">From</label>
+              <input type="time" id="sleepWindowStart" />
+            </div>
+            <div class="form-row">
+              <label for="sleepWindowEnd">Until</label>
+              <input type="time" id="sleepWindowEnd" />
+            </div>
+          </div>
+          <button type="button" id="clearSleepWindow" class="clear-btn">Clear</button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" id="applyConstraints" class="primary">Apply Constraints</button>
+      </div>
+    </div>
+  </div>
+
   <div class="footer">
     <span>Settings are saved in this browser (localStorage).</span>
   </div>
@@ -427,7 +590,7 @@
 
 <script>
   (function () {
-    const STORAGE_KEY = "napPlannerSettings_v4";
+    const STORAGE_KEY = "napPlannerSettings_v5";
     let isRecomputing = false; // Flag to prevent recursive recomputation
 
     const wakeInput = document.getElementById("wakeTime");
@@ -455,6 +618,19 @@
     const toggleWakeWindowsBtn = document.getElementById("toggleWakeWindows");
     const wakeWindowsSection = document.getElementById("wakeWindowsSection");
 
+    // Constraints modal elements
+    const openConstraintsBtn = document.getElementById("openConstraints");
+    const constraintsModal = document.getElementById("constraintsModal");
+    const closeModalBtn = document.getElementById("closeModal");
+    const applyConstraintsBtn = document.getElementById("applyConstraints");
+    const modalBackdrop = constraintsModal.querySelector(".modal-backdrop");
+
+    const mustBeAwakeByInput = document.getElementById("mustBeAwakeBy");
+    const sleepWindowStartInput = document.getElementById("sleepWindowStart");
+    const sleepWindowEndInput = document.getElementById("sleepWindowEnd");
+    const clearAwakeByBtn = document.getElementById("clearAwakeBy");
+    const clearSleepWindowBtn = document.getElementById("clearSleepWindow");
+
     // Toggle wake windows section
     toggleWakeWindowsBtn.addEventListener("click", () => {
       const isHidden = wakeWindowsSection.style.display === "none";
@@ -465,6 +641,58 @@
       } else {
         arrow.classList.remove("expanded");
       }
+    });
+
+    // Update constraints button to show active state
+    function updateConstraintsButton() {
+      const hasAwakeBy = !!mustBeAwakeByInput.value;
+      const hasSleepWindow = !!(sleepWindowStartInput.value && sleepWindowEndInput.value);
+      const constraintsActive = hasAwakeBy || hasSleepWindow;
+
+      if (constraintsActive) {
+        const count = (hasAwakeBy ? 1 : 0) + (hasSleepWindow ? 1 : 0);
+        openConstraintsBtn.textContent = `🎯 Constraints (${count})`;
+        openConstraintsBtn.style.background = "rgba(34, 197, 94, 0.15)";
+        openConstraintsBtn.style.borderColor = "rgba(34, 197, 94, 0.5)";
+        openConstraintsBtn.style.color = "#bbf7d0";
+      } else {
+        openConstraintsBtn.textContent = "🎯 Schedule Constraints";
+        openConstraintsBtn.style.background = "";
+        openConstraintsBtn.style.borderColor = "";
+        openConstraintsBtn.style.color = "";
+      }
+    }
+
+    // Modal open/close handlers
+    function openModal() {
+      constraintsModal.style.display = "flex";
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeModal() {
+      constraintsModal.style.display = "none";
+      document.body.style.overflow = "";
+      updateConstraintsButton();
+    }
+
+    openConstraintsBtn.addEventListener("click", openModal);
+    closeModalBtn.addEventListener("click", closeModal);
+    modalBackdrop.addEventListener("click", closeModal);
+
+    // Clear constraint handlers
+    clearAwakeByBtn.addEventListener("click", () => {
+      mustBeAwakeByInput.value = "";
+    });
+
+    clearSleepWindowBtn.addEventListener("click", () => {
+      sleepWindowStartInput.value = "";
+      sleepWindowEndInput.value = "";
+    });
+
+    // Apply constraints and close modal
+    applyConstraintsBtn.addEventListener("click", () => {
+      closeModal();
+      recomputeSchedule();
     });
 
     function toMinutes(timeStr) {
@@ -510,7 +738,14 @@
         maxWake: Number(maxWakeInput.value) || 0,
         nap1: Number(nap1Input.value) || 0,
         nap2: Number(nap2Input.value) || 0,
-        nap3: Number(nap3Input.value) || 0
+        nap3: Number(nap3Input.value) || 0,
+        constraints: {
+          mustBeAwakeBy: mustBeAwakeByInput.value || null,
+          sleepWindow: {
+            start: sleepWindowStartInput.value || null,
+            end: sleepWindowEndInput.value || null
+          }
+        }
       };
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
@@ -571,6 +806,15 @@
         nap1Input.value = s.nap1 || (preferThree ? 30 : 90);
         nap2Input.value = s.nap2 || (preferThree ? 60 : 30);
         nap3Input.value = s.nap3 || 30;
+
+        // Load constraints if present
+        if (s.constraints) {
+          mustBeAwakeByInput.value = s.constraints.mustBeAwakeBy || "";
+          if (s.constraints.sleepWindow) {
+            sleepWindowStartInput.value = s.constraints.sleepWindow.start || "";
+            sleepWindowEndInput.value = s.constraints.sleepWindow.end || "";
+          }
+        }
       } else {
         applyDefaults(true); // Force 3 naps for new users
       }
@@ -689,6 +933,98 @@
       };
     }
 
+    function validateConstraints(scheduleResult, wakeMins, bedMins) {
+      const violations = [];
+
+      // Get constraint values
+      const mustBeAwakeByStr = mustBeAwakeByInput.value;
+      const sleepWindowStartStr = sleepWindowStartInput.value;
+      const sleepWindowEndStr = sleepWindowEndInput.value;
+
+      // Check "must be awake by" constraint
+      if (mustBeAwakeByStr) {
+        let mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
+        if (mustBeAwakeBy !== null) {
+          // Normalize to same day cycle as schedule
+          while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
+          while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+
+          // Find the last nap end time
+          const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
+          if (naps.length > 0) {
+            const lastNap = naps[naps.length - 1];
+            // Extract end time from timeRange "HH:MM – HH:MM"
+            const endTimeStr = lastNap.timeRange.split(" – ")[1];
+            let lastNapEnd = toMinutes(endTimeStr);
+
+            // Normalize to same day cycle
+            while (lastNapEnd < wakeMins - 12 * 60) lastNapEnd += 24 * 60;
+            while (lastNapEnd > wakeMins + 12 * 60) lastNapEnd -= 24 * 60;
+
+            if (lastNapEnd > mustBeAwakeBy) {
+              const diff = lastNapEnd - mustBeAwakeBy;
+              violations.push({
+                type: 'awake-by',
+                message: `Last nap ends at ${endTimeStr}, but baby needs to be awake by ${mustBeAwakeByStr} (${formatDuration(diff)} too late).`,
+                suggestion: `Try: (1) Reduce last nap length by ${formatDuration(diff)}+, (2) Shorten earlier naps, or (3) Move wake time earlier.`
+              });
+            }
+          }
+        }
+      }
+
+      // Check "must be asleep during" constraint
+      if (sleepWindowStartStr && sleepWindowEndStr) {
+        let sleepStart = toMinutes(sleepWindowStartStr);
+        let sleepEnd = toMinutes(sleepWindowEndStr);
+
+        if (sleepStart !== null && sleepEnd !== null) {
+          // Normalize to same day cycle
+          while (sleepStart < wakeMins - 12 * 60) sleepStart += 24 * 60;
+          while (sleepStart > wakeMins + 12 * 60) sleepStart -= 24 * 60;
+          while (sleepEnd < wakeMins - 12 * 60) sleepEnd += 24 * 60;
+          while (sleepEnd > wakeMins + 12 * 60) sleepEnd -= 24 * 60;
+
+          // Handle wrap-around if end < start
+          if (sleepEnd <= sleepStart) {
+            sleepEnd += 24 * 60;
+          }
+
+          // Check if any part of the sleep window overlaps with awake time
+          const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
+          let isAsleepDuringWindow = false;
+
+          for (const nap of naps) {
+            const [startStr, endStr] = nap.timeRange.split(" – ");
+            let napStart = toMinutes(startStr);
+            let napEnd = toMinutes(endStr);
+
+            // Normalize
+            while (napStart < wakeMins - 12 * 60) napStart += 24 * 60;
+            while (napStart > wakeMins + 12 * 60) napStart -= 24 * 60;
+            while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
+            while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
+
+            // Check if nap covers the entire required sleep window
+            if (napStart <= sleepStart && napEnd >= sleepEnd) {
+              isAsleepDuringWindow = true;
+              break;
+            }
+          }
+
+          if (!isAsleepDuringWindow) {
+            violations.push({
+              type: 'sleep-window',
+              message: `Baby needs to be asleep from ${sleepWindowStartStr} to ${sleepWindowEndStr}, but no nap fully covers this window.`,
+              suggestion: `Try: (1) Adjust nap timing to cover this window, (2) Extend a nap, or (3) Adjust wake time.`
+            });
+          }
+        }
+      }
+
+      return violations;
+    }
+
     function recomputeSchedule() {
       if (isRecomputing) return; // Prevent recursive calls
       isRecomputing = true;
@@ -702,6 +1038,10 @@
         bedtimeNote.textContent = "";
         modeNote.textContent = "";
         warningBox.style.display = "none";
+        // Reset warning box styles
+        warningBox.style.background = "";
+        warningBox.style.borderColor = "";
+        warningBox.style.color = "";
 
         const wakeMins = toMinutes(wakeInput.value);
         let bedMins = toMinutes(bedInput.value);
@@ -829,6 +1169,9 @@
 
         updateNap3Visibility(napCountUsed);
 
+        // Validate constraints
+        const constraintViolations = validateConstraints(scheduleResult, wakeMins, bedMins);
+
         const scheduleTextLines = [];
         scheduleList.innerHTML = "";
 
@@ -902,6 +1245,27 @@
           modeNote.textContent = "";
         }
 
+        // Display constraint violations if any, or success message if constraints are set and met
+        const hasConstraints = !!(mustBeAwakeByInput.value || (sleepWindowStartInput.value && sleepWindowEndInput.value));
+
+        if (constraintViolations.length > 0) {
+          warningBox.style.display = "block";
+          warningBox.style.background = "rgba(248, 113, 113, 0.12)";
+          warningBox.style.borderColor = "rgba(248, 113, 113, 0.35)";
+          warningBox.style.color = "#fecaca";
+          let constraintMsg = "⚠️ Schedule constraints not met:\n\n";
+          constraintViolations.forEach((v, idx) => {
+            constraintMsg += `${idx + 1}. ${v.message}\n   ${v.suggestion}\n\n`;
+          });
+          warningBox.innerHTML = constraintMsg.replace(/\n/g, '<br/>');
+        } else if (hasConstraints) {
+          warningBox.style.display = "block";
+          warningBox.style.background = "rgba(34, 197, 94, 0.12)";
+          warningBox.style.borderColor = "rgba(34, 197, 94, 0.35)";
+          warningBox.style.color = "#bbf7d0";
+          warningBox.innerHTML = "✓ All schedule constraints are satisfied!";
+        }
+
         copyBtn.dataset.scheduleText = scheduleTextLines.join("\n");
       } finally {
         isRecomputing = false; // Always reset the flag
@@ -910,6 +1274,11 @@
 
     resetBtn.addEventListener("click", () => {
       applyDefaults();
+      // Clear constraints
+      mustBeAwakeByInput.value = "";
+      sleepWindowStartInput.value = "";
+      sleepWindowEndInput.value = "";
+      updateConstraintsButton();
       recomputeSchedule();
     });
 
@@ -958,6 +1327,7 @@
     });
 
     initFromStorageOrDefaults();
+    updateConstraintsButton();
     recomputeSchedule();
   })();
 </script>
