@@ -204,7 +204,7 @@
     }
     .nap-row span.label {
       color: #d1d5db;
-      width: 110px;
+      width: 140px;
     }
     .nap-row .unit {
       font-size: 0.72rem;
@@ -289,8 +289,8 @@
     <div class="title-block">
       <h1>Bingpot Studio – Nap Planner</h1>
       <p>
-        Work backwards from bedtime: set wake time, target sleep time, naps, and first/last wake windows.
-        We’ll step up evenly in between.
+        Fixed bedtime. Fixed last wake window. We shift the earlier wake windows within your min/max limits,
+        and drop to 2 naps automatically if 3 no longer fits.
       </p>
     </div>
     <div class="pill">
@@ -313,14 +313,14 @@
           <input type="time" id="wakeTime" />
         </div>
         <div class="form-row">
-          <label for="bedTime">Target bedtime (for reference)</label>
+          <label for="bedTime">Bedtime (fixed, non-negotiable)</label>
           <input type="time" id="bedTime" />
         </div>
       </div>
 
       <div class="inline">
         <input type="checkbox" id="useThreeNaps" />
-        <label for="useThreeNaps">Use 3 naps (untick for 2 naps)</label>
+        <label for="useThreeNaps">Prefer 3 naps (we'll drop to 2 if needed)</label>
       </div>
 
       <div class="nap-rows">
@@ -332,7 +332,17 @@
         <div class="nap-row">
           <span class="label">Last wake window</span>
           <input type="number" id="lastWake" min="30" max="360" step="5" />
-          <span class="unit">mins (before bed)</span>
+          <span class="unit">mins (before bed, fixed)</span>
+        </div>
+        <div class="nap-row">
+          <span class="label">Min wake window</span>
+          <input type="number" id="minWake" min="30" max="360" step="5" />
+          <span class="unit">mins (safety floor)</span>
+        </div>
+        <div class="nap-row">
+          <span class="label">Max wake window</span>
+          <input type="number" id="maxWake" min="30" max="360" step="5" />
+          <span class="unit">mins (safety cap)</span>
         </div>
       </div>
 
@@ -361,8 +371,8 @@
         <button type="button" id="copySchedule">Copy schedule text</button>
       </div>
       <p class="subtext">
-        We build a curve of wake windows that grows from the first window to the last before bed.
-        Nap lengths are fully tweakable.
+        Bedtime and the last wake window are fixed. We fit the rest of the day in between using
+        wake windows that grow from the first window up to the last, respecting your min/max limits.
       </p>
     </section>
 
@@ -375,19 +385,20 @@
       <ul class="schedule-list" id="scheduleList"></ul>
       <div id="wakeWindowsText" class="subtext"></div>
       <div id="bedtimeNote" class="subtext"></div>
+      <div id="modeNote" class="subtext"></div>
       <div id="warningBox" class="warning" style="display:none;"></div>
     </section>
   </div>
 
   <div class="footer">
     <span>Settings are saved in this browser (localStorage).</span>
-    <span>Built for <code>bingpotstudio.com</code> – logic is easy to adjust as your baby grows.</span>
+    <span>Built for <code>bingpotstudio.com</code> – adjust parameters as your baby grows.</span>
   </div>
 </main>
 
 <script>
   (function () {
-    const STORAGE_KEY = "napPlannerSettings_v3";
+    const STORAGE_KEY = "napPlannerSettings_v4";
 
     const wakeInput = document.getElementById("wakeTime");
     const bedInput = document.getElementById("bedTime");
@@ -395,6 +406,8 @@
 
     const firstWakeInput = document.getElementById("firstWake");
     const lastWakeInput = document.getElementById("lastWake");
+    const minWakeInput = document.getElementById("minWake");
+    const maxWakeInput = document.getElementById("maxWake");
 
     const nap1Input = document.getElementById("nap1Length");
     const nap2Input = document.getElementById("nap2Length");
@@ -405,6 +418,7 @@
     const summaryLabel = document.getElementById("summaryLabel");
     const wakeWindowsText = document.getElementById("wakeWindowsText");
     const bedtimeNote = document.getElementById("bedtimeNote");
+    const modeNote = document.getElementById("modeNote");
     const warningBox = document.getElementById("warningBox");
     const resetBtn = document.getElementById("resetDefaults");
     const copyBtn = document.getElementById("copySchedule");
@@ -446,9 +460,11 @@
       const settings = {
         wakeTime: wakeInput.value || "",
         bedTime: bedInput.value || "",
-        useThreeNaps: !!useThreeNapsInput.checked,
+        preferThree: !!useThreeNapsInput.checked,
         firstWake: Number(firstWakeInput.value) || 0,
         lastWake: Number(lastWakeInput.value) || 0,
+        minWake: Number(minWakeInput.value) || 0,
+        maxWake: Number(maxWakeInput.value) || 0,
         nap1: Number(nap1Input.value) || 0,
         nap2: Number(nap2Input.value) || 0,
         nap3: Number(nap3Input.value) || 0
@@ -460,23 +476,28 @@
       }
     }
 
-    function updateNap3Visibility() {
-      nap3Row.style.display = useThreeNapsInput.checked ? "grid" : "none";
+    function updateNap3Visibility(actualNapCount) {
+      const preferThree = useThreeNapsInput.checked;
+      const showThree = (actualNapCount || (preferThree ? 3 : 2)) === 3;
+      nap3Row.style.display = showThree ? "grid" : "none";
     }
 
     function applyDefaults() {
       wakeInput.value = "07:00";
-      bedInput.value = "20:30";            // default target sleep time
-      useThreeNapsInput.checked = false;   // 2 naps default
+      bedInput.value = "20:30";            // default fixed bedtime
 
-      firstWakeInput.value = 150;          // 2.5h
-      lastWakeInput.value = 210;           // 3.5h
+      useThreeNapsInput.checked = true;    // prefer 3 naps initially
+
+      firstWakeInput.value = 150;          // 2h30
+      lastWakeInput.value = 210;           // 3h30
+      minWakeInput.value = 150;            // 2h30 min
+      maxWakeInput.value = 210;            // 3h30 max
 
       nap1Input.value = 60;   // 1h
       nap2Input.value = 90;   // 1.5h
-      nap3Input.value = 30;   // cat nap if using 3 naps
+      nap3Input.value = 30;   // cat nap
 
-      updateNap3Visibility();
+      updateNap3Visibility(3);
     }
 
     function initFromStorageOrDefaults() {
@@ -484,10 +505,12 @@
       if (s) {
         if (s.wakeTime) wakeInput.value = s.wakeTime;
         if (s.bedTime) bedInput.value = s.bedTime;
-        useThreeNapsInput.checked = !!s.useThreeNaps;
+        useThreeNapsInput.checked = !!s.preferThree;
 
         firstWakeInput.value = s.firstWake || 150;
         lastWakeInput.value = s.lastWake || 210;
+        minWakeInput.value = s.minWake || 150;
+        maxWakeInput.value = s.maxWake || 210;
 
         nap1Input.value = s.nap1 || 60;
         nap2Input.value = s.nap2 || 90;
@@ -498,61 +521,62 @@
       updateNap3Visibility();
     }
 
-    function recomputeSchedule() {
-      updateNap3Visibility();
-      saveSettings();
+    function tryBuildSchedule(napCount, params) {
+      const {
+        wakeMins,
+        bedMins,
+        lastWake,
+        minWake,
+        maxWake,
+        napLengths
+      } = params;
 
-      scheduleList.innerHTML = "";
-      wakeWindowsText.textContent = "";
-      summaryLabel.textContent = "";
-      bedtimeNote.textContent = "";
-      warningBox.style.display = "none";
+      const totalNapTime = napLengths.slice(0, napCount).reduce((a, b) => a + b, 0);
+      const totalDay = bedMins - wakeMins;
 
-      const wakeMins = toMinutes(wakeInput.value);
-      const targetBedMins = toMinutes(bedInput.value);
-
-      if (wakeMins == null) {
-        warningBox.style.display = "block";
-        warningBox.textContent = "Please set at least a wake-up time.";
-        return;
+      if (totalDay <= 0) {
+        return { ok: false, reason: "Bedtime must be after wake time (same or next day)." };
       }
 
-      const useThree = useThreeNapsInput.checked;
-      const napCount = useThree ? 3 : 2;
+      const totalAwake = totalDay - totalNapTime;
+      const remainingBeforeLast = totalAwake - lastWake;
 
-      const firstWake = Number(firstWakeInput.value) || 0;
-      const lastWake = Number(lastWakeInput.value) || 0;
-
-      const nap1Len = Number(nap1Input.value) || 0;
-      const nap2Len = Number(nap2Input.value) || 0;
-      const nap3Len = useThree ? (Number(nap3Input.value) || 0) : 0;
-
-      const napLengths = [nap1Len, nap2Len];
-      if (useThree) napLengths.push(nap3Len);
-
-      if (firstWake <= 0 || lastWake <= 0) {
-        warningBox.style.display = "block";
-        warningBox.textContent = "First and last wake windows should be greater than 0 minutes.";
-        return;
+      if (remainingBeforeLast < 0) {
+        return { ok: false, reason: "Not enough time for naps + last wake window before bed." };
       }
 
-      // Build wake windows: arithmetic progression from firstWake to lastWake
-      const wakeWindows = [];
-      const windowCount = napCount + 1; // e.g. 2 naps -> 3 windows
-      if (windowCount === 1) {
-        wakeWindows.push(firstWake);
-      } else {
-        const step = (lastWake - firstWake) / (windowCount - 1);
-        for (let i = 0; i < windowCount; i++) {
-          const value = Math.round(firstWake + step * i);
-          wakeWindows.push(Math.max(0, value));
-        }
+      const nWindowsBeforeLast = napCount; // one before each nap
+      if (nWindowsBeforeLast === 0) {
+        return { ok: false, reason: "Need at least one nap." };
       }
 
+      const minTotal = minWake * nWindowsBeforeLast;
+      const maxTotal = maxWake * nWindowsBeforeLast;
+
+      if (remainingBeforeLast < minTotal || remainingBeforeLast > maxTotal) {
+        return {
+          ok: false,
+          reason: "Awake windows would have to go outside the min/max limits."
+        };
+      }
+
+      // Build wake windows before naps, starting at min and adding to later windows first
+      const wakeWindowsBefore = new Array(nWindowsBeforeLast).fill(minWake);
+      let leftover = remainingBeforeLast - minTotal;
+
+      for (let i = nWindowsBeforeLast - 1; i >= 0 && leftover > 0; i--) {
+        const canAdd = maxWake - wakeWindowsBefore[i];
+        const add = Math.min(canAdd, leftover);
+        wakeWindowsBefore[i] += add;
+        leftover -= add;
+      }
+
+      const wakeWindowsAll = [...wakeWindowsBefore, lastWake];
+
+      // Build schedule items
       const items = [];
       const wakeWindowDurations = [];
 
-      // Start of day
       items.push({
         label: "Wake-up",
         timeRange: fromMinutes(wakeMins),
@@ -563,7 +587,7 @@
       let cursor = wakeMins;
 
       for (let i = 0; i < napCount; i++) {
-        const ww = wakeWindows[i] || 0;
+        const ww = wakeWindowsBefore[i] || 0;
         const napLen = napLengths[i];
 
         cursor += ww;
@@ -582,12 +606,12 @@
         cursor = napEnd;
       }
 
-      // Final wake window before bed
-      const finalWakeWindow = wakeWindows[wakeWindows.length - 1] || 0;
+      // Final wake window to fixed bedtime
+      const finalWakeWindow = lastWake;
       cursor += finalWakeWindow;
       wakeWindowDurations.push(finalWakeWindow);
 
-      const resultingBedtimeMins = cursor;
+      const resultingBedtimeMins = cursor; // should equal bedMins
 
       items.push({
         label: "Bedtime",
@@ -596,10 +620,119 @@
         badgeClass: "bed"
       });
 
-      // Build schedule UI + copy text
-      const scheduleTextLines = [];
+      return {
+        ok: true,
+        items,
+        wakeWindowsAll,
+        wakeWindowDurations,
+        totalNapTime,
+        bedtimeMins: resultingBedtimeMins,
+        napCountUsed: napCount
+      };
+    }
+
+    function recomputeSchedule() {
+      saveSettings();
 
       scheduleList.innerHTML = "";
+      wakeWindowsText.textContent = "";
+      summaryLabel.textContent = "";
+      bedtimeNote.textContent = "";
+      modeNote.textContent = "";
+      warningBox.style.display = "none";
+
+      const wakeMins = toMinutes(wakeInput.value);
+      let bedMins = toMinutes(bedInput.value);
+
+      if (wakeMins == null || bedMins == null) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Please set both wake-up time and bedtime.";
+        return;
+      }
+
+      // Allow bedtime to roll onto next day if it's earlier than wake
+      if (bedMins <= wakeMins) {
+        bedMins += 24 * 60;
+      }
+
+      let minWake = Number(minWakeInput.value) || 150;
+      let maxWake = Number(maxWakeInput.value) || 210;
+
+      if (maxWake < minWake) {
+        maxWake = minWake;
+        maxWakeInput.value = maxWake;
+      }
+
+      let lastWake = Number(lastWakeInput.value) || maxWake;
+      // Clamp last wake to min/max, since it's also a wake window
+      if (lastWake < minWake) lastWake = minWake;
+      if (lastWake > maxWake) lastWake = maxWake;
+      if (lastWake !== Number(lastWakeInput.value)) {
+        lastWakeInput.value = lastWake;
+      }
+
+      const firstWake = Number(firstWakeInput.value) || minWake;
+      // First wake isn't used directly in the math now, but kept as a "hint" parameter we could use later.
+
+      const nap1Len = Number(nap1Input.value) || 0;
+      const nap2Len = Number(nap2Input.value) || 0;
+      const nap3Len = Number(nap3Input.value) || 0;
+      const napLengths = [nap1Len, nap2Len, nap3Len];
+
+      if (nap1Len <= 0 || nap2Len <= 0) {
+        warningBox.style.display = "block";
+        warningBox.textContent = "Nap 1 and Nap 2 lengths should be greater than 0 minutes.";
+        return;
+      }
+
+      const preferThree = !!useThreeNapsInput.checked;
+      let requestedNapCount = preferThree ? 3 : 2;
+
+      let scheduleResult = null;
+      let autoDowngraded = false;
+
+      const params = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths };
+
+      // Try requested nap count, then fallback to 2 if 3 fails due to constraints
+      if (requestedNapCount === 3) {
+        scheduleResult = tryBuildSchedule(3, params);
+        if (!scheduleResult.ok) {
+          // fallback to 2 naps
+          scheduleResult = tryBuildSchedule(2, params);
+          if (scheduleResult.ok) {
+            autoDowngraded = true;
+            requestedNapCount = 2;
+            useThreeNapsInput.checked = false; // reflect reality in the UI
+            saveSettings();
+          }
+        }
+      } else {
+        scheduleResult = tryBuildSchedule(2, params);
+      }
+
+      if (!scheduleResult || !scheduleResult.ok) {
+        warningBox.style.display = "block";
+        warningBox.textContent =
+                scheduleResult && scheduleResult.reason
+                        ? scheduleResult.reason + " Try reducing nap lengths or relaxing min/max wake limits."
+                        : "Could not fit day between wake and bed with these settings. Try adjusting nap lengths or wake limits.";
+        updateNap3Visibility(2);
+        return;
+      }
+
+      const {
+        items,
+        wakeWindowDurations,
+        totalNapTime,
+        bedtimeMins,
+        napCountUsed
+      } = scheduleResult;
+
+      updateNap3Visibility(napCountUsed);
+
+      const scheduleTextLines = [];
+      scheduleList.innerHTML = "";
+
       items.forEach((item) => {
         const li = document.createElement("li");
         const left = document.createElement("div");
@@ -639,36 +772,33 @@
       });
       wakeWindowsText.textContent = wwStrings.join("  •  ");
 
-      // Bedtime vs target note
-      const totalNapTime = napLengths.reduce((a, b) => a + b, 0);
+      // Bedtime note (should match target)
       const totalNapHours = (totalNapTime / 60).toFixed(2);
-      let summary = `${napCount} naps • ${totalNapHours}h total daytime sleep`;
+      summaryLabel.textContent = `${napCountUsed} naps • ${totalNapHours}h total daytime sleep`;
 
-      if (targetBedMins != null) {
-        // normalise target bed to be closest to resulting bedtime (same or previous day)
-        let target = targetBedMins;
-        while (target < resultingBedtimeMins - 12 * 60) target += 24 * 60;
-        while (target > resultingBedtimeMins + 12 * 60) target -= 24 * 60;
-        const diff = resultingBedtimeMins - target;
-        const sign = diff === 0 ? "" : diff > 0 ? "+" : "-";
+      const originalTargetBed = toMinutes(bedInput.value);
+      if (originalTargetBed != null) {
+        // normalise original target to nearest instance to resulting bedtime
+        let target = originalTargetBed;
+        while (target < bedtimeMins - 12 * 60) target += 24 * 60;
+        while (target > bedtimeMins + 12 * 60) target -= 24 * 60;
+        const diff = bedtimeMins - target;
         const absDiff = Math.abs(diff);
+        const sign = diff === 0 ? "" : diff > 0 ? "+" : "-";
         const diffStr = formatDuration(absDiff);
-        bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(
-                resultingBedtimeMins
-        )}  (target ${fromMinutes(targetBedMins)}, ${sign}${diffStr})`;
-
-        if (absDiff >= 45) {
-          warningBox.style.display = "block";
-          warningBox.textContent =
-                  "Resulting bedtime is quite far from your target. Tweak nap lengths or first/last wake windows.";
-        }
-
-        summary += " • working backwards from bedtime target";
+        bedtimeNote.textContent = `Bedtime is fixed at ${fromMinutes(
+                originalTargetBed
+        )}. Schedule lands exactly there (${sign}${diffStr} difference after day normalisation).`;
       } else {
-        bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(resultingBedtimeMins)}`;
+        bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(bedtimeMins)}`;
       }
 
-      summaryLabel.textContent = summary;
+      if (autoDowngraded) {
+        modeNote.textContent =
+                "3 naps couldn't fit within the min/max wake window limits, so this is a 2-nap day instead.";
+      } else {
+        modeNote.textContent = "";
+      }
 
       copyBtn.dataset.scheduleText = scheduleTextLines.join("\n");
     }
@@ -699,6 +829,8 @@
       useThreeNapsInput,
       firstWakeInput,
       lastWakeInput,
+      minWakeInput,
+      maxWakeInput,
       nap1Input,
       nap2Input,
       nap3Input
