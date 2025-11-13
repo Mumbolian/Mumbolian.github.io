@@ -878,7 +878,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.5.1"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.5.2"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v5";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -980,10 +980,14 @@
 
     // Update actual naps button to show active state
     function updateActualNapsButton() {
+      const preferThree = useThreeNapsInput.checked;
+      const currentNapCount = preferThree ? 3 : 2;
+
       let napCount = 0;
       if (actualNap1Start.value && actualNap1End.value) napCount++;
       if (actualNap2Start.value && actualNap2End.value) napCount++;
-      if (actualNap3Start.value && actualNap3End.value) napCount++;
+      // Only count Nap 3 if we're on a 3-nap schedule
+      if (currentNapCount >= 3 && actualNap3Start.value && actualNap3End.value) napCount++;
 
       if (napCount > 0) {
         openActualNapsBtn.textContent = `📊 Tracked Naps (${napCount})`;
@@ -1401,8 +1405,8 @@
       updateNap3Visibility();
     }
 
-    function getActualNapTimes() {
-      // Get actual nap times if they exist
+    function getActualNapTimes(napCount) {
+      // Get actual nap times if they exist, filtered by current schedule
       const actuals = [];
 
       if (actualNap1Start.value && actualNap1End.value) {
@@ -1421,7 +1425,8 @@
         });
       }
 
-      if (actualNap3Start.value && actualNap3End.value) {
+      // Only include Nap 3 if we're on a 3-nap schedule
+      if (napCount >= 3 && actualNap3Start.value && actualNap3End.value) {
         actuals.push({
           napNum: 3,
           start: toMinutes(actualNap3Start.value),
@@ -1577,7 +1582,7 @@
         napLengths
       } = params;
 
-      const actualNaps = getActualNapTimes();
+      const actualNaps = getActualNapTimes(napCount);
 
       // If we have actual nap times, use a different scheduling approach
       if (actualNaps.length > 0) {
@@ -2225,7 +2230,7 @@
         }
 
         // Check if we're using actual nap times
-        const actualNaps = getActualNapTimes();
+        const actualNaps = getActualNapTimes(napCountUsed);
         let modeMessages = [];
 
         if (actualNaps.length > 0) {
@@ -2340,6 +2345,7 @@
         nap1Input.value = 90;
         nap2Input.value = 30;
       }
+      updateActualNapsButton(); // Update button to reflect correct nap count
       recomputeSchedule();
     });
 
