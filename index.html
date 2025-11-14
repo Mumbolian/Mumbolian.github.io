@@ -2371,6 +2371,10 @@
         let nap3Len = Number(nap3Input.value) || 0;
         let napLengths = [nap1Len, nap2Len, nap3Len];
 
+        // Store original nap lengths from inputs for later comparison
+        // This captures user's base settings before any power sleep or mode switching
+        const originalNapLengthsFromInputs = [nap1Len, nap2Len, nap3Len];
+
         if (nap1Len <= 0 || nap2Len <= 0) {
           warningBox.style.display = "block";
           warningBox.textContent = "Nap 1 and Nap 2 lengths should be greater than 0 minutes.";
@@ -2397,6 +2401,10 @@
 
         // Reset actualNapCountInUse at the start of each recalculation
         actualNapCountInUse = null;
+
+        // Track base nap lengths for the mode that gets used (before power sleep)
+        // This is needed to show correct adjustment indicators
+        let baseNapLengthsForUsedMode = [...originalNapLengthsFromInputs];
 
         // Try requested nap count, with auto-downgrade from 3 to 2 if needed
         if (requestedNapCount === 3) {
@@ -2431,6 +2439,9 @@
               } else {
                 newNapLengths = [90, 30, 30];
               }
+
+              // Store base 2-nap lengths before power sleep for comparison
+              baseNapLengthsForUsedMode = [...newNapLengths];
 
               // Apply power sleep to the 2-nap schedule if enabled
               if (powerSleepEnabledInput.checked) {
@@ -2486,6 +2497,9 @@
               } else {
                 newNapLengths = [30, 60, 30];
               }
+
+              // Store base 3-nap lengths before power sleep for comparison
+              baseNapLengthsForUsedMode = [...newNapLengths];
 
               // Apply power sleep to the 3-nap schedule if enabled
               if (powerSleepEnabledInput.checked) {
@@ -2574,12 +2588,9 @@
 
         updateNap3Visibility(napCountUsed);
 
-        // Apply visual indicators when schedule uses different nap lengths than user's settings
-        const userNapLengths = [
-          Number(nap1Input.value) || 0,
-          Number(nap2Input.value) || 0,
-          Number(nap3Input.value) || 0
-        ];
+        // Apply visual indicators when schedule uses different nap lengths than base settings
+        // Compare against base settings of the mode being used (before power sleep/constraints)
+        const userNapLengths = baseNapLengthsForUsedMode;
 
         // Clear all adjustment indicators first
         nap1Input.classList.remove('setting-adjusted');
