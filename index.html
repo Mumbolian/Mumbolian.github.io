@@ -162,6 +162,16 @@
       border-color: rgba(251, 191, 36, 0.5) !important;
       box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15), inset 0 0 12px rgba(251, 191, 36, 0.08) !important;
     }
+    /* Red highlight for validation errors */
+    input[type="number"].validation-error {
+      background: rgba(239, 68, 68, 0.12);
+      border-color: rgba(239, 68, 68, 0.7);
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3), inset 0 0 12px rgba(239, 68, 68, 0.1);
+    }
+    input[type="number"].validation-error:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5), inset 0 0 12px rgba(239, 68, 68, 0.1);
+    }
 
     .inline {
       display: flex;
@@ -640,6 +650,49 @@
       padding: 8px 16px;
       font-size: 0.85rem;
     }
+    .scenario-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .scenario-tab {
+      flex: 1;
+      min-width: fit-content;
+      padding: 10px 14px;
+      background: rgba(51, 65, 85, 0.3);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      color: #94a3b8;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+    .scenario-tab:hover {
+      background: rgba(51, 65, 85, 0.5);
+      border-color: rgba(71, 85, 105, 0.7);
+      color: #cbd5e1;
+    }
+    .scenario-tab.active {
+      background: rgba(99, 102, 241, 0.2);
+      border-color: rgba(99, 102, 241, 0.5);
+      color: #a5b4fc;
+      box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+    }
+    .scenario-tab .tab-label {
+      display: block;
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-bottom: 2px;
+    }
+    .scenario-tab .tab-name {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
 
     @media (max-width: 640px) {
       .modal {
@@ -671,11 +724,11 @@
       <div class="form-grid">
         <div class="form-row">
           <label for="wakeTime">Wake-Up Time</label>
-          <input type="time" id="wakeTime" />
+          <input type="time" id="wakeTime" value="07:00" />
         </div>
         <div class="form-row">
           <label for="bedTime">Bedtime</label>
-          <input type="time" id="bedTime" />
+          <input type="time" id="bedTime" value="20:30" />
         </div>
       </div>
 
@@ -705,17 +758,22 @@
       <div class="nap-rows" id="wakeWindowsSection" style="display: none;">
         <div class="nap-row">
           <span class="label">Last Wake Window</span>
-          <input type="number" id="lastWake" min="30" max="360" step="5" />
+          <input type="number" id="lastWake" min="30" max="360" step="5" value="210" />
           <span class="unit">mins</span>
         </div>
         <div class="nap-row">
           <span class="label">Min Wake Window</span>
-          <input type="number" id="minWake" min="30" max="360" step="5" />
+          <input type="number" id="minWake" min="30" max="360" step="5" value="135" />
           <span class="unit">mins</span>
         </div>
         <div class="nap-row">
           <span class="label">Max Wake Window</span>
-          <input type="number" id="maxWake" min="30" max="360" step="5" />
+          <input type="number" id="maxWake" min="30" max="360" step="5" value="210" />
+          <span class="unit">mins</span>
+        </div>
+        <div class="nap-row">
+          <span class="label">Max First Wake</span>
+          <input type="number" id="maxFirstWake" min="30" max="360" step="5" value="180" />
           <span class="unit">mins</span>
         </div>
       </div>
@@ -723,9 +781,9 @@
       <hr style="border:none;border-top:1px solid rgba(51,65,85,0.9);margin:10px 0;" />
 
       <!-- Hidden inputs for nap lengths (used by code, configured via modal) -->
-      <input type="hidden" id="nap1Length" />
-      <input type="hidden" id="nap2Length" />
-      <input type="hidden" id="nap3Length" />
+      <input type="hidden" id="nap1Length" value="30" />
+      <input type="hidden" id="nap2Length" value="60" />
+      <input type="hidden" id="nap3Length" value="30" />
 
       <div class="buttons-row">
         <button type="button" id="openNapConfig" title="Configure Nap Lengths for 2-Nap and 3-Nap Modes">⚙️ Naps</button>
@@ -744,6 +802,9 @@
         Today's Schedule
         <span id="summaryLabel"></span>
       </h2>
+      <div id="scenarioTabs" class="scenario-tabs" style="display:none;">
+        <!-- Tabs will be dynamically inserted here -->
+      </div>
       <ul class="schedule-list" id="scheduleList"></ul>
       <div id="wakeWindowsText" class="subtext"></div>
       <div id="bedtimeNote" class="subtext"></div>
@@ -967,7 +1028,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.8.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.10.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -999,12 +1060,14 @@
     const lastWakeInput = document.getElementById("lastWake");
     const minWakeInput = document.getElementById("minWake");
     const maxWakeInput = document.getElementById("maxWake");
+    const maxFirstWakeInput = document.getElementById("maxFirstWake");
 
     const nap1Input = document.getElementById("nap1Length");
     const nap2Input = document.getElementById("nap2Length");
     const nap3Input = document.getElementById("nap3Length");
 
     const scheduleList = document.getElementById("scheduleList");
+    const scenarioTabs = document.getElementById("scenarioTabs");
     const summaryLabel = document.getElementById("summaryLabel");
     const wakeWindowsText = document.getElementById("wakeWindowsText");
     const bedtimeNote = document.getElementById("bedtimeNote");
@@ -1012,6 +1075,10 @@
     const warningBox = document.getElementById("warningBox");
     const resetBtn = document.getElementById("resetDefaults");
     const copyBtn = document.getElementById("copySchedule");
+
+    // Global state for scenarios
+    let currentScenarios = [];
+    let activeScenarioIndex = 0;
 
     const toggleWakeWindowsBtn = document.getElementById("toggleWakeWindows");
     const wakeWindowsSection = document.getElementById("wakeWindowsSection");
@@ -1305,6 +1372,7 @@
         lastWake: Number(lastWakeInput.value) || 0,
         minWake: Number(minWakeInput.value) || 0,
         maxWake: Number(maxWakeInput.value) || 0,
+        maxFirstWake: Number(maxFirstWakeInput.value) || 0,
         // Store separate nap lengths for 2-nap and 3-nap modes
         // Save to the mode that's actually being displayed/used
         twoNapLengths: saveAsThreeNap ? null : {
@@ -1586,6 +1654,7 @@
       lastWakeInput.value = 210;           // 3h30
       minWakeInput.value = 135;            // 2h15 min
       maxWakeInput.value = 210;            // 3h30 max
+      maxFirstWakeInput.value = 180;       // 3h max first wake
 
       // Set nap length defaults based on number of naps
       const preferThree = useThreeNapsInput.checked;
@@ -1615,6 +1684,7 @@
         lastWakeInput.value = s.lastWake || 210;
         minWakeInput.value = s.minWake || 135;
         maxWakeInput.value = s.maxWake || 210;
+        maxFirstWakeInput.value = s.maxFirstWake || 180;
 
         // Load mode-specific nap lengths from new v6 format or fall back to old format
         const preferThree = !!s.preferThree;
@@ -1685,7 +1755,7 @@
     }
 
     function tryBuildScheduleWithActuals(napCount, params, actualNaps) {
-      const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths } = params;
+      const { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths } = params;
 
       // Build schedule using actual nap times where available
       const items = [];
@@ -1817,6 +1887,14 @@
         }
       }
 
+      // Enforce maxFirstWake constraint
+      if (maxFirstWake && wakeWindowDurations.length > 0 && wakeWindowDurations[0] > maxFirstWake) {
+        return {
+          ok: false,
+          reason: `First wake window (${wakeWindowDurations[0]} min) exceeds maximum allowed (${maxFirstWake} min).`
+        };
+      }
+
       return {
         ok: true,
         items,
@@ -1830,13 +1908,88 @@
       };
     }
 
-    function tryBuildSchedule(napCount, params) {
+    // Wake window distribution strategies
+    const WAKE_STRATEGIES = {
+      AGGRESSIVE: 'aggressive',    // 20-30 min increments, prioritize shorter first wake
+      GENTLE: 'gentle',            // 10-15 min increments
+      BALANCED: 'balanced'         // Equal distribution
+    };
+
+    /**
+     * Distributes remaining wake time across windows using specified strategy
+     * @param {number} nWindows - Number of wake windows to distribute
+     * @param {number} remaining - Total minutes to distribute
+     * @param {number} minWake - Minimum wake window length
+     * @param {number} maxWake - Maximum wake window length
+     * @param {string} strategy - Distribution strategy (AGGRESSIVE, GENTLE, or BALANCED)
+     * @returns {Array<number>} - Array of wake window durations
+     */
+    function distributeWakeWindows(nWindows, remaining, minWake, maxWake, strategy) {
+      const windows = new Array(nWindows).fill(minWake);
+      let leftover = remaining - (minWake * nWindows);
+
+      if (strategy === WAKE_STRATEGIES.AGGRESSIVE) {
+        // Build longer wake windows toward end, 20-30 min increments
+        // Start from the back and add in chunks of 20-30 min
+        const targetIncrement = 25; // Average of 20-30
+        for (let i = nWindows - 1; i >= 1 && leftover > 0; i--) {
+          const desiredTotal = windows[i - 1] + targetIncrement;
+          const canAdd = Math.min(maxWake - windows[i], leftover);
+          const add = Math.min(canAdd, targetIncrement);
+          windows[i] += add;
+          leftover -= add;
+        }
+        // If still leftover, distribute from back again
+        for (let i = nWindows - 1; i >= 0 && leftover > 0; i--) {
+          const canAdd = Math.min(maxWake - windows[i], leftover);
+          windows[i] += canAdd;
+          leftover -= canAdd;
+        }
+      } else if (strategy === WAKE_STRATEGIES.GENTLE) {
+        // Gradual 10-15 min increments
+        const targetIncrement = 12; // Average of 10-15
+        for (let i = nWindows - 1; i >= 1 && leftover > 0; i--) {
+          const canAdd = Math.min(maxWake - windows[i], leftover);
+          const add = Math.min(canAdd, targetIncrement);
+          windows[i] += add;
+          leftover -= add;
+        }
+        // Second pass to distribute remaining
+        for (let i = nWindows - 1; i >= 0 && leftover > 0; i--) {
+          const canAdd = Math.min(maxWake - windows[i], leftover);
+          windows[i] += canAdd;
+          leftover -= canAdd;
+        }
+      } else if (strategy === WAKE_STRATEGIES.BALANCED) {
+        // Distribute evenly across all windows
+        const perWindow = Math.floor(leftover / nWindows);
+        const remainder = leftover % nWindows;
+
+        for (let i = 0; i < nWindows; i++) {
+          const add = Math.min(perWindow, maxWake - windows[i]);
+          windows[i] += add;
+          leftover -= add;
+        }
+        // Distribute remainder from back
+        for (let i = nWindows - 1; i >= 0 && leftover > 0; i--) {
+          const canAdd = Math.min(maxWake - windows[i], leftover);
+          const add = Math.min(canAdd, 1);
+          windows[i] += add;
+          leftover -= add;
+        }
+      }
+
+      return windows;
+    }
+
+    function tryBuildSchedule(napCount, params, strategy = WAKE_STRATEGIES.AGGRESSIVE) {
       const {
         wakeMins,
         bedMins,
         lastWake,
         minWake,
         maxWake,
+        maxFirstWake,
         napLengths
       } = params;
 
@@ -1876,18 +2029,24 @@
         };
       }
 
-      // Build wake windows before naps, starting at min and adding to later windows first
-      const wakeWindowsBefore = new Array(nWindowsBeforeLast).fill(minWake);
-      let leftover = remainingBeforeLast - minTotal;
-
-      for (let i = nWindowsBeforeLast - 1; i >= 0 && leftover > 0; i--) {
-        const canAdd = maxWake - wakeWindowsBefore[i];
-        const add = Math.min(canAdd, leftover);
-        wakeWindowsBefore[i] += add;
-        leftover -= add;
-      }
+      // Build wake windows before naps using specified strategy
+      const wakeWindowsBefore = distributeWakeWindows(
+        nWindowsBeforeLast,
+        remainingBeforeLast,
+        minWake,
+        maxWake,
+        strategy
+      );
 
       const wakeWindowsAll = [...wakeWindowsBefore, lastWake];
+
+      // Enforce maxFirstWake constraint
+      if (maxFirstWake && wakeWindowsBefore[0] > maxFirstWake) {
+        return {
+          ok: false,
+          reason: `First wake window (${wakeWindowsBefore[0]} min) exceeds maximum allowed (${maxFirstWake} min).`
+        };
+      }
 
       // Build schedule items
       const items = [];
@@ -1946,7 +2105,8 @@
         totalNapTime,
         bedtimeMins: resultingBedtimeMins,
         napCountUsed: napCount,
-        napLengthsUsed: napLengths.slice(0, napCount) // Track which nap lengths were actually used
+        napLengthsUsed: napLengths.slice(0, napCount), // Track which nap lengths were actually used
+        strategy // Track which strategy was used for this schedule
       };
     }
 
@@ -1997,10 +2157,10 @@
       return combinations;
     }
 
-    function tryAutoAdjustNapsToFit(napCount, params) {
+    function tryAutoAdjustNapsToFit(napCount, params, strategy = WAKE_STRATEGIES.AGGRESSIVE) {
       // Try to automatically adjust nap lengths to make a schedule fit
       // This runs when the base schedule fails, even without explicit constraints
-      const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths } = params;
+      const { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths } = params;
 
       const MIN_NAP = 30;
       const MAX_NAP_ADJUST = 15; // Max adjustment per nap (matches user expectation)
@@ -2014,7 +2174,7 @@
           napLengths: testNapLengths
         };
 
-        const testSchedule = tryBuildSchedule(napCount, testParams);
+        const testSchedule = tryBuildSchedule(napCount, testParams, strategy);
 
         if (testSchedule.ok) {
           // Found a solution!
@@ -2037,8 +2197,8 @@
       return null; // Couldn't find a working combination
     }
 
-    function adjustScheduleForConstraints(params) {
-      const { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths, napCount } = params;
+    function adjustScheduleForConstraints(params, strategy = WAKE_STRATEGIES.AGGRESSIVE) {
+      const { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths, napCount } = params;
 
       // Get constraint values
       const mustBeAwakeByStr = mustBeAwakeByInput.value;
@@ -2078,7 +2238,7 @@
       }
 
       // Build the schedule and check constraints
-      let scheduleResult = tryBuildSchedule(napCount, params);
+      let scheduleResult = tryBuildSchedule(napCount, params, strategy);
       if (!scheduleResult.ok) {
         return null; // Can't even build basic schedule
       }
@@ -2117,7 +2277,7 @@
             napLengths: testNapLengths
           };
 
-          const testSchedule = tryBuildSchedule(napCount, testParams);
+          const testSchedule = tryBuildSchedule(napCount, testParams, strategy);
 
           if (testSchedule.ok) {
             const testViolations = validateConstraints(testSchedule, wakeMins, adjustedBedMins);
@@ -2297,6 +2457,155 @@
       }
     }
 
+    /**
+     * Generate all feasible schedule scenarios for a given nap count
+     * @param {number} napCount - Number of naps (2 or 3)
+     * @param {object} params - Schedule parameters
+     * @param {Array} baseNapLengths - Original nap lengths before any adjustments
+     * @returns {Array} - Array of scenario objects with {schedule, strategy, strategyLabel}
+     */
+    function generateScenarios(napCount, params, baseNapLengths) {
+      const scenarios = [];
+      const strategies = [
+        { key: WAKE_STRATEGIES.AGGRESSIVE, label: 'Aggressive Stagger', priority: 1 },
+        { key: WAKE_STRATEGIES.GENTLE, label: 'Gentle Stagger', priority: 2 },
+        { key: WAKE_STRATEGIES.BALANCED, label: 'Balanced Windows', priority: 3 }
+      ];
+
+      for (const strategy of strategies) {
+        // Try to build schedule with this strategy
+        let result = tryBuildSchedule(napCount, params, strategy.key);
+        let adjustmentMessage = null;
+        let constraintAdjustmentMessage = null;
+
+        if (!result.ok) {
+          // Try auto-adjustment if base schedule doesn't work
+          const autoAdjustment = tryAutoAdjustNapsToFit(napCount, params, strategy.key);
+          if (autoAdjustment) {
+            result = autoAdjustment.schedule;
+            adjustmentMessage = autoAdjustment.message;
+          }
+        }
+
+        if (result.ok) {
+          // Try to apply constraints if they exist
+          const constraintParams = { ...params, napCount };
+          const constraintResult = adjustScheduleForConstraints(constraintParams, strategy.key);
+
+          if (constraintResult) {
+            // Constraints required adjustments
+            result = constraintResult.schedule;
+            constraintAdjustmentMessage = constraintResult.message;
+          }
+
+          scenarios.push({
+            schedule: result,
+            strategy: strategy.key,
+            strategyLabel: strategy.label,
+            priority: strategy.priority,
+            baseNapLengths: [...baseNapLengths], // Store original nap lengths for comparison
+            autoAdjustMessage: adjustmentMessage,
+            constraintAdjustMessage: constraintAdjustmentMessage
+          });
+        }
+      }
+
+      return scenarios;
+    }
+
+    /**
+     * Render scenario tabs in the UI
+     * @param {Array} scenarios - Array of scenario objects
+     */
+    function renderScenarioTabs(scenarios) {
+      scenarioTabs.innerHTML = "";
+
+      if (scenarios.length <= 1) {
+        scenarioTabs.style.display = "none";
+        return;
+      }
+
+      scenarioTabs.style.display = "flex";
+
+      scenarios.forEach((scenario, index) => {
+        const tab = document.createElement("div");
+        tab.className = `scenario-tab ${index === activeScenarioIndex ? 'active' : ''}`;
+        tab.innerHTML = `
+          <span class="tab-label">Option ${index + 1}</span>
+          <span class="tab-name">${scenario.strategyLabel}</span>
+        `;
+        tab.onclick = () => switchToScenario(index);
+        scenarioTabs.appendChild(tab);
+      });
+    }
+
+    /**
+     * Switch to a different scenario
+     * @param {number} index - Index of scenario to switch to
+     */
+    function switchToScenario(index) {
+      if (index < 0 || index >= currentScenarios.length) return;
+
+      activeScenarioIndex = index;
+      renderScenarioTabs(currentScenarios);
+      displaySchedule(currentScenarios[index]);
+    }
+
+    /**
+     * Display a single scenario's schedule
+     * @param {object} scenario - Scenario object with schedule and metadata
+     */
+    function displaySchedule(scenario) {
+      const { schedule, baseNapLengths, autoAdjustMessage, constraintAdjustMessage } = scenario;
+
+      scheduleList.innerHTML = "";
+
+      if (!schedule || !schedule.items) return;
+
+      // Render schedule items
+      schedule.items.forEach((item) => {
+        const li = document.createElement("li");
+        const left = document.createElement("div");
+        const right = document.createElement("div");
+
+        left.innerHTML = `<strong>${item.label}</strong><br/><span class="time">${item.timeRange}</span>`;
+
+        // Add extra info (nap length)
+        if (item.extra) {
+          const extraText = item.extra;
+
+          // Check if nap was adjusted
+          if (item.label.startsWith("Nap ")) {
+            const napIndex = parseInt(item.label.split(" ")[1]) - 1;
+            const originalNapLen = baseNapLengths[napIndex];
+            const currentNapLen = parseInt(item.extra);
+            if (originalNapLen && currentNapLen !== originalNapLen) {
+              const diff = currentNapLen - originalNapLen;
+              left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText} (${diff > 0 ? '+' : ''}${diff} min)</span>`;
+              li.classList.add('adjusted');
+            } else {
+              left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText}</span>`;
+            }
+          } else {
+            left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText}</span>`;
+          }
+        }
+
+        // Add wake window duration if present
+        if (item.wakeWindow) {
+          left.innerHTML += `<br/><span class="subtext" style="color: #9ca3af;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
+        }
+
+        if (item.badge) {
+          right.innerHTML = `<span class="badge ${item.badgeClass || ""}">${item.badge}</span>`;
+        }
+
+        li.appendChild(left);
+        li.appendChild(right);
+        scheduleList.appendChild(li);
+      });
+    }
+
     function recomputeSchedule() {
       if (isRecomputing) return; // Prevent recursive calls
       isRecomputing = true;
@@ -2305,6 +2614,8 @@
         saveSettings();
 
         scheduleList.innerHTML = "";
+        scenarioTabs.innerHTML = "";
+        scenarioTabs.style.display = "none";
         wakeWindowsText.textContent = "";
         summaryLabel.textContent = "";
         bedtimeNote.textContent = "";
@@ -2334,35 +2645,63 @@
         const minWake = Number(minWakeInput.value);
         const maxWake = Number(maxWakeInput.value);
         const lastWake = Number(lastWakeInput.value);
+        const maxFirstWake = Number(maxFirstWakeInput.value);
+
+        // Clear any previous validation error highlighting
+        minWakeInput.classList.remove('validation-error');
+        maxWakeInput.classList.remove('validation-error');
+        lastWakeInput.classList.remove('validation-error');
+        maxFirstWakeInput.classList.remove('validation-error');
 
         // Validate all wake window inputs
         if (!minWake || minWake <= 0) {
+          minWakeInput.classList.add('validation-error');
           warningBox.style.display = "block";
           warningBox.textContent = "Min wake window must be greater than 0.";
           return;
         }
 
         if (!maxWake || maxWake <= 0) {
+          maxWakeInput.classList.add('validation-error');
           warningBox.style.display = "block";
           warningBox.textContent = "Max wake window must be greater than 0.";
           return;
         }
 
         if (maxWake < minWake) {
+          minWakeInput.classList.add('validation-error');
+          maxWakeInput.classList.add('validation-error');
           warningBox.style.display = "block";
           warningBox.textContent = "Max wake window must be greater than or equal to min wake window.";
           return;
         }
 
         if (!lastWake || lastWake <= 0) {
+          lastWakeInput.classList.add('validation-error');
           warningBox.style.display = "block";
           warningBox.textContent = "Last wake window must be greater than 0.";
           return;
         }
 
         if (lastWake < minWake || lastWake > maxWake) {
+          lastWakeInput.classList.add('validation-error');
           warningBox.style.display = "block";
           warningBox.textContent = `Last wake window must be between ${minWake} and ${maxWake} minutes.`;
+          return;
+        }
+
+        if (!maxFirstWake || maxFirstWake <= 0) {
+          maxFirstWakeInput.classList.add('validation-error');
+          warningBox.style.display = "block";
+          warningBox.textContent = "Max first wake window must be greater than 0.";
+          return;
+        }
+
+        if (maxFirstWake < minWake) {
+          minWakeInput.classList.add('validation-error');
+          maxFirstWakeInput.classList.add('validation-error');
+          warningBox.style.display = "block";
+          warningBox.textContent = "⚠️ CONFIGURATION ERROR: Max first wake window must be at least equal to min wake window. Please adjust these values.";
           return;
         }
 
@@ -2397,7 +2736,7 @@
         let threeNapFailReason = null;
         let twoNapFailReason = null;
 
-        const params = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths };
+        const params = { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths };
 
         // Reset actualNapCountInUse at the start of each recalculation
         actualNapCountInUse = null;
@@ -2449,7 +2788,7 @@
                 newNapLengths = applyPowerSleep(newNapLengths, 2, powerSleepTarget);
               }
 
-              const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+              const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths: newNapLengths };
               scheduleResult = tryBuildSchedule(2, newParams);
               if (scheduleResult.ok) {
                 autoDowngraded = true;
@@ -2507,7 +2846,7 @@
                 newNapLengths = applyPowerSleep(newNapLengths, 3, powerSleepTarget);
               }
 
-              const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, napLengths: newNapLengths };
+              const newParams = { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths: newNapLengths };
               scheduleResult = tryBuildSchedule(3, newParams);
               if (scheduleResult.ok) {
                 autoUpgraded = true;
@@ -2558,7 +2897,7 @@
         // Try to adjust schedule for constraints
         let constraintAdjustmentInfo = null;
         let adjustedBedMins = bedMins; // Track adjusted bedtime for validation
-        const adjustment = adjustScheduleForConstraints({ wakeMins, bedMins, lastWake, minWake, maxWake, napLengths, napCount: scheduleResult.napCountUsed });
+        const adjustment = adjustScheduleForConstraints({ wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths, napCount: scheduleResult.napCountUsed });
 
         if (adjustment) {
           // Use the adjusted schedule
@@ -2585,6 +2924,29 @@
           napCountUsed,
           napLengthsUsed
         } = scheduleResult;
+
+        // GENERATE MULTIPLE SCENARIOS
+        // Generate alternative schedules with different wake window strategies
+        currentScenarios = generateScenarios(napCountUsed, params, baseNapLengthsForUsedMode);
+
+        // If no scenarios were generated, use the current schedule result as the only scenario
+        if (currentScenarios.length === 0) {
+          currentScenarios = [{
+            schedule: scheduleResult,
+            strategy: WAKE_STRATEGIES.AGGRESSIVE,
+            strategyLabel: 'Default Schedule',
+            priority: 1,
+            baseNapLengths: baseNapLengthsForUsedMode,
+            autoAdjustMessage: scheduleResult.autoAdjustMessage || null,
+            constraintAdjustMessage: constraintAdjustmentInfo ? constraintAdjustmentInfo.message : null
+          }];
+        }
+
+        // Reset to first scenario
+        activeScenarioIndex = 0;
+
+        // Render tabs if there are multiple scenarios
+        renderScenarioTabs(currentScenarios);
 
         updateNap3Visibility(napCountUsed);
 
@@ -2628,58 +2990,35 @@
           openNapConfigBtn.classList.add('setting-adjusted');
         }
 
+        // Display the active scenario using the new rendering function
+        displaySchedule(currentScenarios[activeScenarioIndex]);
+
+        // Get data from the active scenario for additional UI elements
+        const activeSchedule = currentScenarios[activeScenarioIndex].schedule;
+        const activeItems = activeSchedule.items;
+        const activeWakeWindows = activeSchedule.wakeWindowDurations;
+
         // Validate constraints (use adjusted bedtime if it was changed)
-        const constraintViolations = validateConstraints(scheduleResult, wakeMins, adjustedBedMins);
+        const constraintViolations = validateConstraints(activeSchedule, wakeMins, adjustedBedMins);
 
+        // Build schedule text for copy function
         const scheduleTextLines = [];
-        scheduleList.innerHTML = "";
-
-        items.forEach((item) => {
-          const li = document.createElement("li");
-          const left = document.createElement("div");
-          const right = document.createElement("div");
-
-          // Apply visual cue if this nap was adjusted
-          if (item.isAdjusted) {
-            li.classList.add('adjusted');
-          }
-
-          left.innerHTML = `<strong>${item.label}</strong><br/><span class="time">${item.timeRange}</span>`;
-          if (item.extra) {
-            left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${item.extra}</span>`;
-          }
-          // Add adjustment info if present
-          if (item.adjustmentInfo) {
-            left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24;">⚠️ ${item.adjustmentInfo}</span>`;
-          }
-          // Add wake window duration if present
-          if (item.wakeWindow) {
-            left.innerHTML += `<br/><span class="subtext" style="color: #9ca3af;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
-          }
-
-          if (item.badge) {
-            right.innerHTML = `<span class="badge ${item.badgeClass || ""}">${item.badge}</span>`;
-          }
-
-          li.appendChild(left);
-          li.appendChild(right);
-          scheduleList.appendChild(li);
-
+        activeItems.forEach((item) => {
           if (item.label === "Wake-up" || item.label === "Bedtime") {
             scheduleTextLines.push(`${item.label}: ${item.timeRange}`);
           } else {
             scheduleTextLines.push(
-                    `${item.label}: ${item.timeRange} (${item.extra || ""})`.replace(/\s+\(\)/, "")
+              `${item.label}: ${item.timeRange} (${item.extra || ""})`.replace(/\s+\(\)/, "")
             );
           }
         });
 
         // Wake window summary line
-        const wwStrings = wakeWindowDurations.map((mins, idx) => {
+        const wwStrings = activeWakeWindows.map((mins, idx) => {
           const label =
                   idx === 0
                           ? "Before nap 1"
-                          : idx === wakeWindowDurations.length - 1
+                          : idx === activeWakeWindows.length - 1
                                   ? "Before bed"
                                   : `Between naps ${idx} & ${idx + 1}`;
           return `${label}: ${formatDuration(mins)}`;
@@ -2687,22 +3026,22 @@
         wakeWindowsText.textContent = wwStrings.join("  •  ");
 
         // Bedtime note (should match target)
-        const totalNapFormatted = formatDuration(totalNapTime);
-        summaryLabel.textContent = `${napCountUsed} naps • ${totalNapFormatted} total daytime sleep`;
+        const totalNapFormatted = formatDuration(activeSchedule.totalNapTime);
+        summaryLabel.textContent = `${activeSchedule.napCountUsed} naps • ${totalNapFormatted} total daytime sleep`;
 
         const originalTargetBed = toMinutes(bedInput.value);
         if (originalTargetBed != null) {
           // normalise original target to nearest instance to resulting bedtime
           let target = originalTargetBed;
-          while (target < bedtimeMins - 12 * 60) target += 24 * 60;
-          while (target > bedtimeMins + 12 * 60) target -= 24 * 60;
-          const diff = bedtimeMins - target;
+          while (target < activeSchedule.bedtimeMins - 12 * 60) target += 24 * 60;
+          while (target > activeSchedule.bedtimeMins + 12 * 60) target -= 24 * 60;
+          const diff = activeSchedule.bedtimeMins - target;
           const absDiff = Math.abs(diff);
           const sign = diff === 0 ? "" : diff > 0 ? "+" : "-";
           const diffStr = formatDuration(absDiff);
           bedtimeNote.textContent = `Bedtime is fixed at ${fromMinutes(originalTargetBed)}.`;
         } else {
-          bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(bedtimeMins)}`;
+          bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(activeSchedule.bedtimeMins)}`;
         }
 
         // Check if we're using actual nap times
@@ -2854,6 +3193,7 @@
       lastWakeInput,
       minWakeInput,
       maxWakeInput,
+      maxFirstWakeInput,
       nap1Input,
       nap2Input,
       nap3Input
