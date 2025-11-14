@@ -157,7 +157,7 @@ When schedule constraints are set (e.g., "must be awake by" or "must be asleep d
 Simultaneously adjusts multiple parameters to satisfy constraints:
 
 **Variables adjusted:**
-- Bedtime: ±15-45 minutes (tried in order: 0, -15, -30, -45, +15, +30)
+- Bedtime: ±15 minutes (tried in order: 0, -15, +15)
 - Nap lengths: ±30 minutes per nap (more aggressive than base auto-adjustment)
   - Single nap adjustments: ±5, ±10, ±15, ±20, ±25, ±30 minutes
   - Pairwise transfers: Move time between two naps (e.g., reduce Nap 1 by 10, extend Nap 2 by 10)
@@ -178,8 +178,8 @@ Simultaneously adjusts multiple parameters to satisfy constraints:
 **Example:** "Must be asleep 15:00-15:30"
 - Tries: Original bedtime + extend Nap 3 by 15 min
 - If that fails: Bedtime -15 min + reduce Nap 1 by 10 min
-- If that fails: Bedtime -30 min + various nap combinations
-- Result: "Adjusted schedule: bedtime earlier by 30 min to 20:00, adjusted naps: Nap 1 -10 min"
+- If that fails: Bedtime +15 min + various nap combinations
+- Result: "Adjusted schedule: bedtime earlier by 15 min to 20:15, adjusted naps: Nap 1 -10 min"
 
 #### Strategy 2: Switch Nap Count
 - Tries alternative nap count (2 ↔ 3)
