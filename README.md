@@ -50,6 +50,7 @@ This tool formalises that mental model in a way that's simple enough to use on a
 - **Copy to clipboard**: One-click copy of the full day schedule.
 - **Responsive design**: Works on mobile and desktop.
 - **Collapsible settings**: Wake window parameters collapse by default for a cleaner mobile interface.
+- **Power Sleep Mode**: Boosts nap times proportionally to reach a target total sleep duration (default: 3 hours). If current naps are set to 30, 60, 30 (total 120 mins), enabling Power Sleep with a 180-minute target distributes the missing 60 minutes proportionally, resulting in 45, 90, 45 minutes. Target is configurable in the nap settings modal.
 
 ### Schedule Constraints
 Set time-based requirements and let the app automatically adjust the schedule to meet them:
@@ -86,6 +87,8 @@ Core inputs:
 - `lastWake` – wake window before bed (treated as fixed, default: 210 minutes / 3h30)
 - `minWake` – minimum allowed wake window (default: 135 minutes / 2h15)
 - `maxWake` – maximum allowed wake window (default: 210 minutes / 3h30)
+- `powerSleepEnabled` – checkbox: enable Power Sleep Mode to boost nap times to target
+- `powerSleepTarget` – target total nap time in minutes (default: 180 minutes / 3 hours)
 
 Optional constraint inputs:
 
