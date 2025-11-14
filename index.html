@@ -652,46 +652,47 @@
     }
     .scenario-tabs {
       display: flex;
-      gap: 8px;
+      gap: 4px;
       margin-bottom: 16px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      border-bottom: 2px solid rgba(51, 65, 85, 0.5);
     }
     .scenario-tab {
       flex: 1;
-      min-width: fit-content;
-      padding: 10px 14px;
-      background: rgba(51, 65, 85, 0.3);
-      border: 1px solid rgba(71, 85, 105, 0.5);
-      border-radius: 8px;
+      padding: 12px 8px;
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 500;
       color: #94a3b8;
       transition: all 0.2s ease;
       text-align: center;
+      position: relative;
+      margin-bottom: -2px;
     }
     .scenario-tab:hover {
-      background: rgba(51, 65, 85, 0.5);
-      border-color: rgba(71, 85, 105, 0.7);
       color: #cbd5e1;
+      background: rgba(51, 65, 85, 0.2);
     }
     .scenario-tab.active {
-      background: rgba(99, 102, 241, 0.2);
-      border-color: rgba(99, 102, 241, 0.5);
       color: #a5b4fc;
-      box-shadow: 0 0 12px rgba(99, 102, 241, 0.3);
+      border-bottom-color: #6366f1;
+      background: rgba(99, 102, 241, 0.08);
     }
-    .scenario-tab .tab-label {
+    .scenario-tab .tab-number {
       display: block;
-      font-size: 0.75rem;
-      opacity: 0.8;
+      font-size: 0.7rem;
+      opacity: 0.6;
       margin-bottom: 2px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
     .scenario-tab .tab-name {
       display: block;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       font-weight: 600;
+      line-height: 1.2;
     }
 
     @media (max-width: 640px) {
@@ -1028,7 +1029,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.10.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.10.1"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -2165,7 +2166,7 @@
       const MIN_NAP = 30;
       const MAX_NAP_ADJUST = 15; // Max adjustment per nap (matches user expectation)
 
-      // Generate nap length combinations to try (similar to constraint adjustment)
+      // FIRST: Try adjusting nap lengths only (preferred approach)
       const napCombinations = generateNapCombinations(napLengths, napCount, MIN_NAP, MAX_NAP_ADJUST);
 
       for (const testNapLengths of napCombinations) {
@@ -2177,7 +2178,7 @@
         const testSchedule = tryBuildSchedule(napCount, testParams, strategy);
 
         if (testSchedule.ok) {
-          // Found a solution!
+          // Found a solution with nap adjustments!
           const napChanges = [];
           for (let i = 0; i < napCount; i++) {
             const diff = testNapLengths[i] - napLengths[i];
@@ -2189,12 +2190,70 @@
           return {
             schedule: testSchedule,
             napLengths: testNapLengths,
+            bedtimeAdjustment: 0,
             message: napChanges.length > 0 ? `Auto-adjusted naps to fit schedule: ${napChanges.join(', ')}` : null
           };
         }
       }
 
-      return null; // Couldn't find a working combination
+      // SECOND: If nap adjustments didn't work, try ±15 min bedtime adjustments as last resort
+      const bedtimeAdjustments = [-15, 15]; // Try earlier first, then later
+
+      for (const bedAdj of bedtimeAdjustments) {
+        const adjustedBedMins = bedMins + bedAdj;
+
+        // Try with original nap lengths first
+        const testParams = {
+          ...params,
+          bedMins: adjustedBedMins
+        };
+
+        let testSchedule = tryBuildSchedule(napCount, testParams, strategy);
+
+        if (testSchedule.ok) {
+          return {
+            schedule: testSchedule,
+            napLengths: napLengths,
+            bedtimeAdjustment: bedAdj,
+            message: `Adjusted bedtime ${bedAdj > 0 ? 'later' : 'earlier'} by ${Math.abs(bedAdj)} min to ${fromMinutes(adjustedBedMins)}`
+          };
+        }
+
+        // If that didn't work, try bedtime adjustment + minimal nap adjustments
+        for (const testNapLengths of napCombinations) {
+          const testParamsWithNaps = {
+            ...params,
+            bedMins: adjustedBedMins,
+            napLengths: testNapLengths
+          };
+
+          testSchedule = tryBuildSchedule(napCount, testParamsWithNaps, strategy);
+
+          if (testSchedule.ok) {
+            const napChanges = [];
+            for (let i = 0; i < napCount; i++) {
+              const diff = testNapLengths[i] - napLengths[i];
+              if (diff !== 0) {
+                napChanges.push(`Nap ${i + 1} ${diff > 0 ? '+' : ''}${diff} min`);
+              }
+            }
+
+            const messages = [`Adjusted bedtime ${bedAdj > 0 ? 'later' : 'earlier'} by ${Math.abs(bedAdj)} min to ${fromMinutes(adjustedBedMins)}`];
+            if (napChanges.length > 0) {
+              messages.push(`naps: ${napChanges.join(', ')}`);
+            }
+
+            return {
+              schedule: testSchedule,
+              napLengths: testNapLengths,
+              bedtimeAdjustment: bedAdj,
+              message: messages.join(' • ')
+            };
+          }
+        }
+      }
+
+      return null; // Couldn't find a working combination even with bedtime flexibility
     }
 
     function adjustScheduleForConstraints(params, strategy = WAKE_STRATEGIES.AGGRESSIVE) {
@@ -2257,10 +2316,11 @@
       const MAX_NAP_ADJUST = 30; // Max adjustment per nap (+ or -)
 
       // Bedtime adjustments to try (in order of preference)
+      // Limited to ±15 minutes to keep bedtime close to target
       const bedtimeAdjustments = [
         0,    // Try with original bedtime first
-        -15, -30, -45,  // Earlier bedtimes
-        15, 30          // Later bedtimes
+        -15,  // Earlier bedtime
+        15    // Later bedtime
       ];
 
       // Try each bedtime adjustment with nap length variations
@@ -2467,9 +2527,9 @@
     function generateScenarios(napCount, params, baseNapLengths) {
       const scenarios = [];
       const strategies = [
-        { key: WAKE_STRATEGIES.AGGRESSIVE, label: 'Aggressive Stagger', priority: 1 },
-        { key: WAKE_STRATEGIES.GENTLE, label: 'Gentle Stagger', priority: 2 },
-        { key: WAKE_STRATEGIES.BALANCED, label: 'Balanced Windows', priority: 3 }
+        { key: WAKE_STRATEGIES.AGGRESSIVE, label: 'Build Later', shortLabel: 'Build Later', priority: 1 },
+        { key: WAKE_STRATEGIES.GENTLE, label: 'Gentle Build', shortLabel: 'Gentle', priority: 2 },
+        { key: WAKE_STRATEGIES.BALANCED, label: 'Balanced', shortLabel: 'Balanced', priority: 3 }
       ];
 
       for (const strategy of strategies) {
@@ -2502,6 +2562,7 @@
             schedule: result,
             strategy: strategy.key,
             strategyLabel: strategy.label,
+            strategyShortLabel: strategy.shortLabel,
             priority: strategy.priority,
             baseNapLengths: [...baseNapLengths], // Store original nap lengths for comparison
             autoAdjustMessage: adjustmentMessage,
@@ -2531,8 +2592,8 @@
         const tab = document.createElement("div");
         tab.className = `scenario-tab ${index === activeScenarioIndex ? 'active' : ''}`;
         tab.innerHTML = `
-          <span class="tab-label">Option ${index + 1}</span>
-          <span class="tab-name">${scenario.strategyLabel}</span>
+          <span class="tab-number">${index + 1}</span>
+          <span class="tab-name">${scenario.strategyShortLabel}</span>
         `;
         tab.onclick = () => switchToScenario(index);
         scenarioTabs.appendChild(tab);
@@ -2619,6 +2680,7 @@
         wakeWindowsText.textContent = "";
         summaryLabel.textContent = "";
         bedtimeNote.textContent = "";
+        bedtimeNote.style.color = ""; // Reset bedtime note color
         modeNote.textContent = "";
         warningBox.style.display = "none";
         // Reset warning box styles
@@ -3037,11 +3099,20 @@
           while (target > activeSchedule.bedtimeMins + 12 * 60) target -= 24 * 60;
           const diff = activeSchedule.bedtimeMins - target;
           const absDiff = Math.abs(diff);
-          const sign = diff === 0 ? "" : diff > 0 ? "+" : "-";
-          const diffStr = formatDuration(absDiff);
-          bedtimeNote.textContent = `Bedtime is fixed at ${fromMinutes(originalTargetBed)}.`;
+
+          if (diff === 0) {
+            bedtimeNote.textContent = `Bedtime is fixed at ${fromMinutes(originalTargetBed)}.`;
+            bedtimeNote.style.color = ""; // Reset color for normal bedtime
+          } else {
+            // Bedtime was adjusted
+            const sign = diff > 0 ? "+" : "";
+            const diffStr = formatDuration(absDiff);
+            bedtimeNote.textContent = `Bedtime adjusted to ${fromMinutes(activeSchedule.bedtimeMins)} (${sign}${diffStr} from target ${fromMinutes(originalTargetBed)})`;
+            bedtimeNote.style.color = "#fbbf24"; // Amber color to indicate adjustment
+          }
         } else {
           bedtimeNote.textContent = `Resulting bedtime: ${fromMinutes(activeSchedule.bedtimeMins)}`;
+          bedtimeNote.style.color = ""; // Reset color
         }
 
         // Check if we're using actual nap times

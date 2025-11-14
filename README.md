@@ -39,20 +39,23 @@ This tool formalises that mental model in a way that's simple enough to use on a
 - **Version tracking**: App version displayed in footer for debugging and testing purposes
 - **Local-only**: All settings are saved in your browser (localStorage). No server, no login, no tracking.
 - **Multiple schedule scenarios** (v1.10+): The app generates up to 3 different schedule options with varying wake window distribution strategies:
-  1. **Aggressive Stagger**: Wake windows increase by 20-30 minutes, prioritizing shorter first wake window (ideal default)
-  2. **Gentle Stagger**: Wake windows increase by 10-15 minutes (less dramatic increases)
-  3. **Balanced Windows**: Wake windows are roughly equal length (minimal variation)
-  - Switch between scenarios using tabs above the schedule
+  1. **Build Later**: Wake windows increase by 20-30 minutes, prioritizing shorter first wake window (ideal default - builds more awake time toward end of day)
+  2. **Gentle**: Wake windows increase by 10-15 minutes (less dramatic increases)
+  3. **Balanced**: Wake windows are roughly equal length (minimal variation)
+  - Switch between scenarios using compact tabs above the schedule (mobile-optimized)
   - Each scenario independently respects constraints and Power Sleep Mode
   - Only feasible scenarios are shown
+  - Each scenario may use different bedtime adjustments (±15 min) as needed
 - **Nap configuration modal**: Configure both 2-nap and 3-nap settings independently via a dedicated modal, allowing you to maintain separate preferences for each schedule type without losing your configurations when the app auto-switches modes.
 - **Mode-specific settings**: Separate storage for 2-nap and 3-nap configurations (v6 schema). When the app switches modes to fit constraints, it uses your saved settings for that mode.
 - **Settings preservation**: Your configured nap lengths are never modified—adjustments only affect the displayed schedule. Your preferences remain your desired targets.
 - **Automatic mode switching**: If your preferred mode won't fit constraints, the app automatically switches to the alternative (3↔2 naps) using your saved settings for that mode.
+- **Bedtime flexibility** (v1.10.1+): As a last resort before declaring a schedule impossible, the app can adjust bedtime by ±15 minutes. This happens automatically after trying nap adjustments, keeping bedtime as close to your target as possible.
 - **Visual adjustment indicators**:
   - Amber haze on nap schedule cards when adjusted
   - "⚠️ Adjusted +10 min" shown on affected naps
   - Amber highlight on Configure button when adjustments are active
+  - Amber bedtime note when bedtime differs from target (e.g., "Bedtime adjusted to 20:45 (+15min from target 20:30)")
 - **Wake window display**: Each nap and bedtime shows the active wake window duration before it (e.g., "↑ 2h30 awake").
 - **Copy to clipboard**: One-click copy of the full day schedule.
 - **Responsive design**: Works on mobile and desktop.
@@ -67,8 +70,13 @@ Set time-based requirements and let the app automatically adjust the schedule to
 
 The app uses a unified linear programming approach to automatically satisfy constraints:
 
-1. **Unified adjustment** - Simultaneously adjusts bedtime (±15-45 min) and nap lengths (±30 min) to meet constraints while respecting wake window limits
+1. **Unified adjustment** - Simultaneously adjusts bedtime (±15 min) and nap lengths (±30 min) to meet constraints while respecting wake window limits
 2. **Switch nap count** - Tries alternative 2-nap vs 3-nap schedule if unified adjustment can't find a solution
+
+**Automatic schedule fitting** (v1.10.1+): Even without explicit constraints, if a schedule cannot fit within wake window limits, the app automatically tries:
+1. First: Adjust nap lengths by ±5-15 minutes
+2. Last resort: Adjust bedtime by ±15 minutes
+3. Finally: Switch between 2-nap and 3-nap modes
 
 **Key principles:**
 - Wake window parameters (minWake, maxWake, lastWake) are **hard biological constraints** and never adjusted
