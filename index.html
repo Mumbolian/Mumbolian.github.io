@@ -1137,7 +1137,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.11.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.11.2"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -3440,6 +3440,29 @@
 
     // Display app version
     document.getElementById("versionDisplay").textContent = `v${APP_VERSION}`;
+
+    // Automatic version checking and update
+    function checkForUpdates() {
+      // Fetch the current index.html and extract version
+      fetch('index.html?cacheBust=' + Date.now())
+        .then(response => response.text())
+        .then(html => {
+          // Extract version from the fetched HTML
+          const match = html.match(/const APP_VERSION = "([^"]+)"/);
+          if (match && match[1] !== APP_VERSION) {
+            // Version mismatch - reload the page to get the latest version
+            console.log(`Updating from ${APP_VERSION} to ${match[1]}`);
+            location.reload(true); // Hard reload to bypass cache
+          }
+        })
+        .catch(err => {
+          // Silently fail - don't disrupt user experience if check fails
+          console.log('Version check failed:', err);
+        });
+    }
+
+    // Check when user returns to the tab (focus-only, battery-friendly)
+    window.addEventListener('focus', checkForUpdates);
   })();
 </script>
 </body>
