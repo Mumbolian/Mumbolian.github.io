@@ -37,6 +37,7 @@ This tool formalises that mental model in a way that's simple enough to use on a
 
 ### Core Features
 - **Version tracking**: App version displayed in footer for debugging and testing purposes
+- **Automatic updates** (v1.11+): The app automatically checks for new versions and refreshes when updates are available. Checks run silently every 5 minutes and immediately when you return to the tab—no user action needed. Your settings are preserved through updates via localStorage.
 - **Local-only**: All settings are saved in your browser (localStorage). No server, no login, no tracking.
 - **Multiple schedule scenarios** (v1.10+): The app generates up to 3 different schedule options with varying wake window distribution strategies:
   1. **Build Later**: Wake windows increase by 20-30 minutes, prioritizing shorter first wake window (ideal default - builds more awake time toward end of day)
