@@ -114,15 +114,49 @@ open http://localhost:8000
 
 ### Deployment
 
-Hosted on GitHub Pages. To deploy:
+**CRITICAL: This repository uses a worktree-based workflow with branch protection.**
 
-```bash
-git add index.html
-git commit -m "Description of changes"
-git push origin main
-```
+Hosted on GitHub Pages. Changes go live automatically at https://bingpotstudio.com (custom domain via CNAME).
 
-Changes go live automatically at https://bingpotstudio.com (custom domain via CNAME).
+**Repository Structure:**
+- **Main worktree** (`/Users/davidhowlett/Documents/GitHub/Mumbolian.github.io`): On `dev` branch
+- **Test worktree** (`/Users/davidhowlett/Documents/GitHub/Mumbolian.github.io-test-feature`): On `test-feature` branch
+
+**Branch Protection:**
+- `main` branch: Protected, requires PRs, direct pushes BLOCKED
+- `dev` branch: Integration branch, direct pushes allowed
+- Feature branches: Work happens here (e.g., `test-feature`)
+
+**Deployment Workflow (MANDATORY):**
+
+When working in the test-feature worktree:
+
+1. **Commit changes:**
+   ```bash
+   git add index.html
+   git commit -m "Description of changes"
+   ```
+
+2. **Push to dev branch (NOT main):**
+   ```bash
+   git push origin test-feature:dev
+   ```
+   This pushes your test-feature commits to the dev branch.
+
+3. **Create Pull Request from dev to main:**
+   ```bash
+   gh pr create --base main --head dev --title "Deploy: [description]" --body "Description of changes"
+   ```
+
+4. **User approves and merges PR** → Changes go live
+
+**NEVER push directly to main - it will be rejected by branch protection.**
+
+When user requests deployment or asks you to "push changes":
+- Commit with descriptive message
+- Push to `dev`: `git push origin test-feature:dev`
+- Create PR: `dev` → `main` using `gh pr create`
+- Inform user that PR is ready for their review
 
 ## Version Management
 
