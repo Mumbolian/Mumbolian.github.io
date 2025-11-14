@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Settings Mockup - T-Man's Snooze Schedule</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color-scheme: dark;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #020617 100%);
+      color: #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    main {
+      width: 100%;
+      max-width: 720px;
+      background: rgba(15, 23, 42, 0.96);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      padding: 20px 18px 18px;
+    }
+    @media (min-width: 640px) {
+      main {
+        padding: 24px 26px 22px;
+      }
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .title-block h1 {
+      margin: 0 0 4px;
+      font-size: 1.5rem;
+    }
+    .title-block p {
+      margin: 0;
+      font-size: 0.86rem;
+      color: #9ca3af;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 1.05fr 1.1fr;
+      gap: 18px;
+    }
+    @media (max-width: 640px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), rgba(15, 23, 42, 0.96) 55%);
+      border-radius: 14px;
+      padding: 14px 14px 12px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+    }
+    .card.secondary {
+      background: radial-gradient(circle at top right, rgba(22, 163, 74, 0.32), rgba(15, 23, 42, 0.96) 55%);
+    }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 8px;
+    }
+    label {
+      font-size: 0.78rem;
+      color: #9ca3af;
+    }
+    input[type="time"],
+    input[type="number"] {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 9px;
+      border: 1px solid rgba(55, 65, 81, 0.9);
+      background: rgba(15, 23, 42, 0.98);
+      color: #e5e7eb;
+      font-size: 0.8rem;
+      outline: none;
+    }
+    input[type="time"]:focus,
+    input[type="number"]:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.45);
+    }
+
+    .nap-toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+    .nap-toggle-label {
+      font-size: 0.76rem;
+      color: #9ca3af;
+    }
+    .nap-toggle-switch {
+      position: relative;
+      display: flex;
+      background: rgba(51, 65, 85, 0.7);
+      border-radius: 8px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .nap-toggle-option {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 1;
+    }
+    .nap-toggle-option.active {
+      background: #3b82f6;
+      color: white;
+    }
+
+    /* NEW: Full-width settings button */
+    .settings-button {
+      width: 100%;
+      padding: 12px 16px;
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.25), rgba(15, 23, 42, 0.96) 70%);
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      border-radius: 12px;
+      color: #e5e7eb;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+    .settings-button:hover {
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), rgba(15, 23, 42, 0.96) 70%);
+      border-color: rgba(96, 165, 250, 0.5);
+    }
+    .settings-button-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .settings-button-arrow {
+      font-size: 0.7rem;
+      transition: transform 0.2s ease;
+    }
+
+    /* Modal styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+    }
+    .modal-content {
+      position: relative;
+      background: rgba(15, 23, 42, 0.98);
+      border-radius: 16px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      z-index: 10000;
+    }
+    .modal-header {
+      padding: 20px 20px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.9);
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.75rem;
+      color: #9ca3af;
+      cursor: pointer;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: all 0.2s ease;
+    }
+    .modal-close:hover {
+      background: rgba(51, 65, 85, 0.5);
+      color: #e5e7eb;
+    }
+    .modal-body {
+      padding: 0 20px 20px;
+    }
+
+    /* Settings sections */
+    .settings-section {
+      margin-bottom: 24px;
+    }
+    .settings-section:last-child {
+      margin-bottom: 0;
+    }
+    .settings-section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nap-config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .nap-mode-section {
+      background: rgba(51, 65, 85, 0.3);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+    .nap-mode-section h4 {
+      margin: 0 0 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+
+    .nap-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .nap-row:last-child {
+      margin-bottom: 0;
+    }
+    .nap-row .label {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      flex: 1;
+    }
+    .nap-row input[type="number"] {
+      width: 65px;
+      padding: 5px 7px;
+      font-size: 0.75rem;
+    }
+    .nap-row .unit {
+      font-size: 0.7rem;
+      color: #6b7280;
+    }
+
+    .buttons-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    button {
+      padding: 8px 12px;
+      border-radius: 9px;
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    button:hover {
+      background: rgba(51, 65, 85, 0.9);
+      border-color: rgba(96, 165, 250, 0.4);
+    }
+
+    @media (max-width: 640px) {
+      .nap-config-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="title-block">
+      <h1>T-Man's Snooze Schedule</h1>
+      <p>Settings Mockup</p>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- Controls -->
+    <section class="card">
+      <h2>Planned Schedule Inputs</h2>
+
+      <div class="form-grid">
+        <div class="form-row">
+          <label for="wakeTime">Wake-Up Time</label>
+          <input type="time" id="wakeTime" value="07:00" />
+        </div>
+        <div class="form-row">
+          <label for="bedTime">Bedtime</label>
+          <input type="time" id="bedTime" value="20:30" />
+        </div>
+      </div>
+
+      <div class="nap-toggle-container">
+        <span class="nap-toggle-label">Nap Preference:</span>
+        <div class="nap-toggle-switch">
+          <div class="nap-toggle-option">2 Naps</div>
+          <div class="nap-toggle-option active">3 Naps</div>
+        </div>
+      </div>
+
+      <div class="nap-toggle-container" style="margin-top: 12px;">
+        <label class="nap-toggle-label" for="powerSleepEnabled" style="cursor: pointer;">
+          <input type="checkbox" id="powerSleepEnabled" style="margin-right: 8px; cursor: pointer;" />
+          Power Sleep Mode
+        </label>
+      </div>
+
+      <!-- NEW: Unified Settings Button -->
+      <button type="button" id="openSettings" class="settings-button">
+        <span class="settings-button-text">
+          <span>⚙️</span>
+          <span>Settings</span>
+        </span>
+        <span class="settings-button-arrow">▶</span>
+      </button>
+
+      <hr style="border:none;border-top:1px solid rgba(51,65,85,0.9);margin:10px 0;" />
+
+      <div class="buttons-row" style="grid-template-columns: repeat(4, 1fr);">
+        <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">↻ Reset</button>
+        <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">↗️ Share</button>
+        <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">📊 Track</button>
+        <button type="button" id="openConstraints" title="Set Schedule Constraints">🎯 Constraints</button>
+      </div>
+    </section>
+
+    <!-- Output -->
+    <section class="card secondary">
+      <h2>Schedule Preview</h2>
+      <p style="color: #9ca3af; font-size: 0.8rem; margin: 8px 0;">
+        Click "Settings" to configure nap lengths and wake window parameters.
+      </p>
+    </section>
+  </div>
+
+  <!-- NEW: Unified Settings Modal -->
+  <div id="settingsModal" class="modal" style="display: none;">
+    <div class="modal-backdrop" onclick="closeSettings()"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>⚙️ Settings</h3>
+        <button class="modal-close" onclick="closeSettings()">&times;</button>
+      </div>
+      <div class="modal-body">
+
+        <!-- Nap Configuration Section -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <span>💤</span>
+            <span>Nap Configuration</span>
+          </div>
+          <p style="font-size: 0.76rem; color: #9ca3af; margin: 8px 0 12px;">
+            Configure nap lengths for both 2-nap and 3-nap schedules. The app will use the appropriate settings when switching modes.
+          </p>
+
+          <div class="nap-config-grid">
+            <!-- 3-Nap Mode -->
+            <div class="nap-mode-section">
+              <h4>3-Nap Mode</h4>
+              <div class="nap-row">
+                <span class="label">Nap 1</span>
+                <input type="number" id="threeNap1" min="15" max="180" step="5" value="30" />
+                <span class="unit">mins</span>
+              </div>
+              <div class="nap-row">
+                <span class="label">Nap 2</span>
+                <input type="number" id="threeNap2" min="15" max="180" step="5" value="60" />
+                <span class="unit">mins</span>
+              </div>
+              <div class="nap-row">
+                <span class="label">Nap 3</span>
+                <input type="number" id="threeNap3" min="15" max="180" step="5" value="30" />
+                <span class="unit">mins</span>
+              </div>
+            </div>
+
+            <!-- 2-Nap Mode -->
+            <div class="nap-mode-section">
+              <h4>2-Nap Mode</h4>
+              <div class="nap-row">
+                <span class="label">Nap 1</span>
+                <input type="number" id="twoNap1" min="15" max="180" step="5" value="90" />
+                <span class="unit">mins</span>
+              </div>
+              <div class="nap-row">
+                <span class="label">Nap 2</span>
+                <input type="number" id="twoNap2" min="15" max="180" step="5" value="30" />
+                <span class="unit">mins</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="nap-row" style="margin-top: 12px;">
+            <span class="label">Power Sleep Target</span>
+            <input type="number" id="powerSleepTarget" min="60" max="300" step="15" value="180" />
+            <span class="unit">mins</span>
+          </div>
+        </div>
+
+        <!-- Wake Window Settings Section -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <span>⏰</span>
+            <span>Wake Window Parameters</span>
+          </div>
+          <p style="font-size: 0.76rem; color: #9ca3af; margin: 8px 0 12px;">
+            These biological constraints control how wake windows are distributed throughout the day.
+          </p>
+
+          <div class="nap-row">
+            <span class="label">Last Wake Window</span>
+            <input type="number" id="lastWake" min="30" max="360" step="5" value="210" />
+            <span class="unit">mins</span>
+          </div>
+          <div class="nap-row">
+            <span class="label">Min Wake Window</span>
+            <input type="number" id="minWake" min="30" max="360" step="5" value="135" />
+            <span class="unit">mins</span>
+          </div>
+          <div class="nap-row">
+            <span class="label">Max Wake Window</span>
+            <input type="number" id="maxWake" min="30" max="360" step="5" value="210" />
+            <span class="unit">mins</span>
+          </div>
+          <div class="nap-row">
+            <span class="label">Max First Wake</span>
+            <input type="number" id="maxFirstWake" min="30" max="360" step="5" value="180" />
+            <span class="unit">mins</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // Simple modal controls
+  const settingsModal = document.getElementById('settingsModal');
+  const openSettingsBtn = document.getElementById('openSettings');
+
+  openSettingsBtn.addEventListener('click', () => {
+    settingsModal.style.display = 'flex';
+  });
+
+  function closeSettings() {
+    settingsModal.style.display = 'none';
+  }
+
+  // Close on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && settingsModal.style.display === 'flex') {
+      closeSettings();
+    }
+  });
+</script>
+</body>
+</html>

@@ -305,6 +305,36 @@
       color: #e5e7eb;
       background: rgba(15, 23, 42, 0.8);
     }
+    /* Settings button - full-width unified settings modal trigger */
+    button.settings-button {
+      width: 100%;
+      padding: 12px 16px;
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.25), rgba(15, 23, 42, 0.96) 70%);
+      border: 1px solid rgba(51, 65, 85, 0.9);
+      border-radius: 12px;
+      color: #e5e7eb;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      transition: all 0.2s ease;
+    }
+    button.settings-button:hover {
+      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), rgba(15, 23, 42, 0.96) 70%);
+      border-color: rgba(96, 165, 250, 0.5);
+    }
+    button.settings-button .settings-button-text {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    button.settings-button .settings-button-arrow {
+      font-size: 0.7rem;
+      transition: transform 0.2s ease;
+    }
     .toggle-arrow {
       display: inline-block;
       transition: transform 0.2s ease;
@@ -638,6 +668,47 @@
       font-size: 0.78rem;
       color: #9ca3af;
     }
+    /* Settings modal sections */
+    .settings-section {
+      margin-bottom: 24px;
+    }
+    .settings-section:last-child {
+      margin-bottom: 0;
+    }
+    .settings-section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .nap-config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .nap-mode-section {
+      background: rgba(51, 65, 85, 0.3);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+    .nap-mode-section h4 {
+      margin: 0 0 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #a5b4fc;
+    }
+    @media (max-width: 640px) {
+      .nap-config-grid {
+        grid-template-columns: 1fr;
+      }
+    }
     .clear-btn {
       font-size: 0.72rem;
       padding: 4px 8px;
@@ -778,33 +849,14 @@
         </label>
       </div>
 
-      <button type="button" id="toggleWakeWindows" class="collapse-toggle">
-        <span class="toggle-arrow">▶</span>
-        Wake Window Settings
+      <!-- Unified Settings Button -->
+      <button type="button" id="openSettings" class="settings-button">
+        <span class="settings-button-text">
+          <span>⚙️</span>
+          <span>Settings</span>
+        </span>
+        <span class="settings-button-arrow">▶</span>
       </button>
-
-      <div class="nap-rows" id="wakeWindowsSection" style="display: none;">
-        <div class="nap-row">
-          <span class="label">Last Wake Window</span>
-          <input type="number" id="lastWake" min="30" max="360" step="5" value="210" />
-          <span class="unit">mins</span>
-        </div>
-        <div class="nap-row">
-          <span class="label">Min Wake Window</span>
-          <input type="number" id="minWake" min="30" max="360" step="5" value="135" />
-          <span class="unit">mins</span>
-        </div>
-        <div class="nap-row">
-          <span class="label">Max Wake Window</span>
-          <input type="number" id="maxWake" min="30" max="360" step="5" value="210" />
-          <span class="unit">mins</span>
-        </div>
-        <div class="nap-row">
-          <span class="label">Max First Wake</span>
-          <input type="number" id="maxFirstWake" min="30" max="360" step="5" value="180" />
-          <span class="unit">mins</span>
-        </div>
-      </div>
 
       <hr style="border:none;border-top:1px solid rgba(51,65,85,0.9);margin:10px 0;" />
 
@@ -813,12 +865,15 @@
       <input type="hidden" id="nap2Length" value="60" />
       <input type="hidden" id="nap3Length" value="30" />
 
-      <div class="buttons-row">
-        <button type="button" id="openNapConfig" title="Configure Nap Lengths for 2-Nap and 3-Nap Modes">⚙️ Naps</button>
+      <!-- Hidden inputs for wake window settings (configured via Settings modal) -->
+      <input type="hidden" id="lastWake" value="210" />
+      <input type="hidden" id="minWake" value="135" />
+      <input type="hidden" id="maxWake" value="210" />
+      <input type="hidden" id="maxFirstWake" value="180" />
+
+      <div class="buttons-row" style="grid-template-columns: repeat(4, 1fr);">
         <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">↻ Reset</button>
         <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">↗️ Share</button>
-      </div>
-      <div class="buttons-row">
         <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">📊 Track</button>
         <button type="button" id="openConstraints" title="Set Schedule Constraints">🎯 Constraints</button>
       </div>
@@ -969,81 +1024,107 @@
     </div>
   </div>
 
-  <!-- Nap Configuration Modal -->
-  <div id="napConfigModal" class="modal" style="display: none;">
+  <!-- Unified Settings Modal -->
+  <div id="settingsModal" class="modal" style="display: none;">
     <div class="modal-backdrop"></div>
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Configure Nap Lengths</h3>
-        <button type="button" id="closeNapConfigModal" class="close-btn">&times;</button>
+        <h3>⚙️ Settings</h3>
+        <button type="button" id="closeSettingsModal" class="close-btn">&times;</button>
       </div>
 
       <div class="modal-body">
-        <p class="constraint-description" style="margin-bottom: 14px;">
-          Configure your preferred nap lengths for both 2-nap and 3-nap schedules. The app will use these settings when building your schedule.
-        </p>
 
-        <!-- 2-Nap Configuration -->
-        <div class="constraint-section">
-          <h4>2-Nap Schedule Settings</h4>
-          <p class="constraint-description">Typically used for: 90 min + 30 min naps</p>
-          <div class="nap-rows">
-            <div class="nap-row">
-              <span class="label">Nap 1 Length</span>
-              <input type="number" id="config2NapNap1" min="10" max="240" step="5" />
-              <span class="unit">mins</span>
+        <!-- Nap Configuration Section -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <span>💤</span>
+            <span>Nap Configuration</span>
+          </div>
+          <p style="font-size: 0.76rem; color: #9ca3af; margin: 8px 0 12px;">
+            Configure nap lengths for both 2-nap and 3-nap schedules. The app will use the appropriate settings when switching modes.
+          </p>
+
+          <div class="nap-config-grid">
+            <!-- 3-Nap Mode -->
+            <div class="nap-mode-section">
+              <h4>3-Nap Mode</h4>
+              <div class="nap-row">
+                <span class="label">Nap 1</span>
+                <input type="number" id="config3NapNap1" min="10" max="240" step="5" />
+                <span class="unit">mins</span>
+              </div>
+              <div class="nap-row">
+                <span class="label">Nap 2</span>
+                <input type="number" id="config3NapNap2" min="10" max="240" step="5" />
+                <span class="unit">mins</span>
+              </div>
+              <div class="nap-row">
+                <span class="label">Nap 3</span>
+                <input type="number" id="config3NapNap3" min="10" max="240" step="5" />
+                <span class="unit">mins</span>
+              </div>
             </div>
-            <div class="nap-row">
-              <span class="label">Nap 2 Length</span>
-              <input type="number" id="config2NapNap2" min="10" max="240" step="5" />
-              <span class="unit">mins</span>
+
+            <!-- 2-Nap Mode -->
+            <div class="nap-mode-section">
+              <h4>2-Nap Mode</h4>
+              <div class="nap-row">
+                <span class="label">Nap 1</span>
+                <input type="number" id="config2NapNap1" min="10" max="240" step="5" />
+                <span class="unit">mins</span>
+              </div>
+              <div class="nap-row">
+                <span class="label">Nap 2</span>
+                <input type="number" id="config2NapNap2" min="10" max="240" step="5" />
+                <span class="unit">mins</span>
+              </div>
             </div>
+          </div>
+
+          <div class="nap-row" style="margin-top: 12px;">
+            <span class="label">Power Sleep Target</span>
+            <input type="number" id="powerSleepTarget" min="60" max="300" step="15" value="180" />
+            <span class="unit">mins</span>
           </div>
         </div>
 
-        <hr style="border:none;border-top:1px solid rgba(51,65,85,0.9);margin:14px 0;" />
+        <!-- Wake Window Settings Section -->
+        <div class="settings-section">
+          <div class="settings-section-title">
+            <span>⏰</span>
+            <span>Wake Window Parameters</span>
+          </div>
+          <p style="font-size: 0.76rem; color: #9ca3af; margin: 8px 0 12px;">
+            These biological constraints control how wake windows are distributed throughout the day.
+          </p>
 
-        <!-- 3-Nap Configuration -->
-        <div class="constraint-section">
-          <h4>3-Nap Schedule Settings</h4>
-          <p class="constraint-description">Typically used for: 30 min + 60 min + 30 min naps</p>
-          <div class="nap-rows">
-            <div class="nap-row">
-              <span class="label">Nap 1 Length</span>
-              <input type="number" id="config3NapNap1" min="10" max="240" step="5" />
-              <span class="unit">mins</span>
-            </div>
-            <div class="nap-row">
-              <span class="label">Nap 2 Length</span>
-              <input type="number" id="config3NapNap2" min="10" max="240" step="5" />
-              <span class="unit">mins</span>
-            </div>
-            <div class="nap-row">
-              <span class="label">Nap 3 Length</span>
-              <input type="number" id="config3NapNap3" min="10" max="240" step="5" />
-              <span class="unit">mins</span>
-            </div>
+          <div class="nap-row">
+            <span class="label">Last Wake Window</span>
+            <input type="number" id="settingsLastWake" min="30" max="360" step="5" value="210" />
+            <span class="unit">mins</span>
+          </div>
+          <div class="nap-row">
+            <span class="label">Min Wake Window</span>
+            <input type="number" id="settingsMinWake" min="30" max="360" step="5" value="135" />
+            <span class="unit">mins</span>
+          </div>
+          <div class="nap-row">
+            <span class="label">Max Wake Window</span>
+            <input type="number" id="settingsMaxWake" min="30" max="360" step="5" value="210" />
+            <span class="unit">mins</span>
+          </div>
+          <div class="nap-row">
+            <span class="label">Max First Wake</span>
+            <input type="number" id="settingsMaxFirstWake" min="30" max="360" step="5" value="180" />
+            <span class="unit">mins</span>
           </div>
         </div>
 
-        <hr style="border:none;border-top:1px solid rgba(51,65,85,0.9);margin:14px 0;" />
-
-        <!-- Power Sleep Configuration -->
-        <div class="constraint-section">
-          <h4>Power Sleep Target</h4>
-          <p class="constraint-description">Total nap time target for power sleep mode (typically 3 hours = 180 mins)</p>
-          <div class="nap-rows">
-            <div class="nap-row">
-              <span class="label">Power Sleep Target</span>
-              <input type="number" id="powerSleepTarget" min="60" max="300" step="15" value="180" />
-              <span class="unit">mins</span>
-            </div>
-          </div>
-        </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" id="saveNapConfig" class="primary">Save Configuration</button>
+        <button type="button" id="saveSettings" class="primary">Save Settings</button>
       </div>
     </div>
   </div>
@@ -1056,7 +1137,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.10.3"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.11.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -1125,18 +1206,23 @@
     const closeActualNapsModalBtn = document.getElementById("closeActualNapsModal");
     const actualNapsModalBackdrop = actualNapsModal.querySelector(".modal-backdrop");
 
-    // Nap configuration modal elements
-    const openNapConfigBtn = document.getElementById("openNapConfig");
-    const napConfigModal = document.getElementById("napConfigModal");
-    const closeNapConfigModalBtn = document.getElementById("closeNapConfigModal");
-    const napConfigModalBackdrop = napConfigModal.querySelector(".modal-backdrop");
-    const saveNapConfigBtn = document.getElementById("saveNapConfig");
+    // Unified Settings modal elements
+    const openSettingsBtn = document.getElementById("openSettings");
+    const settingsModal = document.getElementById("settingsModal");
+    const closeSettingsModalBtn = document.getElementById("closeSettingsModal");
+    const settingsModalBackdrop = settingsModal.querySelector(".modal-backdrop");
+    const saveSettingsBtn = document.getElementById("saveSettings");
 
     const config2NapNap1 = document.getElementById("config2NapNap1");
     const config2NapNap2 = document.getElementById("config2NapNap2");
     const config3NapNap1 = document.getElementById("config3NapNap1");
     const config3NapNap2 = document.getElementById("config3NapNap2");
     const config3NapNap3 = document.getElementById("config3NapNap3");
+
+    const settingsLastWakeInput = document.getElementById("settingsLastWake");
+    const settingsMinWakeInput = document.getElementById("settingsMinWake");
+    const settingsMaxWakeInput = document.getElementById("settingsMaxWake");
+    const settingsMaxFirstWakeInput = document.getElementById("settingsMaxFirstWake");
 
     // Power sleep elements
     const powerSleepEnabledInput = document.getElementById("powerSleepEnabled");
@@ -1148,17 +1234,7 @@
     const clearAwakeByBtn = document.getElementById("clearAwakeBy");
     const clearSleepWindowBtn = document.getElementById("clearSleepWindow");
 
-    // Toggle wake windows section
-    toggleWakeWindowsBtn.addEventListener("click", () => {
-      const isHidden = wakeWindowsSection.style.display === "none";
-      wakeWindowsSection.style.display = isHidden ? "flex" : "none";
-      const arrow = toggleWakeWindowsBtn.querySelector(".toggle-arrow");
-      if (isHidden) {
-        arrow.classList.add("expanded");
-      } else {
-        arrow.classList.remove("expanded");
-      }
-    });
+    // Wake window toggle code removed - now handled in unified Settings modal
 
     // Update constraints button to show active state
     function updateConstraintsButton() {
@@ -1236,8 +1312,8 @@
     closeActualNapsModalBtn.addEventListener("click", closeActualNapsModal);
     actualNapsModalBackdrop.addEventListener("click", closeActualNapsModal);
 
-    // Nap config modal open/close
-    function openNapConfigModal() {
+    // Unified Settings modal open/close
+    function openSettingsModal() {
       // Load current settings into modal
       const s = loadSettings();
 
@@ -1268,16 +1344,22 @@
         powerSleepTargetInput.value = 180; // default 3 hours
       }
 
-      napConfigModal.style.display = "flex";
+      // Load wake window settings
+      settingsLastWakeInput.value = Number(lastWakeInput.value) || 210;
+      settingsMinWakeInput.value = Number(minWakeInput.value) || 135;
+      settingsMaxWakeInput.value = Number(maxWakeInput.value) || 210;
+      settingsMaxFirstWakeInput.value = Number(maxFirstWakeInput.value) || 180;
+
+      settingsModal.style.display = "flex";
       document.body.style.overflow = "hidden";
     }
 
-    function closeNapConfigModal() {
-      napConfigModal.style.display = "none";
+    function closeSettingsModal() {
+      settingsModal.style.display = "none";
       document.body.style.overflow = "";
     }
 
-    function saveNapConfigFromModal() {
+    function saveSettingsFromModal() {
       // Update the stored settings for both modes
       const s = loadSettings() || {};
 
@@ -1295,6 +1377,12 @@
 
       // Save power sleep target
       s.powerSleepTarget = Number(powerSleepTargetInput.value) || 180;
+
+      // Save wake window settings to hidden inputs
+      lastWakeInput.value = Number(settingsLastWakeInput.value) || 210;
+      minWakeInput.value = Number(settingsMinWakeInput.value) || 135;
+      maxWakeInput.value = Number(settingsMaxWakeInput.value) || 210;
+      maxFirstWakeInput.value = Number(settingsMaxFirstWakeInput.value) || 180;
 
       // Save to localStorage
       try {
@@ -1317,14 +1405,14 @@
         nap3Input.value = s.twoNapLengths.nap3;
       }
 
-      closeNapConfigModal();
+      closeSettingsModal();
       recomputeSchedule();
     }
 
-    openNapConfigBtn.addEventListener("click", openNapConfigModal);
-    closeNapConfigModalBtn.addEventListener("click", closeNapConfigModal);
-    napConfigModalBackdrop.addEventListener("click", closeNapConfigModal);
-    saveNapConfigBtn.addEventListener("click", saveNapConfigFromModal);
+    openSettingsBtn.addEventListener("click", openSettingsModal);
+    closeSettingsModalBtn.addEventListener("click", closeSettingsModal);
+    settingsModalBackdrop.addEventListener("click", closeSettingsModal);
+    saveSettingsBtn.addEventListener("click", saveSettingsFromModal);
 
     // Clear constraint handlers
     clearAwakeByBtn.addEventListener("click", () => {
