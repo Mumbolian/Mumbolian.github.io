@@ -650,49 +650,63 @@
       padding: 8px 16px;
       font-size: 0.85rem;
     }
+    .schedule-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+    }
+    .schedule-header h2 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
     .scenario-tabs {
       display: flex;
       gap: 4px;
-      margin-bottom: 16px;
-      border-bottom: 2px solid rgba(51, 65, 85, 0.5);
+      margin: 0;
     }
     .scenario-tab {
-      flex: 1;
-      padding: 12px 8px;
-      background: transparent;
+      min-width: 36px;
+      padding: 6px 14px;
+      background: rgba(51, 65, 85, 0.2);
       border: none;
-      border-bottom: 3px solid transparent;
+      border-radius: 6px 6px 0 0;
       cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 500;
+      font-size: 0.9rem;
+      font-weight: 600;
       color: #94a3b8;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
       text-align: center;
       position: relative;
-      margin-bottom: -2px;
     }
     .scenario-tab:hover {
+      background: rgba(51, 65, 85, 0.4);
       color: #cbd5e1;
-      background: rgba(51, 65, 85, 0.2);
     }
     .scenario-tab.active {
+      background: rgba(99, 102, 241, 0.15);
       color: #a5b4fc;
-      border-bottom-color: #6366f1;
-      background: rgba(99, 102, 241, 0.08);
     }
-    .scenario-tab .tab-number {
-      display: block;
-      font-size: 0.7rem;
-      opacity: 0.6;
-      margin-bottom: 2px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .scenario-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #6366f1;
     }
-    .scenario-tab .tab-name {
-      display: block;
-      font-size: 0.85rem;
-      font-weight: 600;
-      line-height: 1.2;
+    .schedule-summary {
+      margin-top: 16px;
+      padding: 12px;
+      background: rgba(51, 65, 85, 0.3);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #cbd5e1;
+      font-weight: 500;
     }
 
     @media (max-width: 640px) {
@@ -799,14 +813,14 @@
 
     <!-- Output -->
     <section class="card secondary">
-      <h2>
-        Today's Schedule
-        <span id="summaryLabel"></span>
-      </h2>
-      <div id="scenarioTabs" class="scenario-tabs" style="display:none;">
-        <!-- Tabs will be dynamically inserted here -->
+      <div class="schedule-header">
+        <h2>Schedule Choices:</h2>
+        <div id="scenarioTabs" class="scenario-tabs" style="display:none;">
+          <!-- Tabs will be dynamically inserted here -->
+        </div>
       </div>
       <ul class="schedule-list" id="scheduleList"></ul>
+      <div id="summaryLabel" class="schedule-summary"></div>
       <div id="wakeWindowsText" class="subtext"></div>
       <div id="bedtimeNote" class="subtext"></div>
       <div id="modeNote" class="subtext"></div>
@@ -1029,7 +1043,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.10.1"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.10.2"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -2591,10 +2605,8 @@
       scenarios.forEach((scenario, index) => {
         const tab = document.createElement("div");
         tab.className = `scenario-tab ${index === activeScenarioIndex ? 'active' : ''}`;
-        tab.innerHTML = `
-          <span class="tab-number">${index + 1}</span>
-          <span class="tab-name">${scenario.strategyShortLabel}</span>
-        `;
+        tab.textContent = `${index + 1}`;
+        tab.title = scenario.strategyLabel; // Show full label on hover
         tab.onclick = () => switchToScenario(index);
         scenarioTabs.appendChild(tab);
       });
