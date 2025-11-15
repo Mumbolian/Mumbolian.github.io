@@ -461,12 +461,12 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: var(--neon-cyan);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       font-family: 'Rajdhani', sans-serif;
       letter-spacing: 1px;
       text-transform: uppercase;
-      padding: 12px 16px;
+      padding: 9px 12px;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       clip-path: polygon(
@@ -516,11 +516,9 @@
       width: 100%;
       text-align: left;
       margin: 8px 0 4px;
-      padding: 6px 8px;
       display: flex;
       align-items: center;
       gap: 6px;
-      font-size: 0.78rem;
       color: #93c5fd;
       background: rgba(10, 1, 24, 0.5);
       backdrop-filter: blur(8px);
@@ -1128,7 +1126,7 @@
       </div>
 
       <button type="button" id="openSettings" class="collapse-toggle" title="Configure Nap Lengths and Wake Window Parameters">
-        ⚙ SETTINGS
+        SETTINGS
       </button>
 
       <!-- Hidden inputs for wake window settings (configured via Settings modal) -->
@@ -1501,7 +1499,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.15"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.16"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
