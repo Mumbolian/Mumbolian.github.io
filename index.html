@@ -277,7 +277,7 @@
       margin-bottom: 8px;
     }
     label {
-      font-size: 0.78rem;
+      font-size: 0.92rem;
       color: #93c5fd;
       font-weight: 500;
     }
@@ -370,7 +370,7 @@
       margin-bottom: 8px;
     }
     .nap-toggle-label {
-      font-size: 0.76rem;
+      font-size: 0.92rem;
       color: #93c5fd;
       font-weight: 500;
     }
@@ -461,12 +461,12 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       color: var(--neon-cyan);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
       font-family: 'Rajdhani', sans-serif;
       letter-spacing: 1px;
       text-transform: uppercase;
-      padding: 12px 16px;
+      padding: 9px 12px;
       cursor: pointer;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       clip-path: polygon(
@@ -511,28 +511,6 @@
         0 2px 12px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255, 255, 255, 0.3),
         inset 0 0 50px rgba(0, 245, 255, 0.15);
-    }
-    button.collapse-toggle {
-      width: 100%;
-      text-align: left;
-      margin: 8px 0 4px;
-      padding: 6px 8px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.78rem;
-      color: #93c5fd;
-      background: rgba(10, 1, 24, 0.5);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(0, 128, 255, 0.3);
-      transition: all 0.3s ease;
-    }
-    button.collapse-toggle:active {
-      color: #e5e7eb;
-      background: rgba(10, 1, 24, 0.7);
-      border-color: rgba(0, 128, 255, 0.5);
-      box-shadow: 0 0 15px rgba(0, 128, 255, 0.2);
     }
     .toggle-arrow {
       display: inline-block;
@@ -866,13 +844,31 @@
         inset 0 0 50px rgba(0, 245, 255, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
       width: 100%;
-      max-width: 500px;
+      max-width: 530px;
       height: auto;
       max-height: 85vh;
       display: flex;
       flex-direction: column;
       z-index: 1001;
       overflow: hidden;
+    }
+    /* Settings modal - centered text and purpley blue theme */
+    #settingsModal .constraint-section h4,
+    #settingsModal .constraint-section h5,
+    #settingsModal .constraint-description {
+      text-align: center;
+    }
+    #settingsModal .modal-content {
+      border: 1px solid rgba(138, 102, 255, 0.5);
+      box-shadow:
+        0 0 60px rgba(138, 102, 255, 0.3),
+        0 0 100px rgba(138, 102, 255, 0.2),
+        inset 0 0 50px rgba(138, 102, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    #settingsModal .modal-header::after {
+      background: linear-gradient(90deg, rgba(138, 102, 255, 0.8), transparent);
+      box-shadow: 0 0 10px rgba(138, 102, 255, 0.6);
     }
     .modal-header {
       display: flex;
@@ -1109,10 +1105,6 @@
         </label>
       </div>
 
-      <button type="button" id="openSettings" class="collapse-toggle" title="Configure Nap Lengths and Wake Window Parameters">
-        ⚙ SETTINGS
-      </button>
-
       <!-- Hidden inputs for wake window settings (configured via Settings modal) -->
       <input type="hidden" id="lastWake" value="210" />
       <input type="hidden" id="minWake" value="135" />
@@ -1127,6 +1119,7 @@
       <input type="hidden" id="nap3Length" value="30" />
 
       <div class="buttons-row">
+        <button type="button" id="openSettings" title="Configure Nap Lengths and Wake Window Parameters">SETTINGS</button>
         <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">RESET</button>
         <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">SHARE</button>
         <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">TRACK NAPS</button>
