@@ -124,6 +124,9 @@
       .layout {
         grid-template-columns: 1fr;
       }
+      .card {
+        padding: 16px;
+      }
     }
 
     .card {
@@ -829,6 +832,9 @@
       }
       .modal-header {
         padding: 16px 20px 12px;
+      }
+      .modal-body {
+        padding: 18px 16px;
       }
       .modal-footer {
         padding: 10px 20px 12px;
@@ -3100,19 +3106,19 @@
             const currentNapLen = parseInt(item.extra);
             if (originalNapLen && currentNapLen !== originalNapLen) {
               const diff = currentNapLen - originalNapLen;
-              left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText} (${diff > 0 ? '+' : ''}${diff} min)</span>`;
+              left.innerHTML += `<br/><span class="subtext" style="color: #d97706; font-weight: 500;">${extraText} (${diff > 0 ? '+' : ''}${diff} min)</span>`;
               li.classList.add('adjusted');
             } else {
-              left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText}</span>`;
+              left.innerHTML += `<br/><span class="subtext" style="color: #d97706; font-weight: 500;">${extraText}</span>`;
             }
           } else {
-            left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText}</span>`;
+            left.innerHTML += `<br/><span class="subtext" style="color: #d97706; font-weight: 500;">${extraText}</span>`;
           }
         }
 
         // Add wake window duration if present
         if (item.wakeWindow) {
-          left.innerHTML += `<br/><span class="subtext" style="color: #9ca3af;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
+          left.innerHTML += `<br/><span class="subtext" style="color: #0f5132;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
         }
 
         if (item.badge) {
