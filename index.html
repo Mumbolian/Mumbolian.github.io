@@ -1156,7 +1156,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.12.6"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.12.7"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -1335,6 +1335,7 @@
       actualNapsModal.style.display = "none";
       document.body.style.overflow = "";
       updateActualNapsButton();
+      recomputeSchedule(); // Refresh schedule to show actual nap adjustments
     }
 
     openActualNapsBtn.addEventListener("click", openActualNapsModal);
