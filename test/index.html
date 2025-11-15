@@ -48,12 +48,13 @@
     body {
       margin: 0;
       min-height: 100vh;
-      /* WATERCOLOR WASH: Soft gradient wash background - SOLID colors */
-      background: linear-gradient(135deg,
-        #d8e3cf 0%,
-        #e3cec9 30%,
-        #d8e3cf 60%,
-        #dfe8d5 100%);
+      /* WATERCOLOR SPLASH: Organic sage green watercolor splashes */
+      background:
+        radial-gradient(ellipse 800px 600px at 15% 25%, rgba(184, 205, 168, 0.4) 0%, transparent 50%),
+        radial-gradient(ellipse 700px 500px at 85% 75%, rgba(212, 227, 200, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 600px 700px at 50% 50%, rgba(168, 190, 152, 0.25) 0%, transparent 60%),
+        radial-gradient(ellipse 500px 400px at 70% 20%, rgba(229, 197, 192, 0.3) 0%, transparent 50%),
+        #f5f8f2;
       color: var(--text-primary);
       display: flex;
       align-items: center;
@@ -66,12 +67,13 @@
     main {
       width: 100%;
       max-width: 720px;
-      /* SOLID base with subtle overlay */
-      background:
-        linear-gradient(180deg, rgba(229, 197, 192, 0.12) 0%, transparent 100%),
-        #eef5e8;
-      border-radius: 0;
-      border: 2px solid var(--card-border);
+      /* Clean white base with very subtle sage tint */
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      border: 2px solid rgba(184, 205, 168, 0.4);
+      box-shadow: 0 8px 32px rgba(106, 122, 99, 0.12);
       padding: 24px 22px 22px;
       position: relative;
       z-index: 1;
@@ -142,24 +144,23 @@
     }
 
     .card {
-      /* LAYERED SEMI-TRANSPARENT: Card backgrounds with subtle layers - MORE SOLID */
-      background:
-        radial-gradient(circle at top right, rgba(229, 197, 192, 0.15) 0%, transparent 60%),
-        linear-gradient(135deg, #f8faf6 0%, #f0f4eb 100%);
-      border-radius: 0;
+      /* Clean white cards with subtle sage tint */
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 12px;
       padding: 20px;
-      border: 2px solid var(--card-border);
+      border: 2px solid rgba(197, 212, 184, 0.4);
+      box-shadow: 0 2px 12px rgba(106, 122, 99, 0.08);
       position: relative;
       overflow: visible;
-      transition: border-color 0.3s ease;
+      transition: all 0.3s ease;
     }
 
     .card.secondary {
-      /* LAYERED SEMI-TRANSPARENT: Different tint for secondary card - MORE SOLID */
-      background:
-        radial-gradient(circle at bottom left, rgba(212, 227, 200, 0.2) 0%, transparent 60%),
-        linear-gradient(135deg, #f0f4eb 0%, #f8faf6 100%);
-      border: 2px solid var(--sage-medium);
+      /* Slightly different tint for variety */
+      background: rgba(248, 250, 246, 0.8);
+      border: 2px solid rgba(212, 227, 200, 0.5);
     }
 
     .card h2 {
@@ -331,8 +332,8 @@
 
     button {
       position: relative;
-      border: 2px solid var(--sage-medium);
-      background: var(--sage-light);
+      border: 2px solid rgba(184, 205, 168, 0.5);
+      background: rgba(255, 255, 255, 0.8);
       color: var(--text-primary);
       font-size: 0.82rem;
       font-weight: 600;
@@ -342,30 +343,33 @@
       padding: 10px 14px;
       cursor: pointer;
       transition: all 0.2s ease;
-      border-radius: 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(106, 122, 99, 0.08);
     }
 
     button:hover {
-      background: var(--dusty-rose-light);
-      border-color: var(--dusty-rose);
-      color: var(--dusty-rose-dark);
+      background: rgba(229, 197, 192, 0.25);
+      border-color: rgba(212, 168, 163, 0.6);
+      box-shadow: 0 3px 8px rgba(106, 122, 99, 0.12);
     }
 
     button:active {
       transform: scale(0.98);
+      box-shadow: 0 1px 3px rgba(106, 122, 99, 0.12);
     }
 
     button.primary {
-      background: var(--dusty-rose);
-      color: white;
-      border: 2px solid var(--dusty-rose-dark);
+      background: linear-gradient(135deg, rgba(184, 205, 168, 0.4), rgba(168, 190, 152, 0.4));
+      color: var(--text-primary);
+      border: 2px solid rgba(168, 190, 152, 0.6);
       font-weight: 700;
+      box-shadow: 0 3px 10px rgba(106, 122, 99, 0.15);
     }
 
     button.primary:hover {
-      background: var(--dusty-rose-dark);
-      border-color: var(--dusty-rose-dark);
-      color: white;
+      background: linear-gradient(135deg, rgba(184, 205, 168, 0.5), rgba(168, 190, 152, 0.5));
+      border-color: rgba(168, 190, 152, 0.7);
+      box-shadow: 0 4px 12px rgba(106, 122, 99, 0.2);
     }
 
     .toggle-arrow {
