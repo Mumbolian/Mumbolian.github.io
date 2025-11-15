@@ -5,10 +5,10 @@
   <title>T-Man's Snooze Schedule</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Rajdhani:wght@300;400;500;600;700&family=Exo+2:wght@400;500;600;700&family=Saira:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Chakra+Petch:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Exo+2:wght@400;500;600;700&display=swap');
 
     :root {
-      font-family: 'Rajdhani', system-ui, -apple-system, sans-serif;
+      font-family: 'Exo 2', system-ui, -apple-system, sans-serif;
       color-scheme: dark;
       --neon-cyan: #00f5ff;
       --neon-orange: #ff9e00;
@@ -141,7 +141,7 @@
     .title-block h1 {
       margin: 0 0 8px;
       font-size: 1.75rem;
-      font-family: 'Orbitron', monospace;
+      font-family: 'Exo 2', sans-serif;
       font-weight: 700;
       letter-spacing: 2px;
       text-transform: uppercase;
@@ -1058,31 +1058,40 @@
       }
     }
 
-    /* FONT MOCKUP STYLES - For visual comparison */
-    .font-rajdhani { font-family: 'Rajdhani', sans-serif !important; }
-    .font-exo2 { font-family: 'Exo 2', sans-serif !important; }
-    .font-saira { font-family: 'Saira', sans-serif !important; }
-    .font-spacegrotesk { font-family: 'Space Grotesk', sans-serif !important; }
-    .font-chakrapetch { font-family: 'Chakra Petch', sans-serif !important; }
-
-    /* Font label indicators for mockup */
-    .font-label {
+    /* Power Sleep Mode Toggle */
+    .power-sleep-toggle {
       display: inline-block;
-      font-size: 0.6rem;
-      padding: 2px 5px;
-      margin-left: 8px;
-      border-radius: 4px;
-      background: rgba(0, 245, 255, 0.25);
-      color: var(--neon-cyan);
-      font-family: ui-monospace, monospace;
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'Exo 2', sans-serif;
       text-transform: uppercase;
-      opacity: 0.8;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-    }
-    button .font-label {
-      background: rgba(0, 245, 255, 0.15);
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      user-select: none;
       border: 1px solid rgba(0, 245, 255, 0.3);
+      background: rgba(0, 245, 255, 0.08);
+      color: #93c5fd;
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.1);
+    }
+    .power-sleep-toggle:hover {
+      background: rgba(0, 245, 255, 0.12);
+      border-color: rgba(0, 245, 255, 0.4);
+    }
+    .power-sleep-toggle.active {
+      background: rgba(0, 245, 255, 0.25);
+      border: 1px solid rgba(0, 245, 255, 0.6);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.3), inset 0 0 20px rgba(0, 245, 255, 0.15);
+      text-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
+    }
+    .power-sleep-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
     }
   </style>
 </head>
@@ -1125,11 +1134,10 @@
       <!-- Mismatch warning message (outside flex container to display below) -->
       <div id="napMismatchWarning" class="nap-mismatch-warning" style="display: none;"></div>
 
-      <div class="nap-toggle-container" style="margin-top: 12px;">
-        <label class="nap-toggle-label" for="powerSleepEnabled" style="cursor: pointer;">
-          <input type="checkbox" id="powerSleepEnabled" style="margin-right: 8px; cursor: pointer;" />
-          Power Sleep Mode
-        </label>
+      <div class="power-sleep-container">
+        <span class="nap-toggle-label">Power Sleep Mode:</span>
+        <span class="power-sleep-toggle" id="powerSleepToggle">Off</span>
+        <input type="checkbox" id="powerSleepEnabled" style="display: none;" />
       </div>
 
       <!-- Hidden inputs for wake window settings (configured via Settings modal) -->
@@ -1146,11 +1154,11 @@
       <input type="hidden" id="nap3Length" value="30" />
 
       <div class="buttons-row">
-        <button type="button" id="openSettings" class="font-rajdhani" title="Configure Nap Lengths and Wake Window Parameters">SETTINGS<span class="font-label">Rajdhani</span></button>
-        <button type="button" id="resetDefaults" class="font-exo2" title="Reset All Settings to Defaults">RESET<span class="font-label">Exo 2</span></button>
-        <button type="button" id="copySchedule" class="font-saira" title="Copy Schedule to Share via Text/WhatsApp">SHARE<span class="font-label">Saira</span></button>
-        <button type="button" id="openActualNaps" class="font-spacegrotesk" title="Track Today's Actual Nap Times">TRACK NAPS<span class="font-label">Space Grotesk</span></button>
-        <button type="button" id="openConstraints" class="font-chakrapetch" title="Set Schedule Constraints">CONSTRAINTS<span class="font-label">Chakra Petch</span></button>
+        <button type="button" id="openSettings" title="Configure Nap Lengths and Wake Window Parameters">SETTINGS</button>
+        <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">RESET</button>
+        <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">SHARE</button>
+        <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">TRACK NAPS</button>
+        <button type="button" id="openConstraints" title="Set Schedule Constraints">CONSTRAINTS</button>
       </div>
     </section>
 
@@ -1503,7 +1511,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.20"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.22"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -3340,21 +3348,6 @@
         li.appendChild(right);
         scheduleList.appendChild(li);
       });
-
-      // FONT MOCKUP: Apply different fonts to different schedule items
-      const fontClasses = ['font-rajdhani', 'font-exo2', 'font-saira', 'font-spacegrotesk', 'font-chakrapetch'];
-      const fontNames = ['Rajdhani', 'Exo 2', 'Saira', 'Space Grotesk', 'Chakra Petch'];
-      const scheduleItems = scheduleList.querySelectorAll('li');
-      scheduleItems.forEach((item, index) => {
-        const fontIndex = index % fontClasses.length;
-        item.classList.add(fontClasses[fontIndex]);
-        // Add font label to the item
-        const leftDiv = item.querySelector('div:first-child');
-        const fontLabel = document.createElement('span');
-        fontLabel.className = 'font-label';
-        fontLabel.textContent = fontNames[fontIndex];
-        leftDiv.appendChild(fontLabel);
-      });
     }
 
     function recomputeSchedule() {
@@ -3962,6 +3955,31 @@
     // Power sleep checkbox listener
     powerSleepEnabledInput.addEventListener("change", recomputeSchedule);
 
+    // Power Sleep Mode toggle handler
+    const powerSleepToggle = document.getElementById("powerSleepToggle");
+    if (powerSleepToggle) {
+      powerSleepToggle.addEventListener("click", () => {
+        const isEnabled = powerSleepEnabledInput.checked;
+        powerSleepEnabledInput.checked = !isEnabled;
+        updatePowerSleepToggle();
+        recomputeSchedule();
+      });
+    }
+
+    // Function to update toggle visual state
+    function updatePowerSleepToggle() {
+      if (powerSleepToggle) {
+        const isEnabled = powerSleepEnabledInput.checked;
+        if (isEnabled) {
+          powerSleepToggle.classList.add("active");
+          powerSleepToggle.textContent = "On";
+        } else {
+          powerSleepToggle.classList.remove("active");
+          powerSleepToggle.textContent = "Off";
+        }
+      }
+    }
+
     // Actual naps tracking event listeners
     [
       actualNap1Start,
@@ -4003,6 +4021,7 @@
     updateConstraintsButton();
     updateActualNapsButton();
     updateActualNapsInsights();
+    updatePowerSleepToggle();
     recomputeSchedule();
 
     // Display app version
