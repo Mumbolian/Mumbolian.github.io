@@ -5,22 +5,22 @@
   <title>T-Man's Snooze Schedule</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap');
 
     :root {
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-family: 'Quicksand', system-ui, -apple-system, sans-serif;
       color-scheme: light dark;
-      /* Light mode colors */
-      --sage-bg: #dae5d0;
-      --sage-light: #e8f0e0;
-      --sage-medium: #b8c9a8;
-      --sage-dark: #8a9d7a;
-      --dusty-rose: #c89f9c;
-      --dusty-rose-light: #e0c4c1;
-      --dusty-rose-dark: #a67e7b;
-      --text-primary: #2d3319;
-      --text-secondary: #5a6b4a;
-      --card-bg: #f8faf6;
+      /* Light mode colors - lighter, more washed out pastels */
+      --sage-bg: #e8f0e4;
+      --sage-light: #f2f7ed;
+      --sage-medium: #d4e3c8;
+      --sage-dark: #b8cda8;
+      --dusty-rose: #e5c5c0;
+      --dusty-rose-light: #f0dbd8;
+      --dusty-rose-dark: #d4a8a3;
+      --text-primary: #4a5640;
+      --text-secondary: #7a8870;
+      --card-bg: #fafcf8;
       --card-border: #c5d4b8;
     }
 
@@ -31,9 +31,9 @@
         --sage-light: #3d4a38;
         --sage-medium: #4f5f4a;
         --sage-dark: #6a7a63;
-        --dusty-rose: #9a7472;
-        --dusty-rose-light: #b38f8d;
-        --dusty-rose-dark: #7d5b59;
+        --dusty-rose: #b39390;
+        --dusty-rose-light: #c9a8a5;
+        --dusty-rose-dark: #9a7775;
         --text-primary: #e8ede4;
         --text-secondary: #c5d0bc;
         --card-bg: #333d30;
@@ -48,7 +48,12 @@
     body {
       margin: 0;
       min-height: 100vh;
-      background: var(--sage-bg);
+      /* WATERCOLOR WASH: Soft gradient wash background */
+      background: linear-gradient(135deg,
+        #e8f0e4 0%,
+        #f0dbd8 30%,
+        #e8f0e4 60%,
+        #f2f7ed 100%);
       color: var(--text-primary);
       display: flex;
       align-items: center;
@@ -61,10 +66,13 @@
     main {
       width: 100%;
       max-width: 720px;
-      background: var(--sage-light);
+      /* LAYERED SEMI-TRANSPARENT: Multiple translucent layers */
+      background:
+        linear-gradient(180deg, rgba(242, 247, 237, 0.95) 0%, rgba(250, 252, 248, 0.9) 100%),
+        linear-gradient(45deg, rgba(229, 197, 192, 0.1) 0%, transparent 50%);
       border-radius: 0;
-      border: 1px solid var(--card-border);
-      padding: 20px 18px 18px;
+      border: 2px solid var(--card-border);
+      padding: 24px 22px 22px;
       position: relative;
       z-index: 1;
     }
@@ -89,9 +97,9 @@
     .title-block h1 {
       margin: 0 0 8px;
       font-size: 1.75rem;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Quicksand', sans-serif;
       font-weight: 600;
-      letter-spacing: -0.5px;
+      letter-spacing: 0px;
       color: var(--text-primary);
       position: relative;
     }
@@ -134,17 +142,24 @@
     }
 
     .card {
-      background: var(--card-bg);
+      /* LAYERED SEMI-TRANSPARENT: Card backgrounds with subtle layers */
+      background:
+        linear-gradient(135deg, rgba(250, 252, 248, 0.9) 0%, rgba(242, 247, 237, 0.85) 100%),
+        radial-gradient(circle at top right, rgba(229, 197, 192, 0.08) 0%, transparent 60%);
       border-radius: 0;
-      padding: 16px;
-      border: 1px solid var(--card-border);
+      padding: 20px;
+      border: 2px solid var(--card-border);
       position: relative;
       overflow: visible;
       transition: border-color 0.3s ease;
     }
 
     .card.secondary {
-      border: 1px solid var(--card-border);
+      /* LAYERED SEMI-TRANSPARENT: Different tint for secondary card */
+      background:
+        linear-gradient(135deg, rgba(242, 247, 237, 0.9) 0%, rgba(250, 252, 248, 0.85) 100%),
+        radial-gradient(circle at bottom left, rgba(212, 227, 200, 0.12) 0%, transparent 60%);
+      border: 2px solid var(--sage-medium);
     }
 
     .card h2 {
@@ -183,9 +198,9 @@
     input[type="time"],
     input[type="number"] {
       width: 100%;
-      padding: 6px 8px;
+      padding: 8px 10px;
       border-radius: 4px;
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       background: var(--sage-light);
       color: var(--text-primary);
       font-size: 0.8rem;
@@ -257,8 +272,8 @@
       display: inline-flex;
       background: var(--sage-light);
       border-radius: 999px;
-      border: 1px solid var(--sage-medium);
-      padding: 3px;
+      border: 2px solid var(--sage-medium);
+      padding: 4px;
       cursor: pointer;
       user-select: none;
       transition: all 0.3s ease;
@@ -298,9 +313,9 @@
     .nap-mismatch-warning {
       margin-top: 4px;
       margin-bottom: 8px;
-      padding: 6px 10px;
+      padding: 8px 12px;
       background: var(--dusty-rose-light);
-      border: 1px solid var(--dusty-rose);
+      border: 2px solid var(--dusty-rose);
       border-radius: 4px;
       font-size: 0.75rem;
       color: var(--dusty-rose-dark);
@@ -316,15 +331,15 @@
 
     button {
       position: relative;
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       background: var(--sage-light);
       color: var(--text-primary);
       font-size: 0.82rem;
       font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: 0.3px;
+      font-family: 'Quicksand', sans-serif;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
-      padding: 9px 12px;
+      padding: 10px 14px;
       cursor: pointer;
       transition: all 0.2s ease;
       border-radius: 0;
@@ -343,7 +358,7 @@
     button.primary {
       background: var(--dusty-rose);
       color: white;
-      border: 1px solid var(--dusty-rose-dark);
+      border: 2px solid var(--dusty-rose-dark);
       font-weight: 700;
     }
 
@@ -396,26 +411,39 @@
       font-size: 0.95rem;
       display: flex;
       flex-direction: column;
-      gap: 1px;
+      gap: 8px;
     }
     .schedule-list li {
-      padding: 6px 8px;
+      padding: 10px 12px;
       border-radius: 0;
-      background: var(--sage-light);
-      border-top: 1px solid var(--sage-medium);
+      /* BOTH COMBINED: Watercolor wash + layered semi-transparent */
+      background:
+        linear-gradient(90deg,
+          rgba(242, 247, 237, 0.7) 0%,
+          rgba(240, 219, 216, 0.15) 50%,
+          rgba(242, 247, 237, 0.7) 100%),
+        linear-gradient(180deg,
+          rgba(250, 252, 248, 0.8) 0%,
+          rgba(232, 240, 228, 0.6) 100%);
+      border: 2px solid var(--sage-medium);
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: 8px;
       transition: all 0.2s ease;
     }
-    .schedule-list li:first-child {
-      border-top: none;
-    }
     /* Subtle visual cue when schedule item uses adjusted value */
     .schedule-list li.adjusted {
-      background: var(--dusty-rose-light);
-      border-top-color: var(--dusty-rose);
+      /* BOTH COMBINED: Stronger dusty rose wash for adjusted items */
+      background:
+        linear-gradient(90deg,
+          rgba(240, 219, 216, 0.5) 0%,
+          rgba(229, 197, 192, 0.3) 50%,
+          rgba(240, 219, 216, 0.5) 100%),
+        linear-gradient(180deg,
+          rgba(245, 225, 222, 0.9) 0%,
+          rgba(240, 219, 216, 0.7) 100%);
+      border-color: var(--dusty-rose);
     }
     .time {
       font-variant-numeric: tabular-nums;
@@ -460,8 +488,8 @@
       color: var(--dusty-rose-dark);
       background: var(--dusty-rose-light);
       border-radius: 4px;
-      padding: 4px 6px;
-      border: 1px solid var(--dusty-rose);
+      padding: 6px 8px;
+      border: 2px solid var(--dusty-rose);
     }
     .footer {
       margin-top: 10px;
@@ -476,9 +504,9 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 0.75rem;
       background: var(--sage-light);
-      padding: 2px 4px;
+      padding: 3px 5px;
       border-radius: 4px;
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       color: var(--text-primary);
     }
 
@@ -497,9 +525,9 @@
     }
     .actual-nap-row {
       background: var(--sage-light);
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       border-radius: 0;
-      padding: 10px 12px;
+      padding: 12px 14px;
       transition: all 0.2s ease;
     }
     .actual-nap-row.has-data {
@@ -549,9 +577,9 @@
     }
     .actual-nap-input {
       width: 100%;
-      padding: 6px 8px;
+      padding: 8px 10px;
       border-radius: 4px;
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       background: var(--sage-light);
       color: var(--text-primary);
       font-size: 0.8rem;
@@ -568,9 +596,9 @@
     .nap-insights {
       font-size: 0.72rem;
       color: var(--text-secondary);
-      padding: 6px 8px;
+      padding: 8px 10px;
       background: var(--sage-light);
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       border-radius: 4px;
       line-height: 1.4;
       display: none;
@@ -599,9 +627,9 @@
     }
     .overall-insights {
       background: var(--dusty-rose-light);
-      border: 1px solid var(--dusty-rose);
+      border: 2px solid var(--dusty-rose);
       border-radius: 4px;
-      padding: 8px 10px;
+      padding: 10px 12px;
       font-size: 0.75rem;
       color: var(--dusty-rose-dark);
       line-height: 1.5;
@@ -637,7 +665,7 @@
       position: relative;
       background: var(--card-bg);
       border-radius: 0;
-      border: 1px solid var(--card-border);
+      border: 2px solid var(--card-border);
       width: 100%;
       max-width: 530px;
       height: auto;
@@ -654,7 +682,7 @@
       text-align: center;
     }
     #settingsModal .modal-content {
-      border: 1px solid var(--dusty-rose);
+      border: 2px solid var(--dusty-rose);
     }
     .modal-header {
       display: flex;
@@ -669,8 +697,8 @@
       margin: 0;
       font-size: 1.3rem;
       font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: -0.3px;
+      font-family: 'Quicksand', sans-serif;
+      letter-spacing: 0px;
       color: var(--text-primary);
     }
     .close-btn {
@@ -716,11 +744,11 @@
     }
     .clear-btn {
       font-size: 0.72rem;
-      padding: 4px 8px;
+      padding: 5px 10px;
       margin-top: 6px;
       background: var(--dusty-rose-light);
       color: var(--dusty-rose-dark);
-      border: 1px solid var(--dusty-rose);
+      border: 2px solid var(--dusty-rose);
       transition: all 0.2s ease;
     }
     .clear-btn:hover {
@@ -758,9 +786,9 @@
     }
     .scenario-tab {
       min-width: 36px;
-      padding: 6px 14px;
+      padding: 7px 16px;
       background: var(--sage-light);
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       border-bottom: none;
       border-radius: 0;
       cursor: pointer;
@@ -782,10 +810,10 @@
     }
     .schedule-summary {
       margin-top: 16px;
-      padding: 12px;
+      padding: 14px;
       background: var(--sage-light);
       border-radius: 4px;
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       text-align: center;
       font-size: 0.9rem;
       color: var(--text-secondary);
@@ -815,16 +843,16 @@
     .power-sleep-toggle {
       display: inline-block;
       font-size: 0.7rem;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 4px;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Quicksand', sans-serif;
       text-transform: uppercase;
       font-weight: 600;
       letter-spacing: 0.5px;
       cursor: pointer;
       transition: all 0.2s ease;
       user-select: none;
-      border: 1px solid var(--sage-medium);
+      border: 2px solid var(--sage-medium);
       background: var(--sage-light);
       color: var(--text-secondary);
     }
