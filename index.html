@@ -1156,7 +1156,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.12.4"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.12.5"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -2368,20 +2368,8 @@
       // 1. Try original lengths first
       combinations.push([...originalNapLengths]);
 
-      // 2. Try single nap adjustments (±5, ±10, ±15, ±20, ±25, ±30 min)
-      for (let i = 0; i < napCount; i++) {
-        for (let adj = -maxAdjust; adj <= maxAdjust; adj += 5) {
-          if (adj === 0) continue;
-          const newLength = originalNapLengths[i] + adj;
-          if (newLength >= minNap) {
-            const combo = [...originalNapLengths];
-            combo[i] = newLength;
-            combinations.push(combo);
-          }
-        }
-      }
-
-      // 3. Try pairwise adjustments (shift time between two naps)
+      // 2. Try pairwise adjustments (shift time between two naps) - PRIORITIZED
+      // These maintain total nap time, which is generally preferred
       for (let i = 0; i < napCount; i++) {
         for (let j = i + 1; j < napCount; j++) {
           for (let transfer = 5; transfer <= 30; transfer += 5) {
@@ -2399,6 +2387,51 @@
               combo[i] = originalNapLengths[i] + transfer;
               combinations.push(combo);
             }
+          }
+        }
+      }
+
+      // 3. Try redistribution adjustments (reduce one nap, distribute to others)
+      // This maintains total nap time by spreading reductions across other naps
+      for (let reduceIdx = 0; reduceIdx < napCount; reduceIdx++) {
+        for (let reduction = 5; reduction <= maxAdjust; reduction += 5) {
+          if (originalNapLengths[reduceIdx] - reduction < minNap) continue;
+
+          // Get indices of other naps to redistribute to
+          const otherIndices = [];
+          for (let i = 0; i < napCount; i++) {
+            if (i !== reduceIdx) otherIndices.push(i);
+          }
+
+          if (otherIndices.length === 0) continue;
+
+          // Distribute reduction equally among other naps
+          const perNap = Math.floor(reduction / otherIndices.length);
+          const remainder = reduction % otherIndices.length;
+
+          const combo = [...originalNapLengths];
+          combo[reduceIdx] = originalNapLengths[reduceIdx] - reduction;
+
+          for (let i = 0; i < otherIndices.length; i++) {
+            const idx = otherIndices[i];
+            const addition = perNap + (i < remainder ? 1 : 0);
+            combo[idx] = originalNapLengths[idx] + addition;
+          }
+
+          combinations.push(combo);
+        }
+      }
+
+      // 4. Try single nap adjustments (±5, ±10, ±15, ±20, ±25, ±30 min)
+      // These change total nap time and are tried LAST
+      for (let i = 0; i < napCount; i++) {
+        for (let adj = -maxAdjust; adj <= maxAdjust; adj += 5) {
+          if (adj === 0) continue;
+          const newLength = originalNapLengths[i] + adj;
+          if (newLength >= minNap) {
+            const combo = [...originalNapLengths];
+            combo[i] = newLength;
+            combinations.push(combo);
           }
         }
       }
