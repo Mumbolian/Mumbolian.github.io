@@ -67,13 +67,15 @@
     main {
       width: 100%;
       max-width: 720px;
-      /* Clean white base with very subtle sage tint */
-      background: rgba(255, 255, 255, 0.85);
+      /* Sage green tinted base with watercolor overlay */
+      background:
+        linear-gradient(180deg, rgba(229, 197, 192, 0.15) 0%, transparent 100%),
+        rgba(238, 245, 232, 0.95);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
       border-radius: 16px;
-      border: 2px solid rgba(184, 205, 168, 0.4);
-      box-shadow: 0 8px 32px rgba(106, 122, 99, 0.12);
+      border: 2px solid rgba(184, 205, 168, 0.5);
+      box-shadow: 0 8px 32px rgba(106, 122, 99, 0.15);
       padding: 24px 22px 22px;
       position: relative;
       z-index: 1;
@@ -144,23 +146,27 @@
     }
 
     .card {
-      /* Clean white cards with subtle sage tint */
-      background: rgba(255, 255, 255, 0.7);
+      /* Sage green watercolor cards with layered gradients */
+      background:
+        radial-gradient(circle at top right, rgba(229, 197, 192, 0.2) 0%, transparent 60%),
+        linear-gradient(135deg, rgba(248, 250, 246, 0.9) 0%, rgba(240, 244, 235, 0.9) 100%);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border-radius: 12px;
       padding: 20px;
-      border: 2px solid rgba(197, 212, 184, 0.4);
-      box-shadow: 0 2px 12px rgba(106, 122, 99, 0.08);
+      border: 2px solid rgba(197, 212, 184, 0.5);
+      box-shadow: 0 2px 12px rgba(106, 122, 99, 0.12);
       position: relative;
       overflow: visible;
       transition: all 0.3s ease;
     }
 
     .card.secondary {
-      /* Slightly different tint for variety */
-      background: rgba(248, 250, 246, 0.8);
-      border: 2px solid rgba(212, 227, 200, 0.5);
+      /* Dusty rose tint for variety */
+      background:
+        radial-gradient(circle at bottom left, rgba(212, 227, 200, 0.25) 0%, transparent 60%),
+        linear-gradient(135deg, rgba(240, 244, 235, 0.9) 0%, rgba(248, 250, 246, 0.9) 100%);
+      border: 2px solid rgba(212, 227, 200, 0.6);
     }
 
     .card h2 {
