@@ -15,9 +15,9 @@
       --sage-light: #f2f7ed;
       --sage-medium: #d4e3c8;
       --sage-dark: #b8cda8;
-      --dusty-rose: #e8d5c4;
-      --dusty-rose-light: #f2e6d8;
-      --dusty-rose-dark: #8b7961;
+      --dusty-rose: #e5a890;
+      --dusty-rose-light: #f5d4c8;
+      --dusty-rose-dark: #b8835f;
       --text-primary: #1a3a1a;
       --text-secondary: #2d4a2d;
       --card-bg: #fafcf8;
@@ -124,18 +124,15 @@
       .layout {
         grid-template-columns: 1fr;
       }
-    }
-
-    @media (max-width: 480px) {
       .card {
         padding: 20px 24px;
       }
       .form-grid {
-        gap: 10px 8px;
+        gap: 10px 16px;
       }
       input[type="time"],
       input[type="number"] {
-        padding: 8px 12px;
+        min-width: 0;
       }
     }
 
@@ -472,9 +469,9 @@
       color: var(--dusty-rose-dark);
     }
     .badge.bed {
-      background: var(--sage-medium);
-      border: 1px solid var(--sage-dark);
-      color: var(--text-primary);
+      background: var(--dusty-rose-light);
+      border: 1px solid var(--dusty-rose);
+      color: var(--dusty-rose-dark);
     }
     .badge.actual {
       background: var(--dusty-rose);
@@ -854,6 +851,9 @@
       }
       .nap-row {
         padding: 10px 16px;
+      }
+      .time-inputs-row {
+        gap: 8px;
       }
     }
 
@@ -1308,7 +1308,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.1"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
