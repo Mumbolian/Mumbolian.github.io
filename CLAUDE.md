@@ -6,7 +6,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 T-Man's Snooze Schedule is a **pure client-side nap scheduling app** for parents managing baby sleep schedules. The entire application lives in a single `index.html` file (no build system, no dependencies, no backend). It works backwards from a fixed bedtime, automatically distributes wake windows, supports 2-nap vs 3-nap schedules, and intelligently adjusts schedules to satisfy time-based constraints while respecting biological wake window limits. Primary use case: parents on phones during chaos.
 
-**Live URL:** https://bingpotstudio.com
+**Live URL:** https://t-man.net
+
+## Development Workflow
+
+**CRITICAL:** All development happens in `/test/index.html` (https://t-man.net/test/)
+
+- ✅ Make ALL changes to `/test/index.html`
+- ✅ Test live at https://t-man.net/test/
+- ❌ NEVER copy to production `/index.html` without explicit user sign-off
+- When user approves: Copy `/test/index.html` → `/index.html`, increment version, commit, push
 
 ## Tech Stack
 
@@ -82,7 +91,7 @@ For multi-file features or long-running work. **Not for quick fixes or single-fi
 
 ### Deployment Workflow (MANDATORY)
 
-Hosted on GitHub Pages. Changes go live at https://bingpotstudio.com after PR merge.
+Hosted on GitHub Pages. Changes go live at https://t-man.net after PR merge.
 
 **From any worktree (e.g., `test-feature`):**
 
