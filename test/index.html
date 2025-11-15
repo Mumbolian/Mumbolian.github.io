@@ -1090,27 +1090,20 @@
 
     @media (max-width: 640px) {
       .modal {
-        padding: 0;
-        align-items: center;
-        justify-content: center;
+        padding: 12px;
+        align-items: flex-start;
       }
       .modal-content {
         max-width: 100%;
-        max-height: 90vh;
+        max-height: 88vh;
         width: 100%;
-        min-height: 0;
         border-radius: 0;
       }
-      .modal-body {
-        flex: 1 1 0;
-        overflow-y: auto;
-        min-height: 0;
-      }
       .modal-header {
-        padding: 16px 20px 14px;
+        padding: 16px 20px 12px;
       }
       .modal-footer {
-        padding: 12px 20px 14px;
+        padding: 10px 20px 12px;
       }
     }
   </style>
@@ -1536,7 +1529,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.5"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.6"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
