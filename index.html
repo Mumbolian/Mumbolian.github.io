@@ -1156,7 +1156,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.12.5"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.12.6"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -2020,6 +2020,19 @@
 
       let cursor = wakeMins;
 
+      // Calculate total planned nap time and actual nap time consumed
+      const totalPlannedNapTime = napLengths.slice(0, napCount).reduce((a, b) => a + b, 0);
+      let actualNapTimeConsumed = 0;
+
+      // First pass: calculate how much nap time actuals have consumed
+      for (let i = 0; i < napCount; i++) {
+        const napNum = i + 1;
+        const actualNap = actualNaps.find(a => a.napNum === napNum);
+        if (actualNap) {
+          actualNapTimeConsumed += (actualNap.end - actualNap.start);
+        }
+      }
+
       // Process each nap
       for (let i = 0; i < napCount; i++) {
         const napNum = i + 1;
@@ -2047,15 +2060,29 @@
           cursor = napEnd;
         } else {
           // Calculate planned nap time for remaining naps
+          // Adjust based on how much actual naps have consumed vs planned
           const remainingNaps = napCount - i;
           const isLastNap = (i === napCount - 1);
+
+          // Calculate remaining nap budget
+          const remainingBudget = totalPlannedNapTime - actualNapTimeConsumed;
+
+          // Calculate how much was planned for remaining naps
+          let remainingPlannedTime = 0;
+          for (let j = i; j < napCount; j++) {
+            remainingPlannedTime += napLengths[j];
+          }
+
+          // Calculate adjustment factor to redistribute
+          const adjustmentFactor = remainingPlannedTime > 0 ? remainingBudget / remainingPlannedTime : 1;
 
           if (isLastNap) {
             // For the last nap, work backwards from bedtime
             // We need lastWake minutes between nap end and bedtime
-            const napLen = napLengths[i];
+            const originalNapLen = napLengths[i];
+            const adjustedNapLen = Math.max(30, Math.round(originalNapLen * adjustmentFactor));
             const napEnd = bedMins - lastWake;
-            const napStart = napEnd - napLen;
+            const napStart = napEnd - adjustedNapLen;
             const wakeWindow = napStart - cursor;
 
             // Validate that the wake window is reasonable
@@ -2066,48 +2093,50 @@
             items.push({
               label: `Nap ${napNum}`,
               timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
-              extra: `${napLen} min`,
+              extra: `${adjustedNapLen} min`,
               badge: "Planned",
               badgeClass: "planned",
               wakeWindow: wakeWindow,
               isActual: false
             });
 
-            totalNapTime += napLen;
+            totalNapTime += adjustedNapLen;
             wakeWindowDurations.push(wakeWindow);
             cursor = napEnd;
           } else {
-            // For non-last naps, distribute remaining time
+            // For non-last naps, distribute remaining time with adjustment
             const remainingTime = bedMins - cursor;
 
-            // Calculate how much time we need for remaining naps
-            let remainingNapTime = 0;
+            // Calculate adjusted nap lengths for remaining naps
+            let adjustedRemainingNapTime = 0;
             for (let j = i; j < napCount; j++) {
-              remainingNapTime += napLengths[j];
+              const adjustedLen = Math.max(30, Math.round(napLengths[j] * adjustmentFactor));
+              adjustedRemainingNapTime += adjustedLen;
             }
 
             // Reserve lastWake for the final wake window
-            const availableForWakeWindows = remainingTime - remainingNapTime - lastWake;
+            const availableForWakeWindows = remainingTime - adjustedRemainingNapTime - lastWake;
             const wakeWindowsNeeded = remainingNaps; // one before each remaining nap
 
             // Distribute wake windows evenly (or use min/max constraints)
             const wakeWindow = Math.max(minWake, Math.min(maxWake, availableForWakeWindows / wakeWindowsNeeded));
 
             const napStart = cursor + wakeWindow;
-            const napLen = napLengths[i];
-            const napEnd = napStart + napLen;
+            const originalNapLen = napLengths[i];
+            const adjustedNapLen = Math.max(30, Math.round(originalNapLen * adjustmentFactor));
+            const napEnd = napStart + adjustedNapLen;
 
             items.push({
               label: `Nap ${napNum}`,
               timeRange: `${fromMinutes(napStart)} – ${fromMinutes(napEnd)}`,
-              extra: `${napLen} min`,
+              extra: `${adjustedNapLen} min`,
               badge: "Planned",
               badgeClass: "planned",
               wakeWindow: wakeWindow,
               isActual: false
             });
 
-            totalNapTime += napLen;
+            totalNapTime += adjustedNapLen;
             wakeWindowDurations.push(wakeWindow);
             cursor = napEnd;
           }
