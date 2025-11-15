@@ -8,28 +8,65 @@
     :root {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color-scheme: dark;
+      --neon-pink: #ff006e;
+      --neon-cyan: #00f5ff;
+      --neon-orange: #ff9e00;
+      --neon-purple: #9d4edd;
+      --deep-purple: #1a0b2e;
+      --dark-base: #0a0118;
     }
     * {
       box-sizing: border-box;
     }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    @keyframes neonPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
     body {
       margin: 0;
       min-height: 100vh;
-      background: radial-gradient(circle at top, #1f2937 0, #020617 55%, #020617 100%);
+      background: linear-gradient(-45deg, #0a0118, #1a0b2e, #16003b, #1a0b2e);
+      background-size: 400% 400%;
+      animation: gradientShift 15s ease infinite;
       color: #e5e7eb;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 16px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 20% 50%, rgba(157, 78, 221, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
+                  radial-gradient(circle at 40% 20%, rgba(0, 245, 255, 0.08) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
     }
     main {
       width: 100%;
       max-width: 720px;
-      background: rgba(15, 23, 42, 0.96);
-      border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+      background: rgba(26, 11, 46, 0.4);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border-radius: 24px;
+      border: 1px solid rgba(157, 78, 221, 0.3);
+      box-shadow: 0 8px 32px rgba(255, 0, 110, 0.15),
+                  0 0 80px rgba(157, 78, 221, 0.1),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
       padding: 20px 18px 18px;
+      position: relative;
+      z-index: 1;
     }
     @media (min-width: 640px) {
       main {
@@ -46,11 +83,16 @@
     .title-block h1 {
       margin: 0 0 4px;
       font-size: 1.5rem;
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
     }
     .title-block p {
       margin: 0;
       font-size: 0.86rem;
-      color: #9ca3af;
+      color: #c4b5fd;
     }
     .pill {
       display: inline-flex;
@@ -58,17 +100,20 @@
       gap: 0.35rem;
       padding: 0.2rem 0.6rem;
       border-radius: 999px;
-      background: rgba(34, 197, 94, 0.12);
-      color: #bbf7d0;
+      background: rgba(0, 245, 255, 0.15);
+      border: 1px solid rgba(0, 245, 255, 0.3);
+      color: var(--neon-cyan);
       font-size: 0.7rem;
       white-space: nowrap;
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
     }
     .dot {
       width: 7px;
       height: 7px;
       border-radius: 999px;
-      background: #22c55e;
-      box-shadow: 0 0 8px #22c55e;
+      background: var(--neon-cyan);
+      box-shadow: 0 0 12px var(--neon-cyan);
+      animation: neonPulse 2s ease-in-out infinite;
     }
 
     .layout {
@@ -83,13 +128,35 @@
     }
 
     .card {
-      background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.35), rgba(15, 23, 42, 0.96) 55%);
-      border-radius: 14px;
+      background: rgba(26, 11, 46, 0.3);
+      backdrop-filter: blur(12px) saturate(150%);
+      -webkit-backdrop-filter: blur(12px) saturate(150%);
+      border-radius: 16px;
       padding: 14px 14px 12px;
-      border: 1px solid rgba(51, 65, 85, 0.9);
+      border: 1px solid rgba(157, 78, 221, 0.4);
+      box-shadow: 0 4px 24px rgba(157, 78, 221, 0.1),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 0, 110, 0.5), transparent);
+      opacity: 0.5;
     }
     .card.secondary {
-      background: radial-gradient(circle at top right, rgba(22, 163, 74, 0.32), rgba(15, 23, 42, 0.96) 55%);
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      box-shadow: 0 4px 24px rgba(0, 245, 255, 0.1),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+    .card.secondary::before {
+      background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.5), transparent);
     }
     .card h2 {
       margin: 0 0 10px;
@@ -120,23 +187,31 @@
     }
     label {
       font-size: 0.78rem;
-      color: #9ca3af;
+      color: #c4b5fd;
+      font-weight: 500;
     }
     input[type="time"],
     input[type="number"] {
       width: 100%;
       padding: 6px 8px;
-      border-radius: 9px;
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      background: rgba(15, 23, 42, 0.98);
+      border-radius: 10px;
+      border: 1px solid rgba(157, 78, 221, 0.4);
+      background: rgba(10, 1, 24, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #e5e7eb;
       font-size: 0.8rem;
       outline: none;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     input[type="time"]:focus,
     input[type="number"]:focus {
-      border-color: #60a5fa;
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.45);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2),
+                  0 0 20px rgba(0, 245, 255, 0.3),
+                  inset 0 2px 8px rgba(0, 0, 0, 0.3);
+      background: rgba(10, 1, 24, 0.8);
     }
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button {
@@ -148,29 +223,38 @@
     }
     /* Subtle visual indicator when schedule used a different value than user's setting */
     input[type="number"].setting-adjusted {
-      background: rgba(251, 191, 36, 0.08);
-      border-color: rgba(251, 191, 36, 0.4);
-      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.1), inset 0 0 12px rgba(251, 191, 36, 0.06);
+      background: rgba(255, 158, 0, 0.1);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 0 2px rgba(255, 158, 0, 0.2),
+                  0 0 20px rgba(255, 158, 0, 0.3),
+                  inset 0 0 12px rgba(255, 158, 0, 0.1);
     }
     input[type="number"].setting-adjusted:focus {
-      border-color: #fbbf24;
-      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.45), inset 0 0 12px rgba(251, 191, 36, 0.06);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 0 2px rgba(255, 158, 0, 0.4),
+                  0 0 25px rgba(255, 158, 0, 0.4),
+                  inset 0 0 12px rgba(255, 158, 0, 0.1);
     }
     /* Apply same haze to buttons when adjustments are active */
     button.setting-adjusted {
-      background: rgba(251, 191, 36, 0.12) !important;
-      border-color: rgba(251, 191, 36, 0.5) !important;
-      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.15), inset 0 0 12px rgba(251, 191, 36, 0.08) !important;
+      background: rgba(255, 158, 0, 0.15) !important;
+      border-color: var(--neon-orange) !important;
+      box-shadow: 0 0 0 2px rgba(255, 158, 0, 0.2),
+                  0 0 20px rgba(255, 158, 0, 0.3) !important;
     }
     /* Red highlight for validation errors */
     input[type="number"].validation-error {
-      background: rgba(239, 68, 68, 0.12);
-      border-color: rgba(239, 68, 68, 0.7);
-      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.3), inset 0 0 12px rgba(239, 68, 68, 0.1);
+      background: rgba(255, 0, 110, 0.15);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 0 2px rgba(255, 0, 110, 0.3),
+                  0 0 20px rgba(255, 0, 110, 0.4),
+                  inset 0 0 12px rgba(255, 0, 110, 0.1);
     }
     input[type="number"].validation-error:focus {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.5), inset 0 0 12px rgba(239, 68, 68, 0.1);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 0 2px rgba(255, 0, 110, 0.5),
+                  0 0 25px rgba(255, 0, 110, 0.5),
+                  inset 0 0 12px rgba(255, 0, 110, 0.1);
     }
 
     .inline {
@@ -178,13 +262,13 @@
       align-items: center;
       gap: 7px;
       font-size: 0.76rem;
-      color: #9ca3af;
+      color: #c4b5fd;
       margin-bottom: 4px;
     }
     .inline input[type="checkbox"] {
       width: 14px;
       height: 14px;
-      accent-color: #22c55e;
+      accent-color: var(--neon-cyan);
     }
 
     /* Nap preference toggle switch */
@@ -196,17 +280,22 @@
     }
     .nap-toggle-label {
       font-size: 0.76rem;
-      color: #9ca3af;
+      color: #c4b5fd;
+      font-weight: 500;
     }
     .nap-toggle-switch {
       position: relative;
       display: inline-flex;
-      background: rgba(30, 41, 59, 0.8);
+      background: rgba(10, 1, 24, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border-radius: 999px;
-      border: 1px solid rgba(75, 85, 99, 0.9);
+      border: 1px solid rgba(157, 78, 221, 0.4);
       padding: 3px;
       cursor: pointer;
       user-select: none;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+      transition: all 0.3s ease;
     }
     .nap-toggle-option {
       position: relative;
@@ -214,13 +303,14 @@
       padding: 4px 16px;
       font-size: 0.75rem;
       font-weight: 500;
-      color: #9ca3af;
-      transition: color 0.2s ease;
+      color: #8b5cf6;
+      transition: color 0.3s ease;
       text-align: center;
       min-width: 65px;
     }
     .nap-toggle-option.active {
       color: #e5e7eb;
+      text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
     }
     .nap-toggle-slider {
       position: absolute;
@@ -228,13 +318,17 @@
       left: 3px;
       height: calc(100% - 6px);
       width: calc(50% - 3px);
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.6), rgba(37, 99, 235, 0.8));
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
       border-radius: 999px;
-      transition: transform 0.25s ease;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+      box-shadow: 0 0 20px rgba(255, 0, 110, 0.5),
+                  0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .nap-toggle-switch.three-naps .nap-toggle-slider {
       transform: translateX(100%);
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.5),
+                  0 4px 12px rgba(0, 0, 0, 0.3);
     }
     /* Visual indicator when preference doesn't match actual schedule */
     .nap-toggle-switch.preference-mismatch {
@@ -270,24 +364,34 @@
     }
     button {
       border-radius: 999px;
-      border: 1px solid rgba(75, 85, 99, 0.9);
-      background: rgba(15, 23, 42, 0.98);
+      border: 1px solid rgba(157, 78, 221, 0.4);
+      background: rgba(10, 1, 24, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #e5e7eb;
       font-size: 0.75rem;
       padding: 5px 9px;
       cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
-    button:hover {
-      border-color: #60a5fa;
+    button:active {
+      transform: translateY(1px);
     }
     button.primary {
-      background: linear-gradient(135deg, #22c55e, #16a34a);
-      color: #022c22;
-      border-color: transparent;
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      color: #fff;
+      border: 1px solid rgba(255, 0, 110, 0.5);
       font-weight: 600;
+      box-shadow: 0 0 20px rgba(255, 0, 110, 0.4),
+                  0 4px 12px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     }
-    button.primary:hover {
-      filter: brightness(1.05);
+    button.primary:active {
+      box-shadow: 0 0 15px rgba(255, 0, 110, 0.3),
+                  0 2px 8px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
     button.collapse-toggle {
       width: 100%;
@@ -298,12 +402,18 @@
       align-items: center;
       gap: 6px;
       font-size: 0.78rem;
-      color: #9ca3af;
-      background: rgba(15, 23, 42, 0.5);
+      color: #c4b5fd;
+      background: rgba(10, 1, 24, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(157, 78, 221, 0.3);
+      transition: all 0.3s ease;
     }
-    button.collapse-toggle:hover {
+    button.collapse-toggle:active {
       color: #e5e7eb;
-      background: rgba(15, 23, 42, 0.8);
+      background: rgba(10, 1, 24, 0.7);
+      border-color: rgba(157, 78, 221, 0.5);
+      box-shadow: 0 0 15px rgba(157, 78, 221, 0.2);
     }
     .toggle-arrow {
       display: inline-block;
@@ -337,7 +447,7 @@
 
     .nap-row .unit {
       font-size: 0.72rem;
-      color: #6b7280;
+      color: #8b5cf6;
       margin-left: 2px;
     }
 
@@ -352,19 +462,24 @@
     }
     .schedule-list li {
       padding: 6px 8px;
-      border-radius: 9px;
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(55, 65, 81, 0.9);
+      border-radius: 10px;
+      background: rgba(10, 1, 24, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(157, 78, 221, 0.3);
       display: flex;
       justify-content: space-between;
       align-items: baseline;
       gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
     /* Subtle visual cue when schedule item uses adjusted value */
     .schedule-list li.adjusted {
-      background: rgba(251, 191, 36, 0.06);
-      border-color: rgba(251, 191, 36, 0.35);
-      box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.08);
+      background: rgba(255, 158, 0, 0.1);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 15px rgba(255, 158, 0, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .time {
       font-variant-numeric: tabular-nums;
@@ -373,45 +488,57 @@
       font-size: 0.7rem;
       padding: 2px 6px;
       border-radius: 999px;
-      background: rgba(37, 99, 235, 0.15);
-      color: #bfdbfe;
+      background: rgba(157, 78, 221, 0.2);
+      border: 1px solid rgba(157, 78, 221, 0.4);
+      color: var(--neon-purple);
       white-space: nowrap;
+      box-shadow: 0 0 10px rgba(157, 78, 221, 0.2);
     }
     .badge.wake {
-      background: rgba(234, 179, 8, 0.14);
-      color: #facc15;
+      background: rgba(255, 158, 0, 0.2);
+      border: 1px solid rgba(255, 158, 0, 0.4);
+      color: var(--neon-orange);
+      box-shadow: 0 0 10px rgba(255, 158, 0, 0.2);
     }
     .badge.bed {
-      background: rgba(34, 197, 94, 0.16);
-      color: #bbf7d0;
+      background: rgba(0, 245, 255, 0.2);
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
     }
     .badge.actual {
-      background: rgba(34, 197, 94, 0.2);
-      color: #bbf7d0;
-      border: 1px solid rgba(34, 197, 94, 0.4);
+      background: rgba(0, 245, 255, 0.25);
+      border: 1px solid rgba(0, 245, 255, 0.5);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 12px rgba(0, 245, 255, 0.3);
     }
     .badge.planned {
-      background: rgba(59, 130, 246, 0.15);
-      color: #bfdbfe;
+      background: rgba(157, 78, 221, 0.2);
+      border: 1px solid rgba(157, 78, 221, 0.4);
+      color: var(--neon-purple);
+      box-shadow: 0 0 10px rgba(157, 78, 221, 0.2);
     }
     .subtext {
       font-size: 0.72rem;
-      color: #9ca3af;
+      color: #c4b5fd;
       margin-top: 4px;
     }
     .warning {
       margin-top: 4px;
       font-size: 0.72rem;
-      color: #fecaca;
-      background: rgba(248, 113, 113, 0.12);
-      border-radius: 8px;
+      color: #ffa3c7;
+      background: rgba(255, 0, 110, 0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 10px;
       padding: 4px 6px;
-      border: 1px solid rgba(248, 113, 113, 0.35);
+      border: 1px solid rgba(255, 0, 110, 0.4);
+      box-shadow: 0 0 15px rgba(255, 0, 110, 0.2);
     }
     .footer {
       margin-top: 10px;
       font-size: 0.7rem;
-      color: #6b7280;
+      color: #8b5cf6;
       display: flex;
       justify-content: space-between;
       gap: 8px;
@@ -420,10 +547,13 @@
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       font-size: 0.75rem;
-      background: rgba(15, 23, 42, 0.9);
+      background: rgba(10, 1, 24, 0.7);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       padding: 2px 4px;
-      border-radius: 4px;
-      border: 1px solid rgba(55, 65, 81, 0.8);
+      border-radius: 6px;
+      border: 1px solid rgba(157, 78, 221, 0.3);
+      color: var(--neon-cyan);
     }
 
     @media (max-width: 420px) {
@@ -440,15 +570,20 @@
       margin-bottom: 12px;
     }
     .actual-nap-row {
-      background: rgba(15, 23, 42, 0.96);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      border-radius: 10px;
+      background: rgba(10, 1, 24, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(157, 78, 221, 0.3);
+      border-radius: 12px;
       padding: 10px 12px;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
     .actual-nap-row.has-data {
-      border-color: rgba(34, 197, 94, 0.5);
-      background: rgba(34, 197, 94, 0.05);
+      border-color: var(--neon-cyan);
+      background: rgba(0, 245, 255, 0.08);
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .nap-label-row {
       display: flex;
@@ -459,22 +594,23 @@
     .nap-label {
       font-size: 0.85rem;
       font-weight: 600;
-      color: #d1d5db;
+      color: #e5e7eb;
     }
     .clear-nap-btn {
       background: transparent;
       border: none;
-      color: #9ca3af;
+      color: #c4b5fd;
       font-size: 0.9rem;
       padding: 2px 6px;
       cursor: pointer;
-      border-radius: 4px;
-      transition: all 0.2s ease;
+      border-radius: 6px;
+      transition: all 0.3s ease;
       line-height: 1;
     }
-    .clear-nap-btn:hover {
-      background: rgba(239, 68, 68, 0.15);
-      color: #fca5a5;
+    .clear-nap-btn:active {
+      background: rgba(255, 0, 110, 0.2);
+      color: #ffa3c7;
+      box-shadow: 0 0 10px rgba(255, 0, 110, 0.3);
     }
     .time-inputs-row {
       display: grid;
@@ -489,35 +625,46 @@
     }
     .time-input-group label {
       font-size: 0.72rem;
-      color: #9ca3af;
+      color: #c4b5fd;
     }
     .actual-nap-input {
       width: 100%;
       padding: 6px 8px;
-      border-radius: 8px;
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      background: rgba(15, 23, 42, 0.98);
+      border-radius: 10px;
+      border: 1px solid rgba(157, 78, 221, 0.4);
+      background: rgba(10, 1, 24, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       color: #e5e7eb;
       font-size: 0.8rem;
       outline: none;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     .actual-nap-input:focus {
-      border-color: #60a5fa;
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.45);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 0 2px rgba(0, 245, 255, 0.2),
+                  0 0 20px rgba(0, 245, 255, 0.3),
+                  inset 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     .actual-nap-input.has-value {
-      border-color: rgba(34, 197, 94, 0.5);
-      background: rgba(34, 197, 94, 0.05);
+      border-color: var(--neon-cyan);
+      background: rgba(0, 245, 255, 0.08);
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.15),
+                  inset 0 2px 8px rgba(0, 0, 0, 0.3);
     }
     .nap-insights {
       font-size: 0.72rem;
-      color: #9ca3af;
+      color: #c4b5fd;
       padding: 6px 8px;
-      background: rgba(30, 41, 59, 0.5);
-      border-radius: 6px;
+      background: rgba(10, 1, 24, 0.6);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(157, 78, 221, 0.2);
+      border-radius: 8px;
       line-height: 1.4;
       display: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
     }
     .nap-insights.visible {
       display: block;
@@ -529,7 +676,7 @@
       padding: 2px 0;
     }
     .nap-insights .insight-label {
-      color: #9ca3af;
+      color: #c4b5fd;
     }
     .nap-insights .insight-value {
       color: #e5e7eb;
@@ -542,15 +689,19 @@
       color: #fca5a5;
     }
     .overall-insights {
-      background: rgba(30, 64, 175, 0.12);
-      border: 1px solid rgba(59, 130, 246, 0.3);
-      border-radius: 8px;
+      background: rgba(0, 245, 255, 0.1);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      border-radius: 10px;
       padding: 8px 10px;
       font-size: 0.75rem;
-      color: #bfdbfe;
+      color: var(--neon-cyan);
       line-height: 1.5;
       margin-bottom: 10px;
       display: none;
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.15),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
     .overall-insights.visible {
       display: block;
@@ -575,15 +726,20 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: rgba(0, 0, 0, 0.75);
-      backdrop-filter: blur(4px);
+      background: rgba(10, 1, 24, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
     }
     .modal-content {
       position: relative;
-      background: rgba(15, 23, 42, 0.98);
-      border-radius: 18px;
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8);
+      background: rgba(26, 11, 46, 0.5);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-radius: 24px;
+      border: 1px solid rgba(157, 78, 221, 0.4);
+      box-shadow: 0 8px 32px rgba(255, 0, 110, 0.2),
+                  0 0 80px rgba(157, 78, 221, 0.15),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
       width: 100%;
       max-width: 500px;
       max-height: 90vh;
@@ -595,17 +751,21 @@
       justify-content: space-between;
       align-items: center;
       padding: 18px 20px 14px;
-      border-bottom: 1px solid rgba(51, 65, 85, 0.9);
+      border-bottom: 1px solid rgba(157, 78, 221, 0.3);
     }
     .modal-header h3 {
       margin: 0;
       font-size: 1.2rem;
       font-weight: 600;
+      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
     .close-btn {
       background: transparent;
       border: none;
-      color: #9ca3af;
+      color: #c4b5fd;
       font-size: 1.8rem;
       line-height: 1;
       cursor: pointer;
@@ -615,11 +775,13 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      border-radius: 6px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
     }
-    .close-btn:hover {
-      background: rgba(55, 65, 81, 0.5);
-      color: #e5e7eb;
+    .close-btn:active {
+      background: rgba(157, 78, 221, 0.3);
+      color: var(--neon-pink);
+      box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
     }
     .modal-body {
       padding: 18px 20px;
@@ -636,23 +798,25 @@
     .constraint-description {
       margin: 0 0 10px;
       font-size: 0.78rem;
-      color: #9ca3af;
+      color: #c4b5fd;
     }
     .clear-btn {
       font-size: 0.72rem;
       padding: 4px 8px;
       margin-top: 6px;
-      background: rgba(239, 68, 68, 0.15);
-      color: #fca5a5;
-      border-color: rgba(239, 68, 68, 0.3);
+      background: rgba(255, 0, 110, 0.15);
+      color: #ffa3c7;
+      border-color: rgba(255, 0, 110, 0.4);
+      transition: all 0.3s ease;
     }
-    .clear-btn:hover {
-      background: rgba(239, 68, 68, 0.25);
-      border-color: rgba(239, 68, 68, 0.5);
+    .clear-btn:active {
+      background: rgba(255, 0, 110, 0.25);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
     }
     .modal-footer {
       padding: 14px 20px 18px;
-      border-top: 1px solid rgba(51, 65, 85, 0.9);
+      border-top: 1px solid rgba(157, 78, 221, 0.3);
       display: flex;
       justify-content: flex-end;
       gap: 8px;
@@ -681,24 +845,29 @@
     .scenario-tab {
       min-width: 36px;
       padding: 6px 14px;
-      background: rgba(51, 65, 85, 0.2);
-      border: none;
-      border-radius: 6px 6px 0 0;
+      background: rgba(10, 1, 24, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(157, 78, 221, 0.2);
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
       cursor: pointer;
       font-size: 0.9rem;
       font-weight: 600;
-      color: #94a3b8;
-      transition: all 0.15s ease;
+      color: #8b5cf6;
+      transition: all 0.3s ease;
       text-align: center;
       position: relative;
     }
-    .scenario-tab:hover {
-      background: rgba(51, 65, 85, 0.4);
-      color: #cbd5e1;
+    .scenario-tab:active {
+      background: rgba(10, 1, 24, 0.6);
+      color: #c4b5fd;
     }
     .scenario-tab.active {
-      background: rgba(99, 102, 241, 0.15);
-      color: #a5b4fc;
+      background: rgba(157, 78, 221, 0.2);
+      color: var(--neon-cyan);
+      border-color: rgba(0, 245, 255, 0.4);
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.2);
     }
     .scenario-tab.active::after {
       content: '';
@@ -707,17 +876,22 @@
       left: 0;
       right: 0;
       height: 2px;
-      background: #6366f1;
+      background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
+      box-shadow: 0 0 10px var(--neon-cyan);
     }
     .schedule-summary {
       margin-top: 16px;
       padding: 12px;
-      background: rgba(51, 65, 85, 0.3);
-      border-radius: 8px;
+      background: rgba(10, 1, 24, 0.5);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-radius: 10px;
+      border: 1px solid rgba(157, 78, 221, 0.3);
       text-align: center;
       font-size: 0.9rem;
-      color: #cbd5e1;
+      color: #c4b5fd;
       font-weight: 500;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
     }
 
     @media (max-width: 640px) {
@@ -1156,7 +1330,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.12.7"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.13.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
