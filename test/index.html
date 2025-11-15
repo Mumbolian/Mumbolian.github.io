@@ -241,10 +241,8 @@
       left: 0;
       width: 20px;
       height: 20px;
-      background: transparent;
       border-top: 2px solid rgba(0, 128, 255, 0.8);
       border-left: 2px solid rgba(0, 128, 255, 0.8);
-      box-shadow: 0 0 10px rgba(0, 128, 255, 0.5);
       pointer-events: none;
     }
 
@@ -265,7 +263,6 @@
     }
     .card.secondary::after {
       border-color: rgba(0, 245, 255, 0.8);
-      box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
     }
     .card h2 {
       margin: 0 0 10px;
@@ -625,7 +622,7 @@
       margin: 6px 0 4px;
       padding: 0;
       list-style: none;
-      font-size: 0.95rem;
+      font-size: 1.1rem;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -1534,7 +1531,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.10"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.11"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
