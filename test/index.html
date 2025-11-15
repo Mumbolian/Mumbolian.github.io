@@ -1105,12 +1105,6 @@
         </label>
       </div>
 
-      <div style="display: flex; justify-content: center; margin-top: 12px;">
-        <button type="button" id="openSettings" title="Configure Nap Lengths and Wake Window Parameters">
-          SETTINGS
-        </button>
-      </div>
-
       <!-- Hidden inputs for wake window settings (configured via Settings modal) -->
       <input type="hidden" id="lastWake" value="210" />
       <input type="hidden" id="minWake" value="135" />
@@ -1125,6 +1119,7 @@
       <input type="hidden" id="nap3Length" value="30" />
 
       <div class="buttons-row">
+        <button type="button" id="openSettings" title="Configure Nap Lengths and Wake Window Parameters">SETTINGS</button>
         <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">RESET</button>
         <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">SHARE</button>
         <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">TRACK NAPS</button>
@@ -1481,7 +1476,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.17"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.18"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
