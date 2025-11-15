@@ -110,54 +110,6 @@
       z-index: 1;
     }
 
-    /* Geometric corner brackets (all 4 corners) */
-    main::before,
-    main::after {
-      content: '';
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      pointer-events: none;
-    }
-    main::before {
-      top: 8px;
-      left: 8px;
-      border-top: 2px solid var(--neon-cyan);
-      border-left: 2px solid var(--neon-cyan);
-      box-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
-    }
-    main::after {
-      top: 8px;
-      right: 8px;
-      border-top: 2px solid var(--neon-purple);
-      border-right: 2px solid var(--neon-purple);
-      box-shadow: 0 0 8px rgba(157, 78, 221, 0.5);
-    }
-
-    /* Bottom corners using pseudo-elements on footer */
-    .footer::before,
-    .footer::after {
-      content: '';
-      position: absolute;
-      width: 24px;
-      height: 24px;
-      pointer-events: none;
-    }
-    .footer::before {
-      bottom: 8px;
-      left: 8px;
-      border-bottom: 2px solid var(--neon-orange);
-      border-left: 2px solid var(--neon-orange);
-      box-shadow: 0 0 8px rgba(255, 158, 0, 0.5);
-    }
-    .footer::after {
-      bottom: 8px;
-      right: 8px;
-      border-bottom: 2px solid var(--neon-cyan);
-      border-right: 2px solid var(--neon-cyan);
-      box-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
-    }
-
     @media (min-width: 640px) {
       main {
         padding: 28px 32px 24px;
@@ -754,8 +706,6 @@
       justify-content: space-between;
       gap: 8px;
       flex-wrap: wrap;
-      position: relative;
-      padding-top: 20px;
     }
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -1138,11 +1088,17 @@
     @media (max-width: 640px) {
       .modal {
         padding: 0;
+        align-items: stretch;
       }
       .modal-content {
         max-width: 100%;
-        max-height: 100%;
+        max-height: 100vh;
+        height: 100vh;
         border-radius: 0;
+      }
+      .modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
       }
     }
   </style>
@@ -1568,7 +1524,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.1"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.2"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -3837,7 +3793,7 @@
           const absDiff = Math.abs(diff);
 
           if (diff === 0) {
-            bedtimeNote.textContent = `Bedtime is fixed at ${fromMinutes(originalTargetBed)}.`;
+            bedtimeNote.textContent = "";
             bedtimeNote.style.color = ""; // Reset color for normal bedtime
           } else {
             // Bedtime was adjusted
