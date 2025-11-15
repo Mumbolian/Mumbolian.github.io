@@ -512,26 +512,6 @@
         inset 0 1px 0 rgba(255, 255, 255, 0.3),
         inset 0 0 50px rgba(0, 245, 255, 0.15);
     }
-    button.collapse-toggle {
-      width: 100%;
-      text-align: left;
-      margin: 8px 0 4px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: #93c5fd;
-      background: rgba(10, 1, 24, 0.5);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(0, 128, 255, 0.3);
-      transition: all 0.3s ease;
-    }
-    button.collapse-toggle:active {
-      color: #e5e7eb;
-      background: rgba(10, 1, 24, 0.7);
-      border-color: rgba(0, 128, 255, 0.5);
-      box-shadow: 0 0 15px rgba(0, 128, 255, 0.2);
-    }
     .toggle-arrow {
       display: inline-block;
       transition: transform 0.2s ease;
@@ -1125,9 +1105,11 @@
         </label>
       </div>
 
-      <button type="button" id="openSettings" class="collapse-toggle" title="Configure Nap Lengths and Wake Window Parameters">
-        SETTINGS
-      </button>
+      <div style="display: flex; justify-content: center; margin-top: 12px;">
+        <button type="button" id="openSettings" title="Configure Nap Lengths and Wake Window Parameters">
+          SETTINGS
+        </button>
+      </div>
 
       <!-- Hidden inputs for wake window settings (configured via Settings modal) -->
       <input type="hidden" id="lastWake" value="210" />
@@ -1499,7 +1481,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.16"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.17"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
