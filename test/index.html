@@ -124,18 +124,8 @@
       .layout {
         grid-template-columns: 1fr;
       }
-    }
-
-    @media (max-width: 480px) {
       .card {
-        padding: 20px 24px;
-      }
-      .form-grid {
-        gap: 10px 8px;
-      }
-      input[type="time"],
-      input[type="number"] {
-        padding: 8px 12px;
+        padding: 16px;
       }
     }
 
@@ -841,19 +831,13 @@
         border-radius: 0;
       }
       .modal-header {
-        padding: 16px 24px 12px;
+        padding: 16px 20px 12px;
       }
       .modal-body {
-        padding: 18px 24px;
+        padding: 18px 16px;
       }
       .modal-footer {
-        padding: 10px 24px 12px;
-      }
-      .actual-nap-row {
-        padding: 12px 16px;
-      }
-      .nap-row {
-        padding: 10px 16px;
+        padding: 10px 20px 12px;
       }
     }
 
@@ -1308,7 +1292,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.1"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
