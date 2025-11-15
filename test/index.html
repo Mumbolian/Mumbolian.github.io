@@ -5,33 +5,47 @@
   <title>T-Man's Snooze Schedule</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Rajdhani:wght@300;400;500;600;700&display=swap');
+
     :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-family: 'Rajdhani', system-ui, -apple-system, sans-serif;
       color-scheme: dark;
-      --neon-pink: #ff006e;
       --neon-cyan: #00f5ff;
       --neon-orange: #ff9e00;
       --neon-purple: #9d4edd;
       --deep-purple: #1a0b2e;
       --dark-base: #0a0118;
+      --cyber-blue: #00d4ff;
     }
     * {
       box-sizing: border-box;
     }
-    @keyframes gradientShift {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
+
+    @keyframes gridPulse {
+      0%, 100% { opacity: 0.03; }
+      50% { opacity: 0.08; }
     }
-    @keyframes neonPulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.8; }
+    @keyframes scanline {
+      0% { transform: translateY(-100%); }
+      100% { transform: translateY(100vh); }
     }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 20px var(--neon-cyan); }
+      50% { box-shadow: 0 0 35px var(--neon-cyan), 0 0 50px var(--neon-cyan); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -1000px 0; }
+      100% { background-position: 1000px 0; }
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
-      background: linear-gradient(-45deg, #0a0118, #1a0b2e, #16003b, #1a0b2e);
-      background-size: 400% 400%;
-      animation: gradientShift 15s ease infinite;
+      background: #0a0118;
       color: #e5e7eb;
       display: flex;
       align-items: center;
@@ -40,59 +54,135 @@
       position: relative;
       overflow-x: hidden;
     }
+
+    /* Animated grid background */
     body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+      background-size: 50px 50px;
+      pointer-events: none;
+      z-index: 0;
+      animation: gridPulse 4s ease-in-out infinite;
+    }
+
+    /* Ambient glow orbs */
+    body::after {
       content: '';
       position: fixed;
       top: -50%;
       left: -50%;
       width: 200%;
       height: 200%;
-      background: radial-gradient(circle at 20% 50%, rgba(157, 78, 221, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 80%, rgba(255, 0, 110, 0.1) 0%, transparent 50%),
-                  radial-gradient(circle at 40% 20%, rgba(0, 245, 255, 0.08) 0%, transparent 50%);
+      background:
+        radial-gradient(circle at 20% 50%, rgba(157, 78, 221, 0.15) 0%, transparent 25%),
+        radial-gradient(circle at 80% 80%, rgba(0, 245, 255, 0.12) 0%, transparent 25%),
+        radial-gradient(circle at 40% 20%, rgba(255, 158, 0, 0.1) 0%, transparent 25%);
       pointer-events: none;
       z-index: 0;
+      animation: float 20s ease-in-out infinite;
     }
     main {
       width: 100%;
       max-width: 720px;
-      background: rgba(26, 11, 46, 0.4);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border-radius: 24px;
-      border: 1px solid rgba(157, 78, 221, 0.3);
-      box-shadow: 0 8px 32px rgba(255, 0, 110, 0.15),
-                  0 0 80px rgba(157, 78, 221, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      background: rgba(10, 1, 24, 0.6);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-radius: 0;
+      clip-path: polygon(
+        0 0, calc(100% - 20px) 0, 100% 20px,
+        100% 100%, 20px 100%, 0 calc(100% - 20px)
+      );
+      border: 1px solid rgba(0, 245, 255, 0.4);
+      box-shadow:
+        0 0 60px rgba(0, 245, 255, 0.2),
+        0 0 100px rgba(157, 78, 221, 0.15),
+        inset 0 0 80px rgba(0, 245, 255, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
       padding: 20px 18px 18px;
       position: relative;
       z-index: 1;
     }
+
+    /* Corner accents */
+    main::before,
+    main::after {
+      content: '';
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--neon-cyan);
+      pointer-events: none;
+    }
+    main::before {
+      top: -1px;
+      left: -1px;
+      border-right: none;
+      border-bottom: none;
+      box-shadow: 0 0 15px var(--neon-cyan);
+    }
+    main::after {
+      bottom: -1px;
+      right: -1px;
+      border-left: none;
+      border-top: none;
+      box-shadow: 0 0 15px var(--neon-cyan);
+    }
+
     @media (min-width: 640px) {
       main {
-        padding: 24px 26px 22px;
+        padding: 28px 32px 24px;
       }
     }
+
     header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 16px;
-      margin-bottom: 18px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid rgba(0, 245, 255, 0.2);
+      position: relative;
     }
+    header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 100px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--neon-cyan), transparent);
+      box-shadow: 0 0 10px var(--neon-cyan);
+    }
+
     .title-block h1 {
-      margin: 0 0 4px;
-      font-size: 1.5rem;
-      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      margin: 0 0 8px;
+      font-size: 1.75rem;
+      font-family: 'Orbitron', monospace;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      text-shadow: 0 0 30px rgba(255, 0, 110, 0.5);
+      filter: drop-shadow(0 0 20px rgba(0, 245, 255, 0.5));
+      position: relative;
     }
+
     .title-block p {
       margin: 0;
-      font-size: 0.86rem;
+      font-size: 0.9rem;
       color: #c4b5fd;
+      font-weight: 500;
+      letter-spacing: 0.5px;
     }
     .pill {
       display: inline-flex;
@@ -128,35 +218,76 @@
     }
 
     .card {
-      background: rgba(26, 11, 46, 0.3);
-      backdrop-filter: blur(12px) saturate(150%);
-      -webkit-backdrop-filter: blur(12px) saturate(150%);
-      border-radius: 16px;
-      padding: 14px 14px 12px;
-      border: 1px solid rgba(157, 78, 221, 0.4);
-      box-shadow: 0 4px 24px rgba(157, 78, 221, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      background: rgba(10, 1, 24, 0.7);
+      backdrop-filter: blur(16px) saturate(150%);
+      -webkit-backdrop-filter: blur(16px) saturate(150%);
+      border-radius: 0;
+      clip-path: polygon(
+        0 0, calc(100% - 12px) 0, 100% 12px,
+        100% 100%, 12px 100%, 0 calc(100% - 12px)
+      );
+      padding: 16px;
+      border: 1px solid rgba(157, 78, 221, 0.5);
+      box-shadow:
+        0 0 30px rgba(157, 78, 221, 0.15),
+        inset 0 0 40px rgba(157, 78, 221, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
       position: relative;
-      overflow: hidden;
-      transition: all 0.3s ease;
+      overflow: visible;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
+
+    /* Animated border shimmer */
     .card::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: -1px;
+      right: -1px;
+      bottom: -1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(157, 78, 221, 0.4),
+        transparent
+      );
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+      z-index: -1;
+      animation: shimmer 3s linear infinite;
+    }
+
+    .card::after {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 0, 110, 0.5), transparent);
-      opacity: 0.5;
+      width: 20px;
+      height: 20px;
+      border-top: 2px solid rgba(157, 78, 221, 0.8);
+      border-left: 2px solid rgba(157, 78, 221, 0.8);
+      box-shadow: 0 0 10px rgba(157, 78, 221, 0.5);
     }
+
     .card.secondary {
-      border: 1px solid rgba(0, 245, 255, 0.4);
-      box-shadow: 0 4px 24px rgba(0, 245, 255, 0.1),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(0, 245, 255, 0.5);
+      box-shadow:
+        0 0 30px rgba(0, 245, 255, 0.15),
+        inset 0 0 40px rgba(0, 245, 255, 0.03),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
     }
     .card.secondary::before {
-      background: linear-gradient(90deg, transparent, rgba(0, 245, 255, 0.5), transparent);
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 245, 255, 0.4),
+        transparent
+      );
+    }
+    .card.secondary::after {
+      border-color: rgba(0, 245, 255, 0.8);
+      box-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
     }
     .card h2 {
       margin: 0 0 10px;
@@ -244,17 +375,17 @@
     }
     /* Red highlight for validation errors */
     input[type="number"].validation-error {
-      background: rgba(255, 0, 110, 0.15);
-      border-color: var(--neon-pink);
-      box-shadow: 0 0 0 2px rgba(255, 0, 110, 0.3),
-                  0 0 20px rgba(255, 0, 110, 0.4),
-                  inset 0 0 12px rgba(255, 0, 110, 0.1);
+      background: rgba(255, 158, 0, 0.15);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 0 2px rgba(255, 158, 0, 0.3),
+                  0 0 20px rgba(255, 158, 0, 0.4),
+                  inset 0 0 12px rgba(255, 158, 0, 0.1);
     }
     input[type="number"].validation-error:focus {
-      border-color: var(--neon-pink);
-      box-shadow: 0 0 0 2px rgba(255, 0, 110, 0.5),
-                  0 0 25px rgba(255, 0, 110, 0.5),
-                  inset 0 0 12px rgba(255, 0, 110, 0.1);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 0 2px rgba(255, 158, 0, 0.5),
+                  0 0 25px rgba(255, 158, 0, 0.5),
+                  inset 0 0 12px rgba(255, 158, 0, 0.1);
     }
 
     .inline {
@@ -318,16 +449,16 @@
       left: 3px;
       height: calc(100% - 6px);
       width: calc(50% - 3px);
-      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      background: linear-gradient(135deg, var(--neon-purple), var(--neon-orange));
       border-radius: 999px;
       transition: transform 0.3s ease;
-      box-shadow: 0 0 20px rgba(255, 0, 110, 0.5),
+      box-shadow: 0 0 20px rgba(157, 78, 221, 0.6),
                   0 4px 12px rgba(0, 0, 0, 0.3);
     }
     .nap-toggle-switch.three-naps .nap-toggle-slider {
       transform: translateX(100%);
       background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-      box-shadow: 0 0 20px rgba(0, 245, 255, 0.5),
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.6),
                   0 4px 12px rgba(0, 0, 0, 0.3);
     }
     /* Visual indicator when preference doesn't match actual schedule */
@@ -357,41 +488,98 @@
     }
 
     .buttons-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
     }
+
     button {
-      border-radius: 999px;
-      border: 1px solid rgba(157, 78, 221, 0.4);
-      background: rgba(10, 1, 24, 0.6);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      color: #e5e7eb;
-      font-size: 0.75rem;
-      padding: 5px 9px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }
-    button:active {
-      transform: translateY(1px);
-    }
-    button.primary {
-      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
-      color: #fff;
-      border: 1px solid rgba(255, 0, 110, 0.5);
+      position: relative;
+      border: none;
+      background: rgba(10, 1, 24, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: var(--neon-cyan);
+      font-size: 0.85rem;
       font-weight: 600;
-      box-shadow: 0 0 20px rgba(255, 0, 110, 0.4),
-                  0 4px 12px rgba(0, 0, 0, 0.3),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      font-family: 'Rajdhani', sans-serif;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 12px 16px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      clip-path: polygon(
+        0 0, calc(100% - 8px) 0, 100% 8px,
+        100% 100%, 8px 100%, 0 calc(100% - 8px)
+      );
+      box-shadow:
+        0 0 20px rgba(0, 245, 255, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1),
+        inset 0 0 20px rgba(0, 245, 255, 0.05);
+      border: 1px solid rgba(0, 245, 255, 0.3);
     }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 8px;
+      height: 8px;
+      border-top: 2px solid var(--neon-cyan);
+      border-left: 2px solid var(--neon-cyan);
+      opacity: 0.6;
+    }
+
+    button::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      width: 8px;
+      height: 8px;
+      border-bottom: 2px solid var(--neon-cyan);
+      border-right: 2px solid var(--neon-cyan);
+      opacity: 0.6;
+    }
+
+    button:active {
+      transform: scale(0.98);
+      box-shadow:
+        0 0 30px rgba(0, 245, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2),
+        inset 0 0 30px rgba(0, 245, 255, 0.1);
+    }
+
+    button.primary {
+      background: linear-gradient(135deg,
+        rgba(0, 245, 255, 0.2),
+        rgba(157, 78, 221, 0.2)
+      );
+      color: #fff;
+      border: 1px solid var(--neon-cyan);
+      font-weight: 700;
+      box-shadow:
+        0 0 30px rgba(0, 245, 255, 0.4),
+        0 4px 20px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 0 40px rgba(0, 245, 255, 0.1);
+      text-shadow: 0 0 15px rgba(0, 245, 255, 0.8);
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+
+    button.primary::before,
+    button.primary::after {
+      opacity: 1;
+    }
+
     button.primary:active {
-      box-shadow: 0 0 15px rgba(255, 0, 110, 0.3),
-                  0 2px 8px rgba(0, 0, 0, 0.3),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.2);
+      box-shadow:
+        0 0 40px rgba(0, 245, 255, 0.5),
+        0 2px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        inset 0 0 50px rgba(0, 245, 255, 0.15);
     }
     button.collapse-toggle {
       width: 100%;
@@ -526,14 +714,14 @@
     .warning {
       margin-top: 4px;
       font-size: 0.72rem;
-      color: #ffa3c7;
-      background: rgba(255, 0, 110, 0.15);
+      color: #ffd699;
+      background: rgba(255, 158, 0, 0.15);
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       border-radius: 10px;
       padding: 4px 6px;
-      border: 1px solid rgba(255, 0, 110, 0.4);
-      box-shadow: 0 0 15px rgba(255, 0, 110, 0.2);
+      border: 1px solid rgba(255, 158, 0, 0.4);
+      box-shadow: 0 0 15px rgba(255, 158, 0, 0.2);
     }
     .footer {
       margin-top: 10px;
@@ -608,9 +796,9 @@
       line-height: 1;
     }
     .clear-nap-btn:active {
-      background: rgba(255, 0, 110, 0.2);
-      color: #ffa3c7;
-      box-shadow: 0 0 10px rgba(255, 0, 110, 0.3);
+      background: rgba(255, 158, 0, 0.2);
+      color: #ffd699;
+      box-shadow: 0 0 10px rgba(255, 158, 0, 0.3);
     }
     .time-inputs-row {
       display: grid;
@@ -732,14 +920,20 @@
     }
     .modal-content {
       position: relative;
-      background: rgba(26, 11, 46, 0.5);
-      backdrop-filter: blur(24px) saturate(180%);
-      -webkit-backdrop-filter: blur(24px) saturate(180%);
-      border-radius: 24px;
-      border: 1px solid rgba(157, 78, 221, 0.4);
-      box-shadow: 0 8px 32px rgba(255, 0, 110, 0.2),
-                  0 0 80px rgba(157, 78, 221, 0.15),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      background: rgba(10, 1, 24, 0.8);
+      backdrop-filter: blur(30px) saturate(180%);
+      -webkit-backdrop-filter: blur(30px) saturate(180%);
+      border-radius: 0;
+      clip-path: polygon(
+        0 0, calc(100% - 15px) 0, 100% 15px,
+        100% 100%, 15px 100%, 0 calc(100% - 15px)
+      );
+      border: 1px solid rgba(0, 245, 255, 0.5);
+      box-shadow:
+        0 0 60px rgba(0, 245, 255, 0.3),
+        0 0 100px rgba(157, 78, 221, 0.2),
+        inset 0 0 50px rgba(0, 245, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
       width: 100%;
       max-width: 500px;
       max-height: 90vh;
@@ -750,17 +944,32 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid rgba(157, 78, 221, 0.3);
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid rgba(0, 245, 255, 0.3);
+      position: relative;
+    }
+    .modal-header::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, var(--neon-cyan), transparent);
+      box-shadow: 0 0 10px var(--neon-cyan);
     }
     .modal-header h3 {
       margin: 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      background: linear-gradient(135deg, var(--neon-pink), var(--neon-cyan));
+      font-size: 1.3rem;
+      font-weight: 700;
+      font-family: 'Orbitron', monospace;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      filter: drop-shadow(0 0 15px rgba(0, 245, 255, 0.5));
     }
     .close-btn {
       background: transparent;
@@ -780,8 +989,8 @@
     }
     .close-btn:active {
       background: rgba(157, 78, 221, 0.3);
-      color: var(--neon-pink);
-      box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+      color: var(--neon-cyan);
+      box-shadow: 0 0 15px rgba(0, 245, 255, 0.4);
     }
     .modal-body {
       padding: 18px 20px;
@@ -804,15 +1013,15 @@
       font-size: 0.72rem;
       padding: 4px 8px;
       margin-top: 6px;
-      background: rgba(255, 0, 110, 0.15);
-      color: #ffa3c7;
-      border-color: rgba(255, 0, 110, 0.4);
+      background: rgba(255, 158, 0, 0.15);
+      color: #ffd699;
+      border-color: rgba(255, 158, 0, 0.4);
       transition: all 0.3s ease;
     }
     .clear-btn:active {
-      background: rgba(255, 0, 110, 0.25);
-      border-color: var(--neon-pink);
-      box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+      background: rgba(255, 158, 0, 0.25);
+      border-color: var(--neon-orange);
+      box-shadow: 0 0 15px rgba(255, 158, 0, 0.3);
     }
     .modal-footer {
       padding: 14px 20px 18px;
@@ -953,8 +1162,7 @@
       </div>
 
       <button type="button" id="openSettings" class="collapse-toggle" title="Configure Nap Lengths and Wake Window Parameters">
-        <span style="font-size: 1.1em;">⚙️</span>
-        <span>Settings</span>
+        <span>⚙ SETTINGS</span>
         <span style="margin-left: auto; font-size: 0.65rem;">▶</span>
       </button>
 
@@ -972,12 +1180,10 @@
       <input type="hidden" id="nap3Length" value="30" />
 
       <div class="buttons-row">
-        <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">↻ Reset</button>
-        <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">↗️ Share</button>
-      </div>
-      <div class="buttons-row">
-        <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">📊 Track</button>
-        <button type="button" id="openConstraints" title="Set Schedule Constraints">🎯 Constraints</button>
+        <button type="button" id="resetDefaults" title="Reset All Settings to Defaults">RESET</button>
+        <button type="button" id="copySchedule" title="Copy Schedule to Share via Text/WhatsApp">SHARE</button>
+        <button type="button" id="openActualNaps" title="Track Today's Actual Nap Times">TRACK NAPS</button>
+        <button type="button" id="openConstraints" title="Set Schedule Constraints">CONSTRAINTS</button>
       </div>
     </section>
 
@@ -1330,7 +1536,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.13.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.0"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
