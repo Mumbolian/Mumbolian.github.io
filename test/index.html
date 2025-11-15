@@ -978,7 +978,6 @@
       -webkit-overflow-scrolling: touch;
       flex: 1 1 auto;
       min-height: 0;
-      max-height: calc(85vh - 140px);
     }
     .constraint-section {
       margin-bottom: 4px;
@@ -1092,19 +1091,26 @@
     @media (max-width: 640px) {
       .modal {
         padding: 0;
-        align-items: stretch;
+        align-items: center;
+        justify-content: center;
       }
       .modal-content {
         max-width: 100%;
-        max-height: 95vh;
-        height: auto;
+        max-height: 90vh;
+        width: 100%;
         min-height: 0;
         border-radius: 0;
       }
       .modal-body {
-        flex: 1 1 auto;
+        flex: 1 1 0;
         overflow-y: auto;
-        max-height: calc(95vh - 120px);
+        min-height: 0;
+      }
+      .modal-header {
+        padding: 16px 20px 14px;
+      }
+      .modal-footer {
+        padding: 12px 20px 14px;
       }
     }
   </style>
@@ -1530,7 +1536,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.3"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.5"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
