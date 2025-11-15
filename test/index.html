@@ -866,7 +866,7 @@
         inset 0 0 50px rgba(0, 245, 255, 0.05),
         inset 0 1px 0 rgba(255, 255, 255, 0.15);
       width: 100%;
-      max-width: 440px;
+      max-width: 530px;
       height: auto;
       max-height: 85vh;
       display: flex;
@@ -874,9 +874,23 @@
       z-index: 1001;
       overflow: hidden;
     }
-    /* Settings modal - larger for dual-mode configuration */
-    #napConfigModal .modal-content {
-      max-width: 620px;
+    /* Settings modal - centered text and purpley blue theme */
+    #settingsModal .constraint-section h4,
+    #settingsModal .constraint-section h5,
+    #settingsModal .constraint-description {
+      text-align: center;
+    }
+    #settingsModal .modal-content {
+      border: 1px solid rgba(138, 102, 255, 0.5);
+      box-shadow:
+        0 0 60px rgba(138, 102, 255, 0.3),
+        0 0 100px rgba(138, 102, 255, 0.2),
+        inset 0 0 50px rgba(138, 102, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+    #settingsModal .modal-header::after {
+      background: linear-gradient(90deg, rgba(138, 102, 255, 0.8), transparent);
+      box-shadow: 0 0 10px rgba(138, 102, 255, 0.6);
     }
     .modal-header {
       display: flex;
@@ -1487,7 +1501,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.14"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.15"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
