@@ -835,11 +835,17 @@
 
       <div class="modal-body">
         <div class="constraint-section">
-          <h4>Need Baby Awake by a Certain Time?</h4>
+          <h4>Need Baby Awake During a Time Window?</h4>
           <p class="constraint-description">For leaving the house, appointments, etc.</p>
-          <div class="form-row">
-            <label for="mustBeAwakeBy">Baby Must Be Awake By</label>
-            <input type="time" id="mustBeAwakeBy" />
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="awakeWindowStart">From</label>
+              <input type="time" id="awakeWindowStart" />
+            </div>
+            <div class="form-row">
+              <label for="awakeWindowEnd">Until</label>
+              <input type="time" id="awakeWindowEnd" />
+            </div>
           </div>
           <button type="button" id="clearAwakeBy" class="clear-btn">Clear</button>
         </div>
@@ -1150,7 +1156,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.12.3"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.12.4"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -1252,7 +1258,8 @@
     const settingsMaxWake = settingsModal ? document.getElementById("settingsMaxWake") : null;
     const settingsMaxFirstWake = settingsModal ? document.getElementById("settingsMaxFirstWake") : null;
 
-    const mustBeAwakeByInput = document.getElementById("mustBeAwakeBy");
+    const awakeWindowStartInput = document.getElementById("awakeWindowStart");
+    const awakeWindowEndInput = document.getElementById("awakeWindowEnd");
     const sleepWindowStartInput = document.getElementById("sleepWindowStart");
     const sleepWindowEndInput = document.getElementById("sleepWindowEnd");
     const clearAwakeByBtn = document.getElementById("clearAwakeBy");
@@ -1260,12 +1267,12 @@
 
     // Update constraints button to show active state
     function updateConstraintsButton() {
-      const hasAwakeBy = !!mustBeAwakeByInput.value;
+      const hasAwakeWindow = !!(awakeWindowStartInput.value && awakeWindowEndInput.value);
       const hasSleepWindow = !!(sleepWindowStartInput.value && sleepWindowEndInput.value);
-      const constraintsActive = hasAwakeBy || hasSleepWindow;
+      const constraintsActive = hasAwakeWindow || hasSleepWindow;
 
       if (constraintsActive) {
-        const count = (hasAwakeBy ? 1 : 0) + (hasSleepWindow ? 1 : 0);
+        const count = (hasAwakeWindow ? 1 : 0) + (hasSleepWindow ? 1 : 0);
         openConstraintsBtn.textContent = `🎯 Constraints (${count})`;
         openConstraintsBtn.style.background = "rgba(34, 197, 94, 0.15)";
         openConstraintsBtn.style.borderColor = "rgba(34, 197, 94, 0.5)";
@@ -1534,7 +1541,8 @@
 
     // Clear constraint handlers
     clearAwakeByBtn.addEventListener("click", () => {
-      mustBeAwakeByInput.value = "";
+      awakeWindowStartInput.value = "";
+      awakeWindowEndInput.value = "";
     });
 
     clearSleepWindowBtn.addEventListener("click", () => {
@@ -1621,7 +1629,10 @@
           nap3: Number(nap3Input.value) || 0
         } : null,
         constraints: {
-          mustBeAwakeBy: mustBeAwakeByInput.value || null,
+          awakeWindow: {
+            start: awakeWindowStartInput.value || null,
+            end: awakeWindowEndInput.value || null
+          },
           sleepWindow: {
             start: sleepWindowStartInput.value || null,
             end: sleepWindowEndInput.value || null
@@ -1942,7 +1953,10 @@
 
         // Load constraints if present
         if (s.constraints) {
-          mustBeAwakeByInput.value = s.constraints.mustBeAwakeBy || "";
+          if (s.constraints.awakeWindow) {
+            awakeWindowStartInput.value = s.constraints.awakeWindow.start || "";
+            awakeWindowEndInput.value = s.constraints.awakeWindow.end || "";
+          }
           if (s.constraints.sleepWindow) {
             sleepWindowStartInput.value = s.constraints.sleepWindow.start || "";
             sleepWindowEndInput.value = s.constraints.sleepWindow.end || "";
@@ -2494,22 +2508,30 @@
       const { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths, napCount } = params;
 
       // Get constraint values
-      const mustBeAwakeByStr = mustBeAwakeByInput.value;
+      const awakeWindowStartStr = awakeWindowStartInput.value;
+      const awakeWindowEndStr = awakeWindowEndInput.value;
       const sleepWindowStartStr = sleepWindowStartInput.value;
       const sleepWindowEndStr = sleepWindowEndInput.value;
 
       // If no constraints at all, return null (no adjustment needed)
-      if (!mustBeAwakeByStr && !(sleepWindowStartStr && sleepWindowEndStr)) {
+      if (!(awakeWindowStartStr && awakeWindowEndStr) && !(sleepWindowStartStr && sleepWindowEndStr)) {
         return null;
       }
 
-      // Parse and normalize "must be awake by" constraint if present
-      let mustBeAwakeBy = null;
-      if (mustBeAwakeByStr) {
-        mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
-        if (mustBeAwakeBy !== null) {
-          while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
-          while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+      // Parse and normalize "must be awake during" constraint if present
+      let awakeStart = null;
+      let awakeEnd = null;
+      if (awakeWindowStartStr && awakeWindowEndStr) {
+        awakeStart = toMinutes(awakeWindowStartStr);
+        awakeEnd = toMinutes(awakeWindowEndStr);
+        if (awakeStart !== null && awakeEnd !== null) {
+          while (awakeStart < wakeMins - 12 * 60) awakeStart += 24 * 60;
+          while (awakeStart > wakeMins + 12 * 60) awakeStart -= 24 * 60;
+          while (awakeEnd < wakeMins - 12 * 60) awakeEnd += 24 * 60;
+          while (awakeEnd > wakeMins + 12 * 60) awakeEnd -= 24 * 60;
+          if (awakeEnd <= awakeStart) {
+            awakeEnd += 24 * 60;
+          }
         }
       }
 
@@ -2631,19 +2653,29 @@
       const violations = [];
 
       // Get constraint values
-      const mustBeAwakeByStr = mustBeAwakeByInput.value;
+      const awakeWindowStartStr = awakeWindowStartInput.value;
+      const awakeWindowEndStr = awakeWindowEndInput.value;
       const sleepWindowStartStr = sleepWindowStartInput.value;
       const sleepWindowEndStr = sleepWindowEndInput.value;
 
-      // Check "must be awake by" constraint
-      if (mustBeAwakeByStr) {
-        let mustBeAwakeBy = toMinutes(mustBeAwakeByStr);
-        if (mustBeAwakeBy !== null) {
-          // Normalize to same day cycle as schedule
-          while (mustBeAwakeBy < wakeMins - 12 * 60) mustBeAwakeBy += 24 * 60;
-          while (mustBeAwakeBy > wakeMins + 12 * 60) mustBeAwakeBy -= 24 * 60;
+      // Check "must be awake during" constraint
+      if (awakeWindowStartStr && awakeWindowEndStr) {
+        let awakeStart = toMinutes(awakeWindowStartStr);
+        let awakeEnd = toMinutes(awakeWindowEndStr);
 
-          // Check if any nap overlaps with the "must be awake by" time
+        if (awakeStart !== null && awakeEnd !== null) {
+          // Normalize to same day cycle as schedule
+          while (awakeStart < wakeMins - 12 * 60) awakeStart += 24 * 60;
+          while (awakeStart > wakeMins + 12 * 60) awakeStart -= 24 * 60;
+          while (awakeEnd < wakeMins - 12 * 60) awakeEnd += 24 * 60;
+          while (awakeEnd > wakeMins + 12 * 60) awakeEnd -= 24 * 60;
+
+          // Handle wrap-around if end < start
+          if (awakeEnd <= awakeStart) {
+            awakeEnd += 24 * 60;
+          }
+
+          // Check if any nap overlaps with the awake window
           const naps = scheduleResult.items.filter(item => item.label.startsWith("Nap"));
           for (const nap of naps) {
             const [startStr, endStr] = nap.timeRange.split(" – ");
@@ -2656,12 +2688,13 @@
             while (napEnd < wakeMins - 12 * 60) napEnd += 24 * 60;
             while (napEnd > wakeMins + 12 * 60) napEnd -= 24 * 60;
 
-            // Check if the constraint time falls during this nap
-            if (mustBeAwakeBy >= napStart && mustBeAwakeBy < napEnd) {
+            // Check if nap overlaps with the awake window
+            // Overlap occurs if: nap starts before awake window ends AND nap ends after awake window starts
+            if (napStart < awakeEnd && napEnd > awakeStart) {
               violations.push({
-                type: 'awake-by',
-                message: `${nap.label} runs from ${startStr} to ${endStr}, but baby needs to be awake by ${mustBeAwakeByStr}.`,
-                suggestion: `Try: (1) Start ${nap.label} earlier, (2) Shorten ${nap.label}, or (3) Move wake time earlier to shift the schedule.`
+                type: 'awake-window',
+                message: `${nap.label} runs from ${startStr} to ${endStr}, but baby needs to be awake from ${awakeWindowStartStr} to ${awakeWindowEndStr}.`,
+                suggestion: `Try: (1) Move ${nap.label} earlier or later, (2) Shorten ${nap.label}, or (3) Adjust wake time to shift the schedule.`
               });
               break; // Only report the first conflicting nap
             }
@@ -3365,7 +3398,7 @@
         modeNote.textContent = modeMessages.join(" • ");
 
         // Display constraint violations if any, or success message if constraints are set and met
-        const hasConstraints = !!(mustBeAwakeByInput.value || (sleepWindowStartInput.value && sleepWindowEndInput.value));
+        const hasConstraints = !!((awakeWindowStartInput.value && awakeWindowEndInput.value) || (sleepWindowStartInput.value && sleepWindowEndInput.value));
 
         // Show adjustment info if schedule was modified
         if (constraintAdjustmentInfo) {
@@ -3400,7 +3433,8 @@
     resetBtn.addEventListener("click", () => {
       applyDefaults();
       // Clear constraints
-      mustBeAwakeByInput.value = "";
+      awakeWindowStartInput.value = "";
+      awakeWindowEndInput.value = "";
       sleepWindowStartInput.value = "";
       sleepWindowEndInput.value = "";
       // Clear actual naps
