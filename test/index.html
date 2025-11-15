@@ -48,12 +48,12 @@
     body {
       margin: 0;
       min-height: 100vh;
-      /* WATERCOLOR WASH: Soft gradient wash background */
+      /* WATERCOLOR WASH: Soft gradient wash background - SOLID colors */
       background: linear-gradient(135deg,
-        #e8f0e4 0%,
-        #f0dbd8 30%,
-        #e8f0e4 60%,
-        #f2f7ed 100%);
+        #d8e3cf 0%,
+        #e3cec9 30%,
+        #d8e3cf 60%,
+        #dfe8d5 100%);
       color: var(--text-primary);
       display: flex;
       align-items: center;
@@ -66,10 +66,10 @@
     main {
       width: 100%;
       max-width: 720px;
-      /* LAYERED SEMI-TRANSPARENT: Multiple translucent layers */
+      /* SOLID base with subtle overlay */
       background:
-        linear-gradient(180deg, rgba(242, 247, 237, 0.95) 0%, rgba(250, 252, 248, 0.9) 100%),
-        linear-gradient(45deg, rgba(229, 197, 192, 0.1) 0%, transparent 50%);
+        linear-gradient(180deg, rgba(229, 197, 192, 0.12) 0%, transparent 100%),
+        #eef5e8;
       border-radius: 0;
       border: 2px solid var(--card-border);
       padding: 24px 22px 22px;
@@ -142,10 +142,10 @@
     }
 
     .card {
-      /* LAYERED SEMI-TRANSPARENT: Card backgrounds with subtle layers */
+      /* LAYERED SEMI-TRANSPARENT: Card backgrounds with subtle layers - MORE SOLID */
       background:
-        linear-gradient(135deg, rgba(250, 252, 248, 0.9) 0%, rgba(242, 247, 237, 0.85) 100%),
-        radial-gradient(circle at top right, rgba(229, 197, 192, 0.08) 0%, transparent 60%);
+        radial-gradient(circle at top right, rgba(229, 197, 192, 0.15) 0%, transparent 60%),
+        linear-gradient(135deg, #f8faf6 0%, #f0f4eb 100%);
       border-radius: 0;
       padding: 20px;
       border: 2px solid var(--card-border);
@@ -155,10 +155,10 @@
     }
 
     .card.secondary {
-      /* LAYERED SEMI-TRANSPARENT: Different tint for secondary card */
+      /* LAYERED SEMI-TRANSPARENT: Different tint for secondary card - MORE SOLID */
       background:
-        linear-gradient(135deg, rgba(242, 247, 237, 0.9) 0%, rgba(250, 252, 248, 0.85) 100%),
-        radial-gradient(circle at bottom left, rgba(212, 227, 200, 0.12) 0%, transparent 60%);
+        radial-gradient(circle at bottom left, rgba(212, 227, 200, 0.2) 0%, transparent 60%),
+        linear-gradient(135deg, #f0f4eb 0%, #f8faf6 100%);
       border: 2px solid var(--sage-medium);
     }
 
@@ -416,15 +416,13 @@
     .schedule-list li {
       padding: 10px 12px;
       border-radius: 0;
-      /* BOTH COMBINED: Watercolor wash + layered semi-transparent */
+      /* BOTH COMBINED: Watercolor wash + layered semi-transparent - SOLID BASE */
       background:
         linear-gradient(90deg,
-          rgba(242, 247, 237, 0.7) 0%,
+          rgba(240, 219, 216, 0.08) 0%,
           rgba(240, 219, 216, 0.15) 50%,
-          rgba(242, 247, 237, 0.7) 100%),
-        linear-gradient(180deg,
-          rgba(250, 252, 248, 0.8) 0%,
-          rgba(232, 240, 228, 0.6) 100%);
+          rgba(240, 219, 216, 0.08) 100%),
+        linear-gradient(180deg, #f5f9f0 0%, #eef3e7 100%);
       border: 2px solid var(--sage-medium);
       display: flex;
       justify-content: space-between;
@@ -434,15 +432,13 @@
     }
     /* Subtle visual cue when schedule item uses adjusted value */
     .schedule-list li.adjusted {
-      /* BOTH COMBINED: Stronger dusty rose wash for adjusted items */
+      /* BOTH COMBINED: Stronger dusty rose wash for adjusted items - SOLID BASE */
       background:
         linear-gradient(90deg,
-          rgba(240, 219, 216, 0.5) 0%,
+          rgba(229, 197, 192, 0.2) 0%,
           rgba(229, 197, 192, 0.3) 50%,
-          rgba(240, 219, 216, 0.5) 100%),
-        linear-gradient(180deg,
-          rgba(245, 225, 222, 0.9) 0%,
-          rgba(240, 219, 216, 0.7) 100%);
+          rgba(229, 197, 192, 0.2) 100%),
+        linear-gradient(180deg, #f5e8e6 0%, #f0dbd8 100%);
       border-color: var(--dusty-rose);
     }
     .time {
