@@ -15,9 +15,9 @@
       --sage-light: #f2f7ed;
       --sage-medium: #d4e3c8;
       --sage-dark: #b8cda8;
-      --dusty-rose: #e8d5c4;
-      --dusty-rose-light: #f2e6d8;
-      --dusty-rose-dark: #8b7961;
+      --dusty-rose: #e5a890;
+      --dusty-rose-light: #f5d4c8;
+      --dusty-rose-dark: #b8835f;
       --text-primary: #1a3a1a;
       --text-secondary: #2d4a2d;
       --card-bg: #fafcf8;
@@ -125,7 +125,14 @@
         grid-template-columns: 1fr;
       }
       .card {
-        padding: 16px;
+        padding: 20px 24px;
+      }
+      .form-grid {
+        gap: 10px 16px;
+      }
+      input[type="time"],
+      input[type="number"] {
+        min-width: 0;
       }
     }
 
@@ -462,9 +469,9 @@
       color: var(--dusty-rose-dark);
     }
     .badge.bed {
-      background: var(--sage-medium);
-      border: 1px solid var(--sage-dark);
-      color: var(--text-primary);
+      background: var(--dusty-rose-light);
+      border: 1px solid var(--dusty-rose);
+      color: var(--dusty-rose-dark);
     }
     .badge.actual {
       background: var(--dusty-rose);
@@ -831,13 +838,22 @@
         border-radius: 0;
       }
       .modal-header {
-        padding: 16px 20px 12px;
+        padding: 16px 24px 12px;
       }
       .modal-body {
-        padding: 18px 16px;
+        padding: 18px 24px;
       }
       .modal-footer {
-        padding: 10px 20px 12px;
+        padding: 10px 24px 12px;
+      }
+      .actual-nap-row {
+        padding: 12px 16px;
+      }
+      .nap-row {
+        padding: 10px 16px;
+      }
+      .time-inputs-row {
+        gap: 8px;
       }
     }
 
