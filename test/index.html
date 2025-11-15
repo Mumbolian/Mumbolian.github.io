@@ -110,29 +110,52 @@
       z-index: 1;
     }
 
-    /* Corner accents */
+    /* Geometric corner brackets (all 4 corners) */
     main::before,
     main::after {
       content: '';
       position: absolute;
-      width: 40px;
-      height: 40px;
-      border: 2px solid var(--neon-cyan);
+      width: 24px;
+      height: 24px;
       pointer-events: none;
     }
     main::before {
-      top: -1px;
-      left: -1px;
-      border-right: none;
-      border-bottom: none;
-      box-shadow: 0 0 15px var(--neon-cyan);
+      top: 8px;
+      left: 8px;
+      border-top: 2px solid var(--neon-cyan);
+      border-left: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
     }
     main::after {
-      bottom: -1px;
-      right: -1px;
-      border-left: none;
-      border-top: none;
-      box-shadow: 0 0 15px var(--neon-cyan);
+      top: 8px;
+      right: 8px;
+      border-top: 2px solid var(--neon-purple);
+      border-right: 2px solid var(--neon-purple);
+      box-shadow: 0 0 8px rgba(157, 78, 221, 0.5);
+    }
+
+    /* Bottom corners using pseudo-elements on footer */
+    .footer::before,
+    .footer::after {
+      content: '';
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+    }
+    .footer::before {
+      bottom: 8px;
+      left: 8px;
+      border-bottom: 2px solid var(--neon-orange);
+      border-left: 2px solid var(--neon-orange);
+      box-shadow: 0 0 8px rgba(255, 158, 0, 0.5);
+    }
+    .footer::after {
+      bottom: 8px;
+      right: 8px;
+      border-bottom: 2px solid var(--neon-cyan);
+      border-right: 2px solid var(--neon-cyan);
+      box-shadow: 0 0 8px rgba(0, 245, 255, 0.5);
     }
 
     @media (min-width: 640px) {
@@ -731,6 +754,8 @@
       justify-content: space-between;
       gap: 8px;
       flex-wrap: wrap;
+      position: relative;
+      padding-top: 20px;
     }
     code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
@@ -937,7 +962,8 @@
       width: 100%;
       max-width: 500px;
       max-height: 90vh;
-      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
       z-index: 1001;
     }
     .modal-header {
@@ -947,6 +973,7 @@
       padding: 20px 24px 16px;
       border-bottom: 1px solid rgba(0, 245, 255, 0.3);
       position: relative;
+      flex-shrink: 0;
     }
     .modal-header::after {
       content: '';
@@ -994,6 +1021,10 @@
     }
     .modal-body {
       padding: 18px 20px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      flex: 1;
+      min-height: 0;
     }
     .constraint-section {
       margin-bottom: 4px;
@@ -1029,6 +1060,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 8px;
+      flex-shrink: 0;
     }
     .modal-footer button {
       padding: 8px 16px;
@@ -1536,7 +1568,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.14.0"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.14.1"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -1653,12 +1685,12 @@
 
       if (constraintsActive) {
         const count = (hasAwakeWindow ? 1 : 0) + (hasSleepWindow ? 1 : 0);
-        openConstraintsBtn.textContent = `🎯 Constraints (${count})`;
-        openConstraintsBtn.style.background = "rgba(34, 197, 94, 0.15)";
-        openConstraintsBtn.style.borderColor = "rgba(34, 197, 94, 0.5)";
-        openConstraintsBtn.style.color = "#bbf7d0";
+        openConstraintsBtn.textContent = `CONSTRAINTS (${count})`;
+        openConstraintsBtn.style.background = "rgba(0, 245, 255, 0.15)";
+        openConstraintsBtn.style.borderColor = "rgba(0, 245, 255, 0.5)";
+        openConstraintsBtn.style.color = "var(--neon-cyan)";
       } else {
-        openConstraintsBtn.textContent = "🎯 Constraints";
+        openConstraintsBtn.textContent = "CONSTRAINTS";
         openConstraintsBtn.style.background = "";
         openConstraintsBtn.style.borderColor = "";
         openConstraintsBtn.style.color = "";
@@ -1677,12 +1709,12 @@
       if (currentNapCount >= 3 && actualNap3Start.value && actualNap3End.value) napCount++;
 
       if (napCount > 0) {
-        openActualNapsBtn.textContent = `📊 Track (${napCount})`;
-        openActualNapsBtn.style.background = "rgba(34, 197, 94, 0.15)";
-        openActualNapsBtn.style.borderColor = "rgba(34, 197, 94, 0.5)";
-        openActualNapsBtn.style.color = "#bbf7d0";
+        openActualNapsBtn.textContent = `TRACK NAPS (${napCount})`;
+        openActualNapsBtn.style.background = "rgba(0, 245, 255, 0.15)";
+        openActualNapsBtn.style.borderColor = "rgba(0, 245, 255, 0.5)";
+        openActualNapsBtn.style.color = "var(--neon-cyan)";
       } else {
-        openActualNapsBtn.textContent = "📊 Track";
+        openActualNapsBtn.textContent = "TRACK NAPS";
         openActualNapsBtn.style.background = "";
         openActualNapsBtn.style.borderColor = "";
         openActualNapsBtn.style.color = "";
