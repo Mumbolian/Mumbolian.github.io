@@ -678,6 +678,9 @@
       justify-content: center;
       padding: 16px;
     }
+    .modal.hidden {
+      display: none;
+    }
     .modal-backdrop {
       position: absolute;
       top: 0;
@@ -752,6 +755,51 @@
       -webkit-overflow-scrolling: touch;
       flex: 1 1 auto;
       min-height: 0;
+    }
+    .theme-choice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+    }
+    .theme-choice-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      background: var(--card-bg);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-choice-card:hover {
+      border-color: var(--dusty-rose);
+      background: var(--dusty-rose-light);
+    }
+    .theme-choice-card .theme-color-indicator {
+      transform: scale(0.9);
+    }
+    .theme-choice-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    .theme-choice-desc {
+      margin: 4px 0 0;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
     .constraint-section {
       margin-bottom: 4px;
@@ -1570,6 +1618,15 @@
     [data-theme="neon"] .nap-insights .insight-value {
       color: #93c5fd;
     }
+    [data-theme="neon"] .theme-choice-card {
+      border-color: rgba(0, 245, 255, 0.35);
+      background: rgba(12, 18, 30, 0.95);
+      box-shadow: inset 0 0 0 1px rgba(195, 255, 90, 0.35);
+    }
+    [data-theme="neon"] .theme-choice-card:hover {
+      border-color: rgba(195, 255, 90, 0.9);
+      box-shadow: 0 0 20px rgba(0, 245, 255, 0.4), inset 0 0 0 1px rgba(195, 255, 90, 0.6);
+    }
     [data-theme="neon"] .schedule-header {
       border-bottom: 1px solid rgba(71, 85, 105, 0.3);
     }
@@ -1635,6 +1692,34 @@
       </div>
       <div class="theme-toggle-option inactive" data-theme="neon">
         <div class="theme-color-indicator neon-theme-indicator"></div>
+      </div>
+    </div>
+  </div>
+  <div class="modal hidden" id="themeChoiceModal" role="dialog" aria-modal="true" aria-labelledby="themeChoiceTitle">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="themeChoiceTitle">Choose your theme</h3>
+        <button class="close-btn" id="closeThemeChoice" aria-label="Close theme chooser">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="subtext">Pick the vibe you want to start with. You can switch anytime.</p>
+        <div class="theme-choice-grid">
+          <button class="theme-choice-card" data-theme="light" aria-label="Use light theme">
+            <div class="theme-color-indicator light-theme-indicator"></div>
+            <div>
+              <div class="theme-choice-name">Daylight</div>
+              <div class="theme-choice-desc">Soft greens with warm rosy accents</div>
+            </div>
+          </button>
+          <button class="theme-choice-card" data-theme="neon" aria-label="Use neon theme">
+            <div class="theme-color-indicator neon-theme-indicator"></div>
+            <div>
+              <div class="theme-choice-name">Neon Glow</div>
+              <div class="theme-choice-desc">Electric cyan with lime highlights</div>
+            </div>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -4599,6 +4684,9 @@
     const THEME_STORAGE_KEY = 'napPlannerTheme';
     const themeToggleSwitch = document.getElementById('themeToggle');
     const themeOptions = themeToggleSwitch.querySelectorAll('.theme-toggle-option');
+    const themeChoiceModal = document.getElementById('themeChoiceModal');
+    const themeChoiceButtons = themeChoiceModal.querySelectorAll('.theme-choice-card');
+    const closeThemeChoiceButton = document.getElementById('closeThemeChoice');
 
     // Update toggle switch visual state
     function updateThemeToggle(theme) {
@@ -4634,6 +4722,10 @@
       localStorage.setItem(THEME_STORAGE_KEY, theme);
     }
 
+    function closeThemeChoice() {
+      themeChoiceModal.classList.add('hidden');
+    }
+
     // Toggle theme on switch click
     themeToggleSwitch.addEventListener('click', function() {
       const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -4641,10 +4733,25 @@
       applyTheme(newTheme);
     });
 
+    themeChoiceButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const chosenTheme = button.dataset.theme;
+        applyTheme(chosenTheme);
+        closeThemeChoice();
+      });
+    });
+
+    closeThemeChoiceButton.addEventListener('click', closeThemeChoice);
+
     // Load saved theme or default to light
     function loadTheme() {
-      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
-      applyTheme(savedTheme);
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme) {
+        applyTheme(savedTheme);
+      } else {
+        applyTheme('light');
+        themeChoiceModal.classList.remove('hidden');
+      }
     }
 
     // Initialize theme on page load
