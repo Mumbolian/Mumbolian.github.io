@@ -18,6 +18,9 @@
       --dusty-rose: #e5a890;
       --dusty-rose-light: #f5d4c8;
       --dusty-rose-dark: #b8835f;
+      --beige: #e8d7c3;
+      --beige-light: #f5ecdf;
+      --beige-dark: #c4ad8f;
       --text-primary: #1a3a1a;
       --text-secondary: #2d4a2d;
       --card-bg: #fafcf8;
@@ -308,27 +311,27 @@
       left: 3px;
       height: calc(100% - 6px);
       width: calc(50% - 3px);
-      background: var(--dusty-rose);
+      background: var(--beige);
       border-radius: 999px;
       transition: transform 0.3s ease;
     }
     .nap-toggle-switch.three-naps .nap-toggle-slider {
       transform: translateX(100%);
-      background: var(--dusty-rose);
+      background: var(--beige);
     }
     /* Visual indicator when preference doesn't match actual schedule */
     .nap-toggle-switch.preference-mismatch {
-      border-color: var(--dusty-rose-dark);
+      border-color: var(--beige-dark);
     }
     .nap-mismatch-warning {
       margin-top: 4px;
       margin-bottom: 8px;
       padding: 8px 12px;
-      background: var(--dusty-rose-light);
-      border: 2px solid var(--dusty-rose);
+      background: var(--beige-light);
+      border: 2px solid var(--beige);
       border-radius: 4px;
       font-size: 0.75rem;
-      color: var(--dusty-rose-dark);
+      color: var(--text-primary);
       line-height: 1.3;
     }
 
@@ -477,14 +480,14 @@
       white-space: nowrap;
     }
     .badge.wake {
-      background: var(--dusty-rose-light);
-      border: 1px solid var(--dusty-rose);
-      color: var(--dusty-rose-dark);
+      background: var(--beige-light);
+      border: 1px solid var(--beige);
+      color: var(--text-primary);
     }
     .badge.bed {
-      background: var(--dusty-rose-light);
-      border: 1px solid var(--dusty-rose);
-      color: var(--dusty-rose-dark);
+      background: var(--beige-light);
+      border: 1px solid var(--beige);
+      color: var(--text-primary);
     }
     .badge.actual {
       background: var(--dusty-rose);
@@ -840,13 +843,13 @@
       position: relative;
     }
     .scenario-tab:hover {
-      background: var(--dusty-rose-light);
-      color: var(--dusty-rose-dark);
+      background: var(--beige-light);
+      color: var(--text-primary);
     }
     .scenario-tab.active {
-      background: var(--dusty-rose-light);
-      color: var(--dusty-rose-dark);
-      border-color: var(--dusty-rose);
+      background: var(--beige);
+      color: var(--text-primary);
+      border-color: var(--beige-dark);
     }
     .schedule-summary {
       margin-top: 16px;
@@ -956,7 +959,7 @@
         /* darker neon left */ linear-gradient(110deg,
           rgba(6, 12, 28, 0.95) 0%, rgba(10, 20, 44, 0.92) 28%, rgba(0, 128, 255, 0.5) 46%, transparent 47%),
         /* calm light right */ linear-gradient(110deg,
-          transparent 53%, #f5d4c8 54%, #e7efe1 72%, #c5d4b8 100%),
+          transparent 53%, var(--beige-light) 54%, var(--beige) 68%, var(--sage-medium) 100%),
         rgba(255,255,255,0.35);
       backdrop-filter: blur(10px);
       -webkit-backdrop-filter: blur(10px);
@@ -1037,7 +1040,7 @@
       height: 14px;
       border-radius: 8px;
       margin-bottom: 10px;
-      background: linear-gradient(90deg, var(--dusty-rose-light), var(--sage-medium));
+      background: linear-gradient(90deg, var(--beige-light), var(--sage-medium));
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
     }
     .mini-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -2161,7 +2164,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.14"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.20"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -3699,7 +3702,35 @@
 
       // Strategy 2: Try alternative nap count (2 vs 3)
       const alternateNapCount = napCount === 2 ? 3 : 2;
-      const alternateNapLengths = alternateNapCount === 3 ? [30, 60, 30] : [90, 30, 30];
+
+      // Load stored settings for the alternate nap count mode
+      const storedSettings = loadSettings();
+      let alternateNapLengths;
+
+      if (alternateNapCount === 3) {
+        // Switching to 3 naps - use stored 3-nap settings or defaults
+        if (storedSettings && storedSettings.threeNapLengths) {
+          alternateNapLengths = [
+            storedSettings.threeNapLengths.nap1 || 30,
+            storedSettings.threeNapLengths.nap2 || 60,
+            storedSettings.threeNapLengths.nap3 || 30
+          ];
+        } else {
+          alternateNapLengths = [30, 60, 30]; // Default for 3 naps
+        }
+      } else {
+        // Switching to 2 naps - use stored 2-nap settings or defaults
+        if (storedSettings && storedSettings.twoNapLengths) {
+          alternateNapLengths = [
+            storedSettings.twoNapLengths.nap1 || 90,
+            storedSettings.twoNapLengths.nap2 || 30,
+            storedSettings.twoNapLengths.nap3 || 30
+          ];
+        } else {
+          alternateNapLengths = [90, 30, 30]; // Default for 2 naps
+        }
+      }
+
       const testParams4 = { ...params, napCount: alternateNapCount, napLengths: alternateNapLengths };
       const testSchedule4 = tryBuildSchedule(alternateNapCount, testParams4);
 
@@ -4192,6 +4223,9 @@
               if (scheduleResult.ok) {
                 autoDowngraded = true;
                 requestedNapCount = 2;
+                // Ensure downstream logic uses the auto-downgraded nap lengths
+                napLengths = newNapLengths;
+                params.napLengths = newNapLengths;
                 // Update input fields to show the 2-nap settings being used
                 nap1Input.value = newNapLengths[0];
                 nap2Input.value = newNapLengths[1];
@@ -4252,6 +4286,9 @@
               if (scheduleResult.ok) {
                 autoUpgraded = true;
                 requestedNapCount = 3;
+                // Ensure downstream logic uses the auto-upgraded nap lengths
+                napLengths = newNapLengths;
+                params.napLengths = newNapLengths;
                 // Update input fields to show the 3-nap settings being used
                 nap1Input.value = newNapLengths[0];
                 nap2Input.value = newNapLengths[1];
@@ -4563,6 +4600,10 @@
       // Reset actualNapCountInUse so saveSettings uses the user's new preference
       actualNapCountInUse = null;
 
+      // Prevent recomputeSchedule from being triggered by input value changes
+      // This avoids race condition where only partial values are updated
+      isRecomputing = true;
+
       if (preferThree) {
         // Switching to 3 naps - load saved 3-nap settings or use defaults
         if (s && s.threeNapLengths) {
@@ -4586,6 +4627,10 @@
           nap3Input.value = 30;
         }
       }
+
+      // Re-enable recomputation
+      isRecomputing = false;
+
       updateActualNapsButton(); // Update button to reflect correct nap count
       recomputeSchedule();
     });
