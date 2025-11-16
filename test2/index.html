@@ -158,7 +158,7 @@
     .card {
       /* Solid sage green watercolor cards with layered gradients */
       background:
-        radial-gradient(circle at top right, rgba(245, 212, 200, 0.25) 0%, transparent 60%),
+        radial-gradient(circle at top right, rgba(235, 225, 210, 0.35) 0%, transparent 60%),
         linear-gradient(135deg, #f8faf6 0%, #f0f4eb 100%);
       border-radius: 12px;
       padding: 20px;
@@ -170,10 +170,10 @@
     }
 
     .card.secondary {
-      /* Solid dusty rose tint for variety */
+      /* Warm beige gradient to match primary card */
       background:
-        radial-gradient(circle at bottom left, rgba(212, 227, 200, 0.3) 0%, transparent 60%),
-        linear-gradient(135deg, #f0f4eb 0%, #f8faf6 100%);
+        radial-gradient(circle at top right, rgba(235, 225, 210, 0.35) 0%, transparent 60%),
+        linear-gradient(135deg, #f8faf6 0%, #f0f4eb 100%);
       border: 2px solid #d4e3c8;
     }
 
@@ -2010,7 +2010,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.9"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.11"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
