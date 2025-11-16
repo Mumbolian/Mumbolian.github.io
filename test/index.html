@@ -1016,6 +1016,33 @@
     .theme-toggle-switch.neon-active .theme-toggle-slider {
       transform: translateX(100%);
     }
+
+    /* Theme picker composite preview */
+    .theme-preview-combined-img {
+      position: relative;
+      width: 100%;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+    .theme-preview-combined-img img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .theme-hit {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    /* Diagonal split: adjust as needed to match the image */
+    .theme-hit.left { clip-path: polygon(0 0, 60% 0, 40% 100%, 0 100%); }
+    .theme-hit.right { clip-path: polygon(60% 0, 100% 0, 100% 100%, 40% 100%); }
     @media (max-width: 640px) {
       .theme-toggle-container {
         top: 12px;
@@ -2040,6 +2067,26 @@
 
       <div class="modal-footer">
         <button type="button" id="saveSettings" class="primary">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Theme Selection Modal -->
+  <div id="themeModal" class="modal" style="display: none;">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Choose your vibe</h3>
+        <button type="button" id="closeThemeModal" class="close-btn" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="theme-choice-row">
+          <div class="theme-preview-combined-img">
+            <img id="themePreviewImage" src="/mock_theme_picker.png" alt="Theme clash preview" />
+            <button type="button" class="theme-hit left" data-theme-choice="light" aria-label="Choose light"></button>
+            <button type="button" class="theme-hit right" data-theme-choice="neon" aria-label="Choose neon"></button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4599,6 +4646,11 @@
     const THEME_STORAGE_KEY = 'napPlannerTheme';
     const themeToggleSwitch = document.getElementById('themeToggle');
     const themeOptions = themeToggleSwitch.querySelectorAll('.theme-toggle-option');
+    const themeModal = document.getElementById('themeModal');
+    const themeModalBackdrop = themeModal ? themeModal.querySelector('.modal-backdrop') : null;
+    const closeThemeModalBtn = document.getElementById('closeThemeModal');
+    const themeChoiceButtons = themeModal ? themeModal.querySelectorAll('[data-theme-choice]') : [];
+    const themePreviewImage = document.getElementById('themePreviewImage');
 
     // Update toggle switch visual state
     function updateThemeToggle(theme) {
@@ -4624,14 +4676,14 @@
     }
 
     // Apply theme to document
-    function applyTheme(theme) {
+    function applyTheme(theme, persist = true) {
       if (theme === 'neon') {
         document.documentElement.setAttribute('data-theme', 'neon');
       } else {
         document.documentElement.removeAttribute('data-theme');
       }
       updateThemeToggle(theme);
-      localStorage.setItem(THEME_STORAGE_KEY, theme);
+      if (persist) localStorage.setItem(THEME_STORAGE_KEY, theme);
     }
 
     // Toggle theme on switch click
@@ -4641,14 +4693,40 @@
       applyTheme(newTheme);
     });
 
-    // Load saved theme or default to light
-    function loadTheme() {
-      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
-      applyTheme(savedTheme);
+    // Load saved theme or show first-run chooser
+    function loadThemePreference() {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved) {
+        applyTheme(saved, false);
+        return;
+      }
+      applyTheme('light', false);
+      if (themeModal) themeModal.style.display = 'flex';
+    }
+
+    // Modal interactions
+    themeChoiceButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const choice = btn.dataset.themeChoice === 'neon' ? 'neon' : 'light';
+        applyTheme(choice, true);
+        if (themeModal) themeModal.style.display = 'none';
+      });
+    });
+    if (closeThemeModalBtn) {
+      closeThemeModalBtn.addEventListener('click', () => {
+        if (themeModal) themeModal.style.display = 'none';
+        if (!localStorage.getItem(THEME_STORAGE_KEY)) applyTheme('light', true);
+      });
+    }
+    if (themeModalBackdrop) {
+      themeModalBackdrop.addEventListener('click', () => {
+        if (themeModal) themeModal.style.display = 'none';
+        if (!localStorage.getItem(THEME_STORAGE_KEY)) applyTheme('light', true);
+      });
     }
 
     // Initialize theme on page load
-    loadTheme();
+    loadThemePreference();
   })();
 </script>
 </body>
