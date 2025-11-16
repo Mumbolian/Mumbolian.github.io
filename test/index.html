@@ -18,6 +18,9 @@
       --dusty-rose: #e5a890;
       --dusty-rose-light: #f5d4c8;
       --dusty-rose-dark: #b8835f;
+      --beige: #e8d7c3;
+      --beige-light: #f5ecdf;
+      --beige-dark: #c4ad8f;
       --text-primary: #1a3a1a;
       --text-secondary: #2d4a2d;
       --card-bg: #fafcf8;
@@ -308,27 +311,27 @@
       left: 3px;
       height: calc(100% - 6px);
       width: calc(50% - 3px);
-      background: var(--dusty-rose);
+      background: var(--beige);
       border-radius: 999px;
       transition: transform 0.3s ease;
     }
     .nap-toggle-switch.three-naps .nap-toggle-slider {
       transform: translateX(100%);
-      background: var(--dusty-rose);
+      background: var(--beige);
     }
     /* Visual indicator when preference doesn't match actual schedule */
     .nap-toggle-switch.preference-mismatch {
-      border-color: var(--dusty-rose-dark);
+      border-color: var(--beige-dark);
     }
     .nap-mismatch-warning {
       margin-top: 4px;
       margin-bottom: 8px;
       padding: 8px 12px;
-      background: var(--dusty-rose-light);
-      border: 2px solid var(--dusty-rose);
+      background: var(--beige-light);
+      border: 2px solid var(--beige);
       border-radius: 4px;
       font-size: 0.75rem;
-      color: var(--dusty-rose-dark);
+      color: var(--text-primary);
       line-height: 1.3;
     }
 
@@ -477,14 +480,14 @@
       white-space: nowrap;
     }
     .badge.wake {
-      background: var(--dusty-rose-light);
-      border: 1px solid var(--dusty-rose);
-      color: var(--dusty-rose-dark);
+      background: var(--beige-light);
+      border: 1px solid var(--beige);
+      color: var(--beige-dark);
     }
     .badge.bed {
-      background: var(--dusty-rose-light);
-      border: 1px solid var(--dusty-rose);
-      color: var(--dusty-rose-dark);
+      background: var(--beige-light);
+      border: 1px solid var(--beige);
+      color: var(--beige-dark);
     }
     .badge.actual {
       background: var(--dusty-rose);
@@ -840,13 +843,13 @@
       position: relative;
     }
     .scenario-tab:hover {
-      background: var(--dusty-rose-light);
-      color: var(--dusty-rose-dark);
+      background: var(--beige-light);
+      color: var(--text-primary);
     }
     .scenario-tab.active {
-      background: var(--dusty-rose-light);
-      color: var(--dusty-rose-dark);
-      border-color: var(--dusty-rose);
+      background: var(--beige);
+      color: var(--text-primary);
+      border-color: var(--beige-dark);
     }
     .schedule-summary {
       margin-top: 16px;
@@ -2161,7 +2164,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.14"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.15"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
