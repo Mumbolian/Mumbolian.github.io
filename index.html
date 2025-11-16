@@ -479,12 +479,12 @@
     .badge.wake {
       background: var(--dusty-rose-light);
       border: 1px solid var(--dusty-rose);
-      color: var(--dusty-rose-dark);
+      color: #2d3a28;
     }
     .badge.bed {
       background: var(--dusty-rose-light);
       border: 1px solid var(--dusty-rose);
-      color: var(--dusty-rose-dark);
+      color: #2d3a28;
     }
     .badge.actual {
       background: var(--dusty-rose);
@@ -2161,7 +2161,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.14"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.16"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -3699,7 +3699,35 @@
 
       // Strategy 2: Try alternative nap count (2 vs 3)
       const alternateNapCount = napCount === 2 ? 3 : 2;
-      const alternateNapLengths = alternateNapCount === 3 ? [30, 60, 30] : [90, 30, 30];
+
+      // Load stored settings for the alternate nap count mode
+      const storedSettings = loadSettings();
+      let alternateNapLengths;
+
+      if (alternateNapCount === 3) {
+        // Switching to 3 naps - use stored 3-nap settings or defaults
+        if (storedSettings && storedSettings.threeNapLengths) {
+          alternateNapLengths = [
+            storedSettings.threeNapLengths.nap1 || 30,
+            storedSettings.threeNapLengths.nap2 || 60,
+            storedSettings.threeNapLengths.nap3 || 30
+          ];
+        } else {
+          alternateNapLengths = [30, 60, 30]; // Default for 3 naps
+        }
+      } else {
+        // Switching to 2 naps - use stored 2-nap settings or defaults
+        if (storedSettings && storedSettings.twoNapLengths) {
+          alternateNapLengths = [
+            storedSettings.twoNapLengths.nap1 || 90,
+            storedSettings.twoNapLengths.nap2 || 30,
+            storedSettings.twoNapLengths.nap3 || 30
+          ];
+        } else {
+          alternateNapLengths = [90, 30, 30]; // Default for 2 naps
+        }
+      }
+
       const testParams4 = { ...params, napCount: alternateNapCount, napLengths: alternateNapLengths };
       const testSchedule4 = tryBuildSchedule(alternateNapCount, testParams4);
 
