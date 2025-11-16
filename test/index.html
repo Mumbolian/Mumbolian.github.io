@@ -943,17 +943,13 @@
     }
 
     /* Theme Toggle Switch */
-    .theme-toggle-container {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      z-index: 20;
-    }
+    .title-actions { display: flex; justify-content: flex-end; align-items: center; margin-top: 6px; }
+    .theme-toggle-container { z-index: 20; position: static; }
     .theme-toggle-switch {
       position: relative;
       display: inline-block;
-      width: 96px;
-      height: 32px;
+      width: 72px;
+      height: 24px;
       padding: 2px;
       border-radius: 999px;
       background:
@@ -996,7 +992,7 @@
     .theme-toggle-switch.neon-active .theme-toggle-slider { border-color: rgba(0,245,255,0.9); box-shadow: 0 0 10px rgba(0,245,255,0.5), inset 0 0 0 2px rgba(255,255,255,0.12); }
     .theme-toggle-switch:not(.neon-active) .theme-toggle-slider { border-color: rgba(255,255,255,0.9); box-shadow: 0 0 8px rgba(255,255,255,0.35), inset 0 0 0 2px rgba(255,255,255,0.15); }
     /* When light is active, move knob right; when neon (neon-active), knob stays left */
-    .theme-toggle-switch:not(.neon-active) .theme-toggle-slider { transform: translateX(64px); }
+    .theme-toggle-switch:not(.neon-active) .theme-toggle-slider { transform: translateX(46px); }
 
     /* Animated glint: thin sweep within active half */
     /* Diagonal seam across the split */
@@ -1092,9 +1088,10 @@
     .theme-hit.left { clip-path: polygon(0 0, 60% 0, 40% 100%, 0 100%); }
     .theme-hit.right { clip-path: polygon(60% 0, 100% 0, 100% 100%, 40% 100%); }
     @media (max-width: 640px) {
-      .theme-toggle-switch { width: 88px; height: 28px; padding: 2px; }
-      .theme-toggle-slider { top: 2px; left: 2px; height: calc(100% - 4px); width: calc(100% - 4px); max-width: 22px; max-height: 22px; }
-      .theme-toggle-switch:not(.neon-active) .theme-toggle-slider { transform: translateX(60px); }
+      .title-actions { margin-top: 4px; }
+      .theme-toggle-switch { width: 68px; height: 22px; padding: 2px; }
+      .theme-toggle-slider { top: 2px; left: 2px; height: calc(100% - 4px); width: calc(100% - 4px); max-width: 16px; max-height: 16px; }
+      .theme-toggle-switch:not(.neon-active) .theme-toggle-slider { transform: translateX(44px); }
     }
 
     /* Neon Theme Overrides */
@@ -1691,15 +1688,13 @@
   <header>
     <div class="title-block">
       <h1>T-Man's Snooze Schedule</h1>
-    </div>
-    <div class="theme-toggle-container">
-      <div class="theme-toggle-switch" id="themeToggle">
-        <div class="theme-toggle-slider"></div>
-        <div class="theme-toggle-option inactive" data-theme="neon">
-          <div class="theme-color-indicator neon-theme-indicator"></div>
-        </div>
-        <div class="theme-toggle-option" data-theme="light">
-          <div class="theme-color-indicator light-theme-indicator"></div>
+      <div class="title-actions">
+        <div class="theme-toggle-container">
+          <div class="theme-toggle-switch" id="themeToggle">
+            <div class="theme-toggle-slider"></div>
+            <div class="theme-toggle-option inactive" data-theme="neon"></div>
+            <div class="theme-toggle-option" data-theme="light"></div>
+          </div>
         </div>
       </div>
     </div>
