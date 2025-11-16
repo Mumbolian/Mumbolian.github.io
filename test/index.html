@@ -928,8 +928,8 @@
     /* Theme Toggle Switch */
     .theme-toggle-container {
       position: absolute;
-      top: 20px;
-      right: 20px;
+      top: 16px;
+      right: 16px;
       z-index: 10;
     }
     .theme-toggle-switch {
@@ -937,46 +937,72 @@
       display: inline-flex;
       background: var(--sage-light);
       border-radius: 999px;
-      border: 2px solid var(--sage-medium);
-      padding: 4px;
+      border: 1px solid var(--sage-medium);
+      padding: 3px;
       cursor: pointer;
       user-select: none;
       transition: all 0.3s ease;
-      box-shadow: 0 2px 8px rgba(106, 122, 99, 0.15);
+      box-shadow: 0 1px 4px rgba(106, 122, 99, 0.1);
     }
     .theme-toggle-switch:hover {
       border-color: var(--dusty-rose);
-      box-shadow: 0 3px 12px rgba(106, 122, 99, 0.25);
+      box-shadow: 0 2px 6px rgba(106, 122, 99, 0.2);
     }
     .theme-toggle-option {
       position: relative;
       z-index: 2;
-      padding: 6px 12px;
-      font-size: 1rem;
+      padding: 4px;
       transition: all 0.3s ease;
-      text-align: center;
-      min-width: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 999px;
     }
     .theme-toggle-option.inactive {
-      opacity: 0.4;
-      filter: grayscale(0.5);
+      opacity: 0.5;
+    }
+    .theme-color-indicator {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    .light-theme-indicator {
+      background: linear-gradient(135deg, #e5c5c0 0%, #c5d4b8 50%, #f8faf6 100%);
+      box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.5);
+    }
+    .neon-theme-indicator {
+      background: linear-gradient(135deg, #0a0118 0%, #00f5ff 50%, #ff6600 100%);
+      box-shadow: inset 0 0 10px rgba(0, 245, 255, 0.3);
+    }
+    .theme-toggle-option:not(.inactive) .theme-color-indicator {
+      border-color: var(--dusty-rose);
+      box-shadow: 0 0 0 2px rgba(184, 131, 95, 0.2);
     }
     .theme-toggle-slider {
       position: absolute;
-      top: 4px;
-      left: 4px;
-      height: calc(100% - 8px);
-      width: calc(50% - 4px);
-      background: linear-gradient(135deg, var(--dusty-rose), var(--dusty-rose-dark));
+      top: 3px;
+      left: 3px;
+      height: calc(100% - 6px);
+      width: calc(50% - 3px);
+      background: linear-gradient(135deg, var(--dusty-rose-light), var(--dusty-rose));
       border-radius: 999px;
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 2px 8px rgba(184, 131, 95, 0.4);
+      box-shadow: 0 1px 3px rgba(184, 131, 95, 0.3);
     }
     .theme-toggle-switch.neon-active .theme-toggle-slider {
       transform: translateX(100%);
+    }
+    @media (max-width: 640px) {
+      .theme-toggle-container {
+        top: 12px;
+        right: 12px;
+      }
+      .theme-color-indicator {
+        width: 20px;
+        height: 20px;
+      }
     }
 
     /* Neon Theme Overrides */
@@ -1582,8 +1608,12 @@
   <div class="theme-toggle-container">
     <div class="theme-toggle-switch" id="themeToggle">
       <div class="theme-toggle-slider"></div>
-      <div class="theme-toggle-option" data-theme="light">☀️</div>
-      <div class="theme-toggle-option inactive" data-theme="neon">🌙</div>
+      <div class="theme-toggle-option" data-theme="light">
+        <div class="theme-color-indicator light-theme-indicator"></div>
+      </div>
+      <div class="theme-toggle-option inactive" data-theme="neon">
+        <div class="theme-color-indicator neon-theme-indicator"></div>
+      </div>
     </div>
   </div>
   <header>
@@ -2000,7 +2030,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.11"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.12"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
