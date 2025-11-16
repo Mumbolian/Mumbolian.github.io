@@ -2161,7 +2161,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.16"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.17"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -4591,6 +4591,10 @@
       // Reset actualNapCountInUse so saveSettings uses the user's new preference
       actualNapCountInUse = null;
 
+      // Prevent recomputeSchedule from being triggered by input value changes
+      // This avoids race condition where only partial values are updated
+      isRecomputing = true;
+
       if (preferThree) {
         // Switching to 3 naps - load saved 3-nap settings or use defaults
         if (s && s.threeNapLengths) {
@@ -4614,6 +4618,10 @@
           nap3Input.value = 30;
         }
       }
+
+      // Re-enable recomputation
+      isRecomputing = false;
+
       updateActualNapsButton(); // Update button to reflect correct nap count
       recomputeSchedule();
     });
