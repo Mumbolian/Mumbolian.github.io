@@ -4195,6 +4195,9 @@
               if (scheduleResult.ok) {
                 autoDowngraded = true;
                 requestedNapCount = 2;
+                // Ensure downstream logic uses the auto-downgraded nap lengths
+                napLengths = newNapLengths;
+                params.napLengths = newNapLengths;
                 // Update input fields to show the 2-nap settings being used
                 nap1Input.value = newNapLengths[0];
                 nap2Input.value = newNapLengths[1];
@@ -4255,6 +4258,9 @@
               if (scheduleResult.ok) {
                 autoUpgraded = true;
                 requestedNapCount = 3;
+                // Ensure downstream logic uses the auto-upgraded nap lengths
+                napLengths = newNapLengths;
+                params.napLengths = newNapLengths;
                 // Update input fields to show the 3-nap settings being used
                 nap1Input.value = newNapLengths[0];
                 nap2Input.value = newNapLengths[1];
