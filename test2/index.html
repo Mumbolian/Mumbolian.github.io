@@ -145,6 +145,14 @@
         -webkit-appearance: none;
         box-sizing: border-box;
       }
+      .nap-toggle-label {
+        font-size: 0.8rem;
+      }
+      .nap-toggle-option {
+        padding: 4px 12px;
+        min-width: 55px;
+        font-size: 0.7rem;
+      }
     }
 
     .card {
@@ -282,7 +290,7 @@
       display: inline-flex;
       background: var(--sage-light);
       border-radius: 999px;
-      border: 2px solid var(--sage-medium);
+      border: 1px solid var(--sage-medium);
       padding: 4px;
       cursor: pointer;
       user-select: none;
@@ -500,6 +508,12 @@
       font-size: 0.78rem;
       color: var(--text-secondary);
       margin-top: 4px;
+    }
+    .nap-duration {
+      color: #d97706;
+    }
+    .wake-duration {
+      color: #0f5132;
     }
     .warning {
       margin-top: 4px;
@@ -1351,6 +1365,12 @@
     [data-theme="neon"] .subtext {
       color: #93c5fd;
     }
+    [data-theme="neon"] .nap-duration {
+      color: #fbbf24;
+    }
+    [data-theme="neon"] .wake-duration {
+      color: #9ca3af;
+    }
     [data-theme="neon"] .warning {
       color: #ffd699;
       background: rgba(255, 158, 0, 0.15);
@@ -1990,7 +2010,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.6"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.9"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -3806,19 +3826,19 @@
             const currentNapLen = parseInt(item.extra);
             if (originalNapLen && currentNapLen !== originalNapLen) {
               const diff = currentNapLen - originalNapLen;
-              left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText} (${diff > 0 ? '+' : ''}${diff} min)</span>`;
+              left.innerHTML += `<br/><span class="subtext nap-duration" style="font-weight: 500;">${extraText} (${diff > 0 ? '+' : ''}${diff} min)</span>`;
               li.classList.add('adjusted');
             } else {
-              left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText}</span>`;
+              left.innerHTML += `<br/><span class="subtext nap-duration" style="font-weight: 500;">${extraText}</span>`;
             }
           } else {
-            left.innerHTML += `<br/><span class="subtext" style="color: #fbbf24; font-weight: 500;">${extraText}</span>`;
+            left.innerHTML += `<br/><span class="subtext nap-duration" style="font-weight: 500;">${extraText}</span>`;
           }
         }
 
         // Add wake window duration if present
         if (item.wakeWindow) {
-          left.innerHTML += `<br/><span class="subtext" style="color: #9ca3af;">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
+          left.innerHTML += `<br/><span class="subtext wake-duration">↑ ${formatDuration(item.wakeWindow)} awake</span>`;
         }
 
         if (item.badge) {
