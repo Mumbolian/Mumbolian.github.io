@@ -2161,7 +2161,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.17"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.18"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -4220,6 +4220,9 @@
               if (scheduleResult.ok) {
                 autoDowngraded = true;
                 requestedNapCount = 2;
+                // Ensure downstream logic uses the auto-downgraded nap lengths
+                napLengths = newNapLengths;
+                params.napLengths = newNapLengths;
                 // Update input fields to show the 2-nap settings being used
                 nap1Input.value = newNapLengths[0];
                 nap2Input.value = newNapLengths[1];
@@ -4280,6 +4283,9 @@
               if (scheduleResult.ok) {
                 autoUpgraded = true;
                 requestedNapCount = 3;
+                // Ensure downstream logic uses the auto-upgraded nap lengths
+                napLengths = newNapLengths;
+                params.napLengths = newNapLengths;
                 // Update input fields to show the 3-nap settings being used
                 nap1Input.value = newNapLengths[0];
                 nap2Input.value = newNapLengths[1];
