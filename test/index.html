@@ -2164,7 +2164,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.17"; // Semantic versioning:  gf: MAJOR.MINOR.PATC
+    const APP_VERSION = "1.15.20"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -3017,6 +3017,55 @@
     function tryBuildScheduleWithActuals(napCount, params, actualNaps) {
       const { wakeMins, bedMins, lastWake, minWake, maxWake, maxFirstWake, napLengths } = params;
 
+      // Start from the user's planned nap lengths
+      const adjustedNapLengths = [...napLengths];
+
+      // Compute net delta between actual and planned sleep for tracked naps,
+      // and adjust future naps so total daytime sleep stays close to target.
+      const MIN_NAP = 30;
+      let netDelta = 0; // >0 means actual tracked sleep > planned, <0 means deficit
+      const actualIndices = new Set();
+      actualNaps.forEach((a) => {
+        const idx = a.napNum - 1;
+        if (idx >= 0 && idx < napCount) {
+          actualIndices.add(idx);
+          const planned = napLengths[idx] || 0;
+          const duration = a.end - a.start;
+          netDelta += (duration - planned);
+          // Keep adjustedNapLengths aligned with actuals for completeness
+          adjustedNapLengths[idx] = duration;
+        }
+      });
+
+      if (netDelta > 0) {
+        // Overshoot: tracked naps slept more than planned.
+        // Pay this back from later, untracked naps (last nap first) down to MIN_NAP.
+        let overshoot = netDelta;
+        for (let i = napCount - 1; i >= 0 && overshoot > 0; i--) {
+          if (actualIndices.has(i)) continue; // never shorten naps that already happened
+          const currentLen = adjustedNapLengths[i];
+          const maxReduction = Math.max(0, currentLen - MIN_NAP);
+          if (maxReduction <= 0) continue;
+          const reduction = Math.min(maxReduction, overshoot);
+          adjustedNapLengths[i] = currentLen - reduction;
+          overshoot -= reduction;
+        }
+      } else if (netDelta < 0) {
+        // Deficit: tracked naps slept less than planned.
+        // Spread this deficit into later, untracked naps (earliest after last actual first).
+        let deficit = -netDelta;
+        let maxActualIdx = -1;
+        actualIndices.forEach((idx) => {
+          if (idx > maxActualIdx) maxActualIdx = idx;
+        });
+        for (let i = Math.max(0, maxActualIdx + 1); i < napCount && deficit > 0; i++) {
+          if (actualIndices.has(i)) continue;
+          const addition = deficit; // let later wake-window logic enforce feasibility
+          adjustedNapLengths[i] = adjustedNapLengths[i] + addition;
+          deficit -= addition;
+        }
+      }
+
       // Build schedule using actual nap times where available
       const items = [];
       const wakeWindowDurations = [];
@@ -3030,19 +3079,6 @@
       });
 
       let cursor = wakeMins;
-
-      // Calculate total planned nap time and actual nap time consumed
-      const totalPlannedNapTime = napLengths.slice(0, napCount).reduce((a, b) => a + b, 0);
-      let actualNapTimeConsumed = 0;
-
-      // First pass: calculate how much nap time actuals have consumed
-      for (let i = 0; i < napCount; i++) {
-        const napNum = i + 1;
-        const actualNap = actualNaps.find(a => a.napNum === napNum);
-        if (actualNap) {
-          actualNapTimeConsumed += (actualNap.end - actualNap.start);
-        }
-      }
 
       // Process each nap
       for (let i = 0; i < napCount; i++) {
@@ -3070,29 +3106,26 @@
           wakeWindowDurations.push(wakeWindow);
           cursor = napEnd;
         } else {
-          // Calculate planned nap time for remaining naps
-          // Adjust based on how much actual naps have consumed vs planned
+          // Calculate planned nap time for remaining naps without forcing total nap time
+          // to match the original plan. Remaining naps aim to keep their planned lengths,
+          // and we only trim if needed to satisfy biological wake constraints.
           const remainingNaps = napCount - i;
           const isLastNap = (i === napCount - 1);
 
-          // Calculate remaining nap budget
-          const remainingBudget = totalPlannedNapTime - actualNapTimeConsumed;
-
-          // Calculate how much was planned for remaining naps
-          let remainingPlannedTime = 0;
-          for (let j = i; j < napCount; j++) {
-            remainingPlannedTime += napLengths[j];
-          }
-
-          // Calculate adjustment factor to redistribute
-          const adjustmentFactor = remainingPlannedTime > 0 ? remainingBudget / remainingPlannedTime : 1;
-
           if (isLastNap) {
             // For the last nap, work backwards from bedtime
-            // We need lastWake minutes between nap end and bedtime
-            const originalNapLen = napLengths[i];
-            const adjustedNapLen = Math.max(30, Math.round(originalNapLen * adjustmentFactor));
+            // We need lastWake minutes between nap end and bedtime, and at least
+            // minWake minutes of wake time before this final nap.
+            const originalNapLen = adjustedNapLengths[i];
             const napEnd = bedMins - lastWake;
+
+            // Maximum nap length that still allows a minimum wake window before it
+            const maxAllowedNapLen = napEnd - (cursor + minWake);
+            if (maxAllowedNapLen < 30) {
+              return { ok: false, reason: `Not enough time for wake window before last nap (need at least ${minWake} min)` };
+            }
+
+            const adjustedNapLen = Math.max(30, Math.min(originalNapLen, maxAllowedNapLen));
             const napStart = napEnd - adjustedNapLen;
             const wakeWindow = napStart - cursor;
 
@@ -3115,13 +3148,13 @@
             wakeWindowDurations.push(wakeWindow);
             cursor = napEnd;
           } else {
-            // For non-last naps, distribute remaining time with adjustment
+            // For non-last naps, distribute remaining time while keeping planned lengths
             const remainingTime = bedMins - cursor;
 
-            // Calculate adjusted nap lengths for remaining naps
+            // Calculate nap lengths for remaining naps (clamped to minimum nap length)
             let adjustedRemainingNapTime = 0;
             for (let j = i; j < napCount; j++) {
-              const adjustedLen = Math.max(30, Math.round(napLengths[j] * adjustmentFactor));
+              const adjustedLen = Math.max(MIN_NAP, adjustedNapLengths[j]);
               adjustedRemainingNapTime += adjustedLen;
             }
 
@@ -3133,8 +3166,8 @@
             const wakeWindow = Math.max(minWake, Math.min(maxWake, availableForWakeWindows / wakeWindowsNeeded));
 
             const napStart = cursor + wakeWindow;
-            const originalNapLen = napLengths[i];
-            const adjustedNapLen = Math.max(30, Math.round(originalNapLen * adjustmentFactor));
+            const originalNapLen = adjustedNapLengths[i];
+            const adjustedNapLen = Math.max(MIN_NAP, originalNapLen);
             const napEnd = napStart + adjustedNapLen;
 
             items.push({
@@ -3399,11 +3432,12 @@
       };
     }
 
-    function generateNapCombinations(originalNapLengths, napCount, minNap, maxAdjust) {
+    function generateNapCombinations(originalNapLengths, napCount, minNap, maxAdjust, lockedIndices = []) {
       // Generate smart nap length combinations to try
       // Start with minimal changes, then progressively try more adjustments
 
       const combinations = [];
+      const lockedSet = new Set(lockedIndices || []);
 
       // 1. Try original lengths first
       combinations.push([...originalNapLengths]);
@@ -3412,7 +3446,10 @@
       // These maintain total nap time, which is generally preferred
       for (let i = 0; i < napCount; i++) {
         for (let j = i + 1; j < napCount; j++) {
-          for (let transfer = 5; transfer <= 30; transfer += 5) {
+          // Do not adjust naps that are already tracked as actuals
+          if (lockedSet.has(i) || lockedSet.has(j)) continue;
+
+          for (let transfer = 5; transfer <= maxAdjust; transfer += 5) {
             // Transfer from i to j
             if (originalNapLengths[i] - transfer >= minNap) {
               const combo = [...originalNapLengths];
@@ -3434,13 +3471,16 @@
       // 3. Try redistribution adjustments (reduce one nap, distribute to others)
       // This maintains total nap time by spreading reductions across other naps
       for (let reduceIdx = 0; reduceIdx < napCount; reduceIdx++) {
+        // Do not reduce naps that have actual tracked times
+        if (lockedSet.has(reduceIdx)) continue;
+
         for (let reduction = 5; reduction <= maxAdjust; reduction += 5) {
           if (originalNapLengths[reduceIdx] - reduction < minNap) continue;
 
           // Get indices of other naps to redistribute to
           const otherIndices = [];
           for (let i = 0; i < napCount; i++) {
-            if (i !== reduceIdx) otherIndices.push(i);
+            if (i !== reduceIdx && !lockedSet.has(i)) otherIndices.push(i);
           }
 
           if (otherIndices.length === 0) continue;
@@ -3465,6 +3505,9 @@
       // 4. Try single nap adjustments (±5, ±10, ±15, ±20, ±25, ±30 min)
       // These change total nap time and are tried LAST
       for (let i = 0; i < napCount; i++) {
+        // Do not change naps that have actual tracked times
+        if (lockedSet.has(i)) continue;
+
         for (let adj = -maxAdjust; adj <= maxAdjust; adj += 5) {
           if (adj === 0) continue;
           const newLength = originalNapLengths[i] + adj;
@@ -3486,6 +3529,15 @@
 
       const MIN_NAP = 30;
       const MAX_NAP_ADJUST = 15; // Max adjustment per nap (matches user expectation)
+      // If we already have actual nap data, don't auto-adjust nap lengths.
+      // Actual-based scheduling (tryBuildScheduleWithActuals) will handle the remaining structure,
+      // and we avoid confusing re-optimization of naps that have already happened.
+      if (typeof getActualNapTimes === "function") {
+        const actualNaps = getActualNapTimes(napCount) || [];
+        if (actualNaps.length > 0) {
+          return null;
+        }
+      }
 
       // FIRST: Try adjusting nap lengths only (preferred approach)
       const napCombinations = generateNapCombinations(napLengths, napCount, MIN_NAP, MAX_NAP_ADJUST);
@@ -3657,7 +3709,22 @@
         const adjustedBedMins = bedMins + bedAdj;
 
         // Generate nap length combinations to try
-        const napCombinations = generateNapCombinations(napLengths, napCount, MIN_NAP, MAX_NAP_ADJUST);
+        // If actual naps are tracked, lock those nap lengths and only adjust future/planned naps.
+        let effectiveNapLengths = [...napLengths];
+        let lockedIndices = [];
+        if (typeof getActualNapTimes === "function") {
+          const actualNaps = getActualNapTimes(napCount) || [];
+          lockedIndices = actualNaps.map(a => a.napNum - 1);
+          actualNaps.forEach(a => {
+            const idx = a.napNum - 1;
+            const duration = a.end - a.start;
+            if (idx >= 0 && idx < effectiveNapLengths.length && duration >= MIN_NAP) {
+              effectiveNapLengths[idx] = duration;
+            }
+          });
+        }
+
+        const napCombinations = generateNapCombinations(effectiveNapLengths, napCount, MIN_NAP, MAX_NAP_ADJUST, lockedIndices);
 
         for (const testNapLengths of napCombinations) {
           const testParams = {
@@ -4463,8 +4530,30 @@
           modeMessages.push(`📊 Using ${actualNaps.length} actual nap time${actualNaps.length > 1 ? 's' : ''}`);
         }
 
-        // Show auto-adjustment message if nap lengths were adjusted
-        if (scheduleResult.autoAdjustMessage) {
+        // Build a nap adjustment summary based on the final schedule
+        // This ensures the text matches the actual nap lengths in use,
+        // including any adjustments from auto-fit, constraints, or actuals.
+        let napAdjustmentSummary = null;
+        if (activeSchedule.napLengthsUsed && Array.isArray(activeSchedule.napLengthsUsed)) {
+          const changes = [];
+          for (let i = 0; i < Math.min(napCountUsed, activeSchedule.napLengthsUsed.length, baseNapLengthsForUsedMode.length); i++) {
+            const baseLen = baseNapLengthsForUsedMode[i];
+            const usedLen = activeSchedule.napLengthsUsed[i];
+            if (typeof baseLen === "number" && typeof usedLen === "number" && usedLen !== baseLen) {
+              const diff = usedLen - baseLen;
+              const sign = diff > 0 ? "+" : "";
+              changes.push(`Nap ${i + 1} ${sign}${diff} min`);
+            }
+          }
+          if (changes.length > 0) {
+            napAdjustmentSummary = `Adjusted naps to fit schedule: ${changes.join(", ")}`;
+          }
+        }
+
+        // Show nap adjustment summary if available; otherwise fall back to any auto-adjust message
+        if (napAdjustmentSummary) {
+          modeMessages.push("✓ " + napAdjustmentSummary);
+        } else if (scheduleResult.autoAdjustMessage) {
           modeMessages.push("✓ " + scheduleResult.autoAdjustMessage);
         }
 
