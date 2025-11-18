@@ -2164,7 +2164,7 @@
 
 <script>
   (function () {
-    const APP_VERSION = "1.15.20"; // Semantic versioning: MAJOR.MINOR.PATCH
+    const APP_VERSION = "1.15.21"; // Semantic versioning: MAJOR.MINOR.PATCH
     const STORAGE_KEY = "napPlannerSettings_v6";
     const ACTUAL_NAPS_KEY = "napPlannerActuals_v1";
     const LAST_RESET_KEY = "napPlannerLastReset";
@@ -4780,7 +4780,9 @@
     // Automatic version checking and update
     function checkForUpdates() {
       // Fetch the current index.html and extract version
-      fetch('index.html?cacheBust=' + Date.now())
+      const cacheBust = Date.now()
+
+      fetch('index.html?cacheBust=' + cacheBust, { cache: 'no-store' })
         .then(response => response.text())
         .then(html => {
           // Extract version from the fetched HTML
@@ -4788,7 +4790,8 @@
           if (match && match[1] !== APP_VERSION) {
             // Version mismatch - reload the page to get the latest version
             console.log(`Updating from ${APP_VERSION} to ${match[1]}`);
-            location.reload(true); // Hard reload to bypass cache
+            const reloadUrl = `${window.location.pathname}?cacheBust=${cacheBust}`
+            window.location.replace(reloadUrl)
           }
         })
         .catch(err => {
