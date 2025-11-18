@@ -55,7 +55,7 @@ This violated the design principle that **wake windows are biological constraint
 
 The system can still adjust schedules to meet constraints using:
 
-1. **Adjust Bedtime** (±15-45 min)
+1. **Adjust Bedtime** (±15 min)
    - Changes day length
    - Shifts all naps earlier or later
 
