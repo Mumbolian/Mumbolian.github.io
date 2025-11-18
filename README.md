@@ -17,7 +17,7 @@ You enter:
 
 The app then builds a full day schedule that **always lands on the chosen bedtime**, automatically switches between 2 and 3 naps as needed, and **automatically adjusts nap lengths to satisfy your constraints** while preserving your preferred settings.
 
-Live at: **https://bingpotstudio.com**
+Live at: **https://t-man.net**
 
 ---
 

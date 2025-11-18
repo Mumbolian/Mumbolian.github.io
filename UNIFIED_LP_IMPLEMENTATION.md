@@ -21,7 +21,7 @@ Try Strategy 3: Switch nap count
 
 ```
 Try Strategy 1: Unified adjustment
-  For each bedtime adjustment (0, -15, -30, -45, +15, +30):
+  For each bedtime adjustment (0, -15, +15):
     For each nap combination:
       Test if constraints satisfied
       ✅ Return first solution found
@@ -82,7 +82,7 @@ return null  // No solution found
 - `lastWake` - final wake window before bed (fixed)
 
 **Adjustable within limits:**
-- Bedtime: ±15-45 minutes
+- Bedtime: ±15 minutes
 - Nap lengths: ±30 minutes per nap
 - Wake windows: Distributed automatically within [minWake, maxWake]
 
